@@ -1,7 +1,13 @@
 import React from 'react';
-import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {
+  LayoutDashboard,
+  Calendar,
+  DollarSign,
+  MessageCircle,
+  User,
+} from 'lucide-react-native';
 import {
   InstrutorDashboardScreen,
   InstrutorScheduleScreen,
@@ -82,8 +88,8 @@ export const InstrutorTabNavigator: React.FC = () => {
         component={DashboardStackNavigator}
         options={{
           tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="dashboard" color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <LayoutDashboard color={color} size={size} />
           ),
         }}
       />
@@ -92,8 +98,8 @@ export const InstrutorTabNavigator: React.FC = () => {
         component={ScheduleStackNavigator}
         options={{
           tabBarLabel: 'Agenda',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="calendar" color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Calendar color={color} size={size} />
           ),
         }}
       />
@@ -102,8 +108,8 @@ export const InstrutorTabNavigator: React.FC = () => {
         component={EarningsStackNavigator}
         options={{
           tabBarLabel: 'Ganhos',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="dollar-sign" color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <DollarSign color={color} size={size} />
           ),
         }}
       />
@@ -112,8 +118,8 @@ export const InstrutorTabNavigator: React.FC = () => {
         component={ChatStackNavigator}
         options={{
           tabBarLabel: 'Chat',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="message-circle" color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <MessageCircle color={color} size={size} />
           ),
         }}
       />
@@ -122,8 +128,8 @@ export const InstrutorTabNavigator: React.FC = () => {
         component={ProfileStackNavigator}
         options={{
           tabBarLabel: 'Perfil',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="user" color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <User color={color} size={size} />
           ),
         }}
       />
@@ -131,7 +137,3 @@ export const InstrutorTabNavigator: React.FC = () => {
   );
 };
 
-// Simple icon component - will be replaced with proper icons later
-const TabIcon: React.FC<{ name: string; color: string }> = ({ color }) => (
-  <View style={{ width: 24, height: 24, backgroundColor: color, borderRadius: 12 }} />
-);

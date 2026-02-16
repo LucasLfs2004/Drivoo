@@ -116,7 +116,7 @@ export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) 
       timeSlot: selectedSlot.time,
       duration: 60, // Default 1 hour
       price: instructor?.precos.valorHora || 0,
-      currency: 'R$',
+      currency: 'BRL', // Código ISO para Real Brasileiro
       vehicleInfo: {
         marca: instructor?.veiculo.marca || '',
         modelo: instructor?.veiculo.modelo || '',

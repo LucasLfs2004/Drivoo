@@ -14,7 +14,7 @@ export const AlunoBookingsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
 
   const handleSearchInstructorsPress = () => {
-    navigation.navigate('Search');
+    navigation.navigate('Search', { screen: 'SearchScreen' });
   };
   return (
     <SafeAreaView style={styles.container}>

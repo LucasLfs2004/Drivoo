@@ -3,8 +3,8 @@ import { Dimensions, PixelRatio } from 'react-native';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 // Base dimensions (iPhone 6/7/8)
-const baseWidth = 375;
-const baseHeight = 667;
+const baseWidth = 440;
+const baseHeight = 956;
 
 // Scale functions
 export const scale = (size: number): number => {

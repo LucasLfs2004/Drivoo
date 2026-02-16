@@ -3,9 +3,11 @@ import type { Coordenadas } from '../auth';
 
 export interface FiltrosBusca {
   localizacao?: {
-    coordenadas: Coordenadas;
+    coordenadas?: Coordenadas;
     raio: number; // km
+    endereco?: string;
   };
+  endereco?: string;
   data?: Date;
   horario?: {
     inicio: string; // HH:mm
@@ -47,6 +49,7 @@ export interface InstrutorDisponivel {
   localizacao: {
     distancia: number; // km
     endereco: string;
+    coordenadas?: Coordenadas;
   };
   disponibilidade: {
     proximoSlot?: Date;

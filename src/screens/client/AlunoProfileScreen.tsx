@@ -1,12 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { theme } from '../../themes';
+import { AlunoProfileStackParamList } from '../../types/navigation';
 
-export const AlunoProfileScreen: React.FC = () => {
+type Props = NativeStackScreenProps<AlunoProfileStackParamList, 'ProfileScreen'>;
+
+export const AlunoProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { usuario, logout } = useAuth();
 
   const handleLogout = () => {
@@ -20,9 +24,50 @@ export const AlunoProfileScreen: React.FC = () => {
     );
   };
 
+  const menuItems = [
+    {
+      icon: '👤',
+      title: 'Editar Perfil',
+      description: 'Atualize suas informações pessoais',
+      onPress: () => navigation.navigate('EditProfile'),
+    },
+    {
+      icon: '⚙️',
+      title: 'Configurações',
+      description: 'Notificações, privacidade e mais',
+      onPress: () => navigation.navigate('Settings'),
+    },
+    {
+      icon: '📚',
+      title: 'Minhas Aulas',
+      description: 'Histórico e aulas agendadas',
+      onPress: () => {
+        // Navigate to bookings tab
+        Alert.alert('Info', 'Navegue para a aba "Aulas" para ver seus agendamentos');
+      },
+    },
+    {
+      icon: '💳',
+      title: 'Pagamentos',
+      description: 'Métodos de pagamento e histórico',
+      onPress: () => {
+        Alert.alert('Em Breve', 'Funcionalidade de pagamentos em desenvolvimento');
+      },
+    },
+    {
+      icon: '❓',
+      title: 'Ajuda e Suporte',
+      description: 'Central de ajuda e contato',
+      onPress: () => {
+        Alert.alert('Suporte', 'Entre em contato: suporte@drivoo.com.br');
+      },
+    },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Profile Header */}
         <View style={styles.header}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
@@ -33,56 +78,65 @@ export const AlunoProfileScreen: React.FC = () => {
             {usuario?.perfil?.primeiroNome} {usuario?.perfil?.ultimoNome}
           </Text>
           <Text style={styles.email}>{usuario?.email}</Text>
+          
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Text style={styles.editButtonText}>Editar Perfil</Text>
+          </TouchableOpacity>
         </View>
 
-        <Card style={styles.infoCard}>
-          <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Nome</Text>
-            <Text style={styles.infoValue}>
-              {usuario?.perfil?.primeiroNome} {usuario?.perfil?.ultimoNome}
-            </Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Email</Text>
-            <Text style={styles.infoValue}>{usuario?.email}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Telefone</Text>
-            <Text style={styles.infoValue}>{usuario?.telefone}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Tipo de Conta</Text>
-            <Text style={styles.infoValue}>
-              {usuario?.papel === 'aluno' ? 'Aluno' : 'Instrutor'}
-            </Text>
+        {/* Stats Card */}
+        <Card style={styles.statsCard}>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Aulas</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Horas</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>-</Text>
+              <Text style={styles.statLabel}>Progresso</Text>
+            </View>
           </View>
         </Card>
 
-        <Card style={styles.actionsCard}>
-          <Text style={styles.sectionTitle}>Ações</Text>
-          <Button
-            title="Editar Perfil"
-            variant="outline"
-            style={styles.actionButton}
-          />
-          <Button
-            title="Configurações"
-            variant="outline"
-            style={styles.actionButton}
-          />
-          <Button
-            title="Ajuda e Suporte"
-            variant="outline"
-            style={styles.actionButton}
-          />
-          <Button
-            title="Sair"
-            variant="destructive"
-            onPress={handleLogout}
-            style={styles.actionButton}
-          />
-        </Card>
+        {/* Menu Items */}
+        <View style={styles.menuSection}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.menuItem}
+              onPress={item.onPress}
+            >
+              <View style={styles.menuIcon}>
+                <Text style={styles.menuIconText}>{item.icon}</Text>
+              </View>
+              <View style={styles.menuContent}>
+                <Text style={styles.menuTitle}>{item.title}</Text>
+                <Text style={styles.menuDescription}>{item.description}</Text>
+              </View>
+              <Text style={styles.menuChevron}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Logout Button */}
+        <Button
+          title="Sair da Conta"
+          variant="destructive"
+          onPress={handleLogout}
+          style={styles.logoutButton}
+        />
+
+        {/* App Version */}
+        <Text style={styles.versionText}>Versão 1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -100,61 +154,121 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: theme.spacing.xl,
+    paddingTop: theme.spacing.md,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: theme.colors.primary[500],
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.spacing.md,
+    ...theme.shadows.md,
   },
   avatarText: {
-    fontSize: theme.typography.fontSize.xl,
+    fontSize: theme.typography.fontSize['2xl'],
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.inverse,
   },
   name: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semibold,
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   email: {
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
-  },
-  infoCard: {
-    marginBottom: theme.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
   },
-  infoItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  editButton: {
     paddingVertical: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.light,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borders.radius.full,
+    backgroundColor: theme.colors.primary[50],
   },
-  infoLabel: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
+  editButtonText: {
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.primary[600],
   },
-  infoValue: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  actionsCard: {
+  statsCard: {
     marginBottom: theme.spacing.lg,
   },
-  actionButton: {
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary[600],
+    marginBottom: theme.spacing.xs,
+  },
+  statLabel: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: theme.colors.border.light,
+  },
+  menuSection: {
+    marginBottom: theme.spacing.lg,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.elevated,
+    padding: theme.spacing.md,
+    borderRadius: theme.borders.radius.lg,
     marginBottom: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+  menuIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.borders.radius.md,
+    backgroundColor: theme.colors.primary[50],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+  },
+  menuIconText: {
+    fontSize: 24,
+  },
+  menuContent: {
+    flex: 1,
+  },
+  menuTitle: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  menuDescription: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+  },
+  menuChevron: {
+    fontSize: theme.typography.fontSize['2xl'],
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing.sm,
+  },
+  logoutButton: {
+    marginBottom: theme.spacing.lg,
+  },
+  versionText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
   },
 });

@@ -90,6 +90,19 @@ export const colors = {
     900: '#212121',  // Quase preto
     950: '#0A0A0A',  // Preto
   },
+  // Paleta cinza azulado (cool gray) - baseada em #EBEEF1
+  coolGray: {
+    50: '#F8F9FA',   // Quase branco com toque azulado
+    100: '#F3F5F7',  // Muito claro
+    200: '#EBEEF1',  // Base - cor original
+    300: '#DDE1E6',  // Claro
+    400: '#C5CBD3',  // Médio claro
+    500: '#A8B0BA',  // Médio
+    600: '#8A94A0',  // Médio escuro
+    700: '#6B7580',  // Escuro
+    800: '#4D5660',  // Muito escuro
+    900: '#2F3740',  // Quase preto azulado
+  },
   // Cores semânticas usando a paleta definida
   semantic: {
     success: '#13B57D',  // Verde

@@ -27,6 +27,14 @@ export interface BookingData {
   updatedAt?: Date;
 }
 
+export interface PaymentSplitInfo {
+  total: number;
+  platformFee: number;
+  platformFeePercentage: number;
+  instructorAmount: number;
+  currency: string;
+}
+
 export interface BookingConfirmationData {
   booking: BookingData;
   paymentInfo: {
@@ -35,6 +43,7 @@ export interface BookingConfirmationData {
     total: number;
     currency: string;
   };
+  paymentSplit?: PaymentSplitInfo;
   termsAccepted: boolean;
 }
 

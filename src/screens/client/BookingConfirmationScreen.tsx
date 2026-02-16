@@ -36,7 +36,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
       subtotal,
       platformFee,
       total,
-      currency: 'R$',
+      currency: 'BRL', // Código ISO para Real Brasileiro
     };
   };
 
@@ -141,45 +141,16 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
       return;
     }
 
-    try {
-      setLoading(true);
-
-      // Simulate API call to confirm booking
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const confirmationData: BookingConfirmationData = {
-        booking: {
-          ...bookingData,
-          id: `booking_${Date.now()}`,
-          status: 'confirmed',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        paymentInfo,
-        termsAccepted,
-      };
-
-      Alert.alert(
-        'Agendamento Confirmado!',
-        `Sua aula com ${bookingData.instructorName} foi agendada para ${formatDate(bookingData.date)} às ${bookingData.timeSlot}.`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Navigate to bookings screen or home
-              navigation.navigate('SearchScreen');
-            },
-          },
-        ]
-      );
-
-      console.log('Booking confirmed:', confirmationData);
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível confirmar o agendamento. Tente novamente.');
-      console.error('Booking confirmation error:', error);
-    } finally {
-      setLoading(false);
-    }
+    // Navigate to payment confirmation screen
+    navigation.navigate('PaymentConfirmation', {
+      bookingData: {
+        ...bookingData,
+        id: `booking_${Date.now()}`,
+        status: 'pending' as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
   };
 
   const handleEditBooking = () => {
@@ -320,7 +291,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
           />
           
           <Button
-            title={loading ? 'Confirmando...' : 'Confirmar e Pagar'}
+            title={loading ? 'Processando...' : 'Continuar para Pagamento'}
             variant="primary"
             onPress={handleConfirmBooking}
             disabled={!termsAccepted || loading}

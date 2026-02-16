@@ -50,6 +50,7 @@ export type AlunoHomeStackParamList = {
   HomeScreen: undefined;
   InstructorDetails: { instructorId: string };
   ComponentShowcase: undefined;
+  DesignSystem: undefined
 };
 
 export type AlunoSearchStackParamList = {
@@ -57,6 +58,7 @@ export type AlunoSearchStackParamList = {
   SearchResults: { filters?: any };
   InstructorDetails: { instructorId: string };
   BookingConfirmation: { bookingData: any };
+  PaymentConfirmation: { bookingData: any };
 };
 
 export type AlunoBookingsStackParamList = {
@@ -120,23 +122,23 @@ export type AdminSettingsStackParamList = {
 };
 
 // Screen Props Types
-export type RootStackScreenProps<T extends keyof RootStackParamList> = 
+export type RootStackScreenProps<T extends keyof RootStackParamList> =
   NativeStackScreenProps<RootStackParamList, T>;
 
-export type AuthStackScreenProps<T extends keyof AuthStackParamList> = 
+export type AuthStackScreenProps<T extends keyof AuthStackParamList> =
   NativeStackScreenProps<AuthStackParamList, T>;
 
-export type AlunoTabScreenProps<T extends keyof AlunoTabParamList> = 
+export type AlunoTabScreenProps<T extends keyof AlunoTabParamList> =
   BottomTabScreenProps<AlunoTabParamList, T>;
 
-export type InstrutorTabScreenProps<T extends keyof InstrutorTabParamList> = 
+export type InstrutorTabScreenProps<T extends keyof InstrutorTabParamList> =
   BottomTabScreenProps<InstrutorTabParamList, T>;
 
-export type AdminDrawerScreenProps<T extends keyof AdminDrawerParamList> = 
+export type AdminDrawerScreenProps<T extends keyof AdminDrawerParamList> =
   DrawerScreenProps<AdminDrawerParamList, T>;
 
 declare global {
   namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList {}
+    interface RootParamList extends RootStackParamList { }
   }
 }

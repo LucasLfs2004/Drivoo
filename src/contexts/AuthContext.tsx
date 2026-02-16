@@ -18,6 +18,7 @@ interface AuthContextType extends AuthState {
   loginWithTokens: (usuario: Usuario, token: string, refreshToken: string, expiresIn: number) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (usuario: Usuario) => Promise<void>;
+  updateProfile: (data: Partial<Usuario>) => Promise<void>;
   refreshToken: () => Promise<void>;
   clearError: () => void;
   // Mock functions for development
@@ -455,6 +456,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfile = async (data: Partial<Usuario>) => {
+    try {
+      if (!state.usuario) {
+        throw new Error('No user logged in');
+      }
+
+      // Merge the updated data with existing user data
+      const updatedUser: Usuario = {
+        ...state.usuario,
+        ...data,
+        perfil: {
+          ...state.usuario.perfil,
+          ...data.perfil,
+        },
+        atualizadoEm: new Date(),
+      };
+
+      // For mock mode, just update the state
+      // TODO: Call API to update profile on backend
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      dispatch({ type: 'AUTH_UPDATE_PROFILE', payload: updatedUser });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+  };
+
   const refreshToken = async () => {
     await performTokenRefresh();
   };
@@ -470,6 +499,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loginWithTokens,
     logout,
     updateUser,
+    updateProfile,
     refreshToken,
     clearError,
     loginAsAluno,

@@ -114,13 +114,13 @@ Este plano de implementação converte o design da arquitetura frontend do Drivo
 - [ ] 7. Checkpoint - Verificar fluxo de agendamento
   - Garantir que todos os testes passem, perguntar ao usuário se surgem dúvidas.
 
-- [ ] 8. Implementar sistema de pagamentos
-  - [ ] 8.1 Integrar Stripe React Native SDK
+- [x] 8. Implementar sistema de pagamentos
+  - [x] 8.1 Integrar Stripe React Native SDK
     - Configurar Stripe com chaves de API
     - Implementar componentes de pagamento básicos
     - _Requisitos: 5.1_
 
-  - [ ] 8.2 Implementar funcionalidade de split payment
+  - [x] 8.2 Implementar funcionalidade de split payment
     - Configurar divisão automática de pagamentos
     - Implementar cálculo de taxas da plataforma
     - _Requisitos: 5.2_
@@ -129,7 +129,7 @@ Este plano de implementação converte o design da arquitetura frontend do Drivo
     - **Propriedade 14: Distribuição de Split Payment**
     - **Valida: Requisitos 5.2**
 
-  - [ ] 8.4 Implementar tela de confirmação de pagamento
+  - [x] 8.4 Implementar tela de confirmação de pagamento
     - Exibir detalhes completos da transação
     - Implementar tratamento de erros de pagamento
     - _Requisitos: 5.3, 5.4_
@@ -163,8 +163,8 @@ Este plano de implementação converte o design da arquitetura frontend do Drivo
     - **Propriedade 20: Suporte a Mensagens Multimídia**
     - **Valida: Requisitos 6.4**
 
-- [ ] 10. Implementar funcionalidades do instrutor
-  - [ ] 10.1 Criar sistema de gerenciamento de agenda
+- [x] 10. Implementar funcionalidades do instrutor
+  - [x] 10.1 Criar sistema de gerenciamento de agenda
     - Implementar interface para definir disponibilidade semanal
     - Implementar sincronização de agenda com agendamentos
     - _Requisitos: 7.1_
@@ -173,12 +173,12 @@ Este plano de implementação converte o design da arquitetura frontend do Drivo
     - **Propriedade 21: Gerenciamento de Agenda do Instrutor**
     - **Valida: Requisitos 7.1**
 
-  - [ ] 10.3 Implementar gerenciamento de perfil do instrutor
+  - [x] 10.3 Implementar gerenciamento de perfil do instrutor
     - Criar formulários para credenciais e certificações
     - Implementar upload de documentos do DETRAN
     - _Requisitos: 7.2, 3.4_
 
-  - [ ] 10.4 Implementar dashboard de ganhos
+  - [x] 10.4 Implementar dashboard de ganhos
     - Criar visualizações de ganhos e histórico de pagamentos
     - Implementar gráficos com React Native Gifted Charts
     - _Requisitos: 7.4_
@@ -187,8 +187,8 @@ Este plano de implementação converte o design da arquitetura frontend do Drivo
     - **Propriedade 24: Precisão de Dados de Ganhos**
     - **Valida: Requisitos 7.4**
 
-- [ ] 11. Implementar sistema de notificações
-  - [ ] 11.1 Configurar sistema de notificações push
+- [x] 11. Implementar sistema de notificações
+  - [x] 11.1 Configurar sistema de notificações push
     - Implementar notificações para novos agendamentos
     - Implementar notificações para mensagens de chat
     - _Requisitos: 7.3_

@@ -4,3 +4,6 @@ export * from './FormSelect';
 export * from './FormDatePicker';
 export * from './FormImagePicker';
 export * from './FilterChips';
+export * from './FiltersModal';
+export * from './PaymentForm';
+export * from './WeeklyScheduleEditor';

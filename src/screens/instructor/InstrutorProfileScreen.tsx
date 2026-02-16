@@ -6,7 +6,7 @@ import { Button } from '../../components/common/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { theme } from '../../themes';
 
-export const InstrutorProfileScreen: React.FC = () => {
+export const InstrutorProfileScreen: React.FC = ({ navigation }: any) => {
   const { usuario, logout } = useAuth();
 
   const handleLogout = () => {
@@ -18,6 +18,10 @@ export const InstrutorProfileScreen: React.FC = () => {
         { text: 'Sair', style: 'destructive', onPress: logout },
       ]
     );
+  };
+
+  const handleEditProfile = () => {
+    navigation.navigate('EditInstructorProfile');
   };
 
   return (
@@ -80,6 +84,7 @@ export const InstrutorProfileScreen: React.FC = () => {
           <Button
             title="Editar Perfil"
             variant="outline"
+            onPress={handleEditProfile}
             style={styles.actionButton}
           />
           <Button

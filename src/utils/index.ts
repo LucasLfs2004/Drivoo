@@ -12,3 +12,12 @@ export {
   getSafeAreaInsets 
 } from './device';
 // Note: isTablet is exported from scale.ts to avoid conflicts
+
+// Currency utilities
+export {
+  normalizeCurrencyCode,
+  formatCurrency,
+  formatCurrencyValue,
+  centsToReais,
+  reaisToCents,
+} from './currency';

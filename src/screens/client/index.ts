@@ -5,3 +5,6 @@ export { AlunoBookingsScreen } from './AlunoBookingsScreen';
 export { AlunoProfileScreen } from './AlunoProfileScreen';
 export { InstructorDetailsScreen } from './InstructorDetailsScreen';
 export { BookingConfirmationScreen } from './BookingConfirmationScreen';
+export { PaymentConfirmationScreen } from './PaymentConfirmationScreen';
+export { EditProfileScreen } from './EditProfileScreen';
+export { SettingsScreen } from './SettingsScreen';

@@ -23,6 +23,10 @@ export const mockInstructors: InstrutorDisponivel[] = [
     localizacao: {
       distancia: 2.3,
       endereco: 'Vila Madalena, São Paulo',
+      coordenadas: {
+        latitude: -23.5505,
+        longitude: -46.6333,
+      },
     },
     disponibilidade: {
       proximoSlot: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
@@ -53,6 +57,10 @@ export const mockInstructors: InstrutorDisponivel[] = [
     localizacao: {
       distancia: 1.8,
       endereco: 'Pinheiros, São Paulo',
+      coordenadas: {
+        latitude: -23.5629,
+        longitude: -46.6997,
+      },
     },
     disponibilidade: {
       proximoSlot: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
@@ -83,6 +91,10 @@ export const mockInstructors: InstrutorDisponivel[] = [
     localizacao: {
       distancia: 3.1,
       endereco: 'Butantã, São Paulo',
+      coordenadas: {
+        latitude: -23.5732,
+        longitude: -46.7286,
+      },
     },
     disponibilidade: {
       proximoSlot: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
@@ -113,6 +125,10 @@ export const mockInstructors: InstrutorDisponivel[] = [
     localizacao: {
       distancia: 4.2,
       endereco: 'Jardins, São Paulo',
+      coordenadas: {
+        latitude: -23.5613,
+        longitude: -46.6565,
+      },
     },
     disponibilidade: {
       proximoSlot: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
@@ -143,6 +159,10 @@ export const mockInstructors: InstrutorDisponivel[] = [
     localizacao: {
       distancia: 5.8,
       endereco: 'Lapa, São Paulo',
+      coordenadas: {
+        latitude: -23.5052,
+        longitude: -46.7019,
+      },
     },
     disponibilidade: {
       proximoSlot: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days from now
@@ -173,6 +193,10 @@ export const mockInstructors: InstrutorDisponivel[] = [
     localizacao: {
       distancia: 2.7,
       endereco: 'Vila Olímpia, São Paulo',
+      coordenadas: {
+        latitude: -23.5955,
+        longitude: -46.6856,
+      },
     },
     disponibilidade: {
       proximoSlot: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
@@ -203,6 +227,10 @@ export const mockInstructors: InstrutorDisponivel[] = [
     localizacao: {
       distancia: 6.2,
       endereco: 'Mooca, São Paulo',
+      coordenadas: {
+        latitude: -23.5505,
+        longitude: -46.5996,
+      },
     },
     disponibilidade: {
       proximoSlot: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
@@ -233,6 +261,10 @@ export const mockInstructors: InstrutorDisponivel[] = [
     localizacao: {
       distancia: 3.5,
       endereco: 'Itaim Bibi, São Paulo',
+      coordenadas: {
+        latitude: -23.5751,
+        longitude: -46.6755,
+      },
     },
     disponibilidade: {
       proximoSlot: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
