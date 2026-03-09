@@ -49,6 +49,7 @@ export type AdminDrawerParamList = {
 export type AlunoHomeStackParamList = {
   HomeScreen: undefined;
   InstructorDetails: { instructorId: string };
+  ProgressDetails: undefined;
   ComponentShowcase: undefined;
   DesignSystem: undefined
 };

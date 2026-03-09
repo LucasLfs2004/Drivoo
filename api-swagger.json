@@ -1,0 +1,3124 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Driving Lessons API - MVP COMPLETO",
+        "description": "API completa para agendamento de aulas práticas de direção",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/auth/registro/aluno": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Registrar Aluno",
+                "description": "Cadastra novo aluno\n\n- **email**: Email válido\n- **senha**: Mínimo 6 caracteres\n- **cpf**: 11 dígitos\n- **veiculo**: Opcional",
+                "operationId": "registrar_aluno_auth_registro_aluno_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegistroAlunoRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegistroResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/registro/instrutor": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Registrar Instrutor",
+                "description": "Cadastra novo instrutor (com geocoding automático)\n\n- **veiculo**: OBRIGATÓRIO\n- **endereco**: OBRIGATÓRIO (para geocoding)\n- **valor_hora**: Valor por hora em reais",
+                "operationId": "registrar_instrutor_auth_registro_instrutor_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegistroInstrutorRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegistroResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Login",
+                "description": "Login de usuário\n\nRetorna token JWT válido por 7 dias",
+                "operationId": "login_auth_login_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Obter Usuario Logado",
+                "description": "Retorna dados do usuário logado\n\nTODO: Implementar middleware de autenticação JWT",
+                "operationId": "obter_usuario_logado_auth_me_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UsuarioResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/instrutores/buscar": {
+            "get": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Buscar Instrutores",
+                "description": "Busca instrutores com filtros",
+                "operationId": "buscar_instrutores_instrutores_buscar_get",
+                "parameters": [
+                    {
+                        "name": "latitude",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "description": "Latitude do aluno",
+                            "title": "Latitude"
+                        },
+                        "description": "Latitude do aluno"
+                    },
+                    {
+                        "name": "longitude",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "description": "Longitude do aluno",
+                            "title": "Longitude"
+                        },
+                        "description": "Longitude do aluno"
+                    },
+                    {
+                        "name": "raio_km",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "description": "Raio de busca em km",
+                            "default": 10,
+                            "title": "Raio Km"
+                        },
+                        "description": "Raio de busca em km"
+                    },
+                    {
+                        "name": "ordenar_por",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^(proximidade|avaliacao|preco)$",
+                            "default": "proximidade",
+                            "title": "Ordenar Por"
+                        }
+                    },
+                    {
+                        "name": "tipo_cambio",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "pattern": "^(MANUAL|AUTOMATICO)$"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Tipo Cambio"
+                        }
+                    },
+                    {
+                        "name": "genero",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "pattern": "^(M|F|Outro)$"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Genero"
+                        }
+                    },
+                    {
+                        "name": "aceita_veiculo_aluno",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Aceita Veiculo Aluno"
+                        }
+                    },
+                    {
+                        "name": "limite",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 20,
+                            "title": "Limite"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/instrutores/{instrutor_id}": {
+            "get": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Obter Instrutor",
+                "description": "Detalhes completos do instrutor",
+                "operationId": "obter_instrutor_instrutores__instrutor_id__get",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Atualizar Instrutor",
+                "description": "Atualiza dados do instrutor",
+                "operationId": "atualizar_instrutor_instrutores__instrutor_id__put",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InstrutorUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/instrutores/{instrutor_id}/horarios-disponiveis": {
+            "get": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Obter Horarios Disponiveis",
+                "description": "Retorna horários disponíveis do instrutor para uma data",
+                "operationId": "obter_horarios_disponiveis_instrutores__instrutor_id__horarios_disponiveis_get",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    },
+                    {
+                        "name": "data",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "title": "Data"
+                        }
+                    },
+                    {
+                        "name": "duracao_minutos",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 240,
+                            "minimum": 30,
+                            "default": 60,
+                            "title": "Duracao Minutos"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/instrutores/{instrutor_id}/disponibilidades": {
+            "get": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Listar Disponibilidades",
+                "description": "Lista disponibilidades semanais do instrutor",
+                "operationId": "listar_disponibilidades_instrutores__instrutor_id__disponibilidades_get",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Criar Disponibilidade",
+                "description": "Cria disponibilidade semanal do instrutor",
+                "operationId": "criar_disponibilidade_instrutores__instrutor_id__disponibilidades_post",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DisponibilidadeCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/instrutores/{instrutor_id}/disponibilidades/{disponibilidade_id}": {
+            "put": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Atualizar Disponibilidade",
+                "description": "Atualiza disponibilidade do instrutor",
+                "operationId": "atualizar_disponibilidade_instrutores__instrutor_id__disponibilidades__disponibilidade_id__put",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    },
+                    {
+                        "name": "disponibilidade_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Disponibilidade Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DisponibilidadeUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Deletar Disponibilidade",
+                "description": "Remove disponibilidade do instrutor",
+                "operationId": "deletar_disponibilidade_instrutores__instrutor_id__disponibilidades__disponibilidade_id__delete",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    },
+                    {
+                        "name": "disponibilidade_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Disponibilidade Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/instrutores/{instrutor_id}/ganhos/historico": {
+            "get": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Obter Historico Ganhos",
+                "description": "Histórico completo de ganhos do instrutor\n\nRetorna todas as aulas com valores, filtradas por período e status",
+                "operationId": "obter_historico_ganhos_instrutores__instrutor_id__ganhos_historico_get",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    },
+                    {
+                        "name": "data_inicio",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "date"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Data inicial do filtro",
+                            "title": "Data Inicio"
+                        },
+                        "description": "Data inicial do filtro"
+                    },
+                    {
+                        "name": "data_fim",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "date"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Data final do filtro",
+                            "title": "Data Fim"
+                        },
+                        "description": "Data final do filtro"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "pattern": "^(CONCLUIDO|CANCELADO)$"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Status"
+                        }
+                    },
+                    {
+                        "name": "limite",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 200,
+                            "minimum": 1,
+                            "default": 50,
+                            "title": "Limite"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/instrutores/{instrutor_id}/pagamentos/recentes": {
+            "get": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Obter Pagamentos Recentes",
+                "description": "Lista de pagamentos/repasses recentes recebidos pelo instrutor\n\nMostra repasses já processados com detalhes",
+                "operationId": "obter_pagamentos_recentes_instrutores__instrutor_id__pagamentos_recentes_get",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    },
+                    {
+                        "name": "limite",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 20,
+                            "title": "Limite"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/instrutores/{instrutor_id}/ganhos/tendencia": {
+            "get": {
+                "tags": [
+                    "Instrutores"
+                ],
+                "summary": "Obter Tendencia Ganhos",
+                "description": "Dados agregados para gráfico de tendência de ganhos\n\nAgrupa ganhos por período (dia/semana/mês) para visualização",
+                "operationId": "obter_tendencia_ganhos_instrutores__instrutor_id__ganhos_tendencia_get",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    },
+                    {
+                        "name": "periodo",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^(dia|semana|mes)$",
+                            "default": "mes",
+                            "title": "Periodo"
+                        }
+                    },
+                    {
+                        "name": "data_inicio",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "date"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Data inicial (padrão: 30 dias atrás)",
+                            "title": "Data Inicio"
+                        },
+                        "description": "Data inicial (padrão: 30 dias atrás)"
+                    },
+                    {
+                        "name": "data_fim",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "date"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Data final (padrão: hoje)",
+                            "title": "Data Fim"
+                        },
+                        "description": "Data final (padrão: hoje)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/agendamentos/validar": {
+            "post": {
+                "tags": [
+                    "Agendamentos"
+                ],
+                "summary": "Validar Disponibilidade",
+                "description": "Valida se instrutor está disponível no horário",
+                "operationId": "validar_disponibilidade_agendamentos_validar_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ValidarDisponibilidadeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/agendamentos": {
+            "post": {
+                "tags": [
+                    "Agendamentos"
+                ],
+                "summary": "Criar Agendamento",
+                "description": "Cria novo agendamento (REQUER AUTENTICAÇÃO DE ALUNO)",
+                "operationId": "criar_agendamento_agendamentos_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AgendamentoCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/agendamentos/meus": {
+            "get": {
+                "tags": [
+                    "Agendamentos"
+                ],
+                "summary": "Listar Meus Agendamentos",
+                "description": "Lista agendamentos do usuário autenticado (REQUER AUTENTICAÇÃO)\n\nFunciona para aluno e instrutor",
+                "operationId": "listar_meus_agendamentos_agendamentos_meus_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "status_filtro",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "pattern": "^(AGENDADO|CONFIRMADO|CONCLUIDO|CANCELADO)$"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Status Filtro"
+                        }
+                    },
+                    {
+                        "name": "limite",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 20,
+                            "title": "Limite"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/agendamentos/{agendamento_id}": {
+            "get": {
+                "tags": [
+                    "Agendamentos"
+                ],
+                "summary": "Obter Agendamento",
+                "description": "Detalhes de um agendamento específico",
+                "operationId": "obter_agendamento_agendamentos__agendamento_id__get",
+                "parameters": [
+                    {
+                        "name": "agendamento_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Agendamento Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/agendamentos/{agendamento_id}/status": {
+            "put": {
+                "tags": [
+                    "Agendamentos"
+                ],
+                "summary": "Atualizar Status",
+                "description": "Atualiza status do agendamento (com validação de transições)\n\nTODO: Pegar usuario_id e role do token JWT",
+                "operationId": "atualizar_status_agendamentos__agendamento_id__status_put",
+                "parameters": [
+                    {
+                        "name": "agendamento_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Agendamento Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AgendamentoUpdateStatus"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/agendamentos/{agendamento_id}/avaliar": {
+            "post": {
+                "tags": [
+                    "Agendamentos"
+                ],
+                "summary": "Avaliar Agendamento",
+                "description": "Cria avaliação após aula concluída\n\nREGRAS:\n- Apenas aulas com status CONCLUIDO podem ser avaliadas\n- Não permite avaliar duas vezes\n- Atualiza média do instrutor automaticamente",
+                "operationId": "avaliar_agendamento_agendamentos__agendamento_id__avaliar_post",
+                "parameters": [
+                    {
+                        "name": "agendamento_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Agendamento Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvaliacaoCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/dashboard/aluno": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Obter Dashboard Aluno",
+                "description": "Dashboard do aluno (REQUER AUTENTICAÇÃO)\n\nRetorna:\n- Próxima aula agendada com detalhes completos\n- Progresso (aulas concluídas, horas de prática)\n- Resumo de agendamentos\n- Estatísticas adicionais",
+                "operationId": "obter_dashboard_aluno_dashboard_aluno_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/instrutor": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Obter Dashboard Instrutor",
+                "description": "Dashboard do instrutor (REQUER AUTENTICAÇÃO)\n\nRetorna:\n- Próxima aula agendada\n- Estatísticas (aulas, horas, ganhos, avaliação)\n- Próximas aulas agendadas",
+                "operationId": "obter_dashboard_instrutor_dashboard_instrutor_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/dashboard": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Obter Dashboard",
+                "description": "Dashboard genérico - redireciona para dashboard específico baseado no tipo de usuário\n\nRetorna dashboard de aluno ou instrutor automaticamente",
+                "operationId": "obter_dashboard_dashboard_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/usuarios/{usuario_id}": {
+            "get": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Obter Usuario",
+                "description": "Retorna dados do usuário",
+                "operationId": "obter_usuario_usuarios__usuario_id__get",
+                "parameters": [
+                    {
+                        "name": "usuario_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Usuario Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Atualizar Usuario",
+                "description": "Atualiza dados do usuário",
+                "operationId": "atualizar_usuario_usuarios__usuario_id__put",
+                "parameters": [
+                    {
+                        "name": "usuario_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Usuario Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UsuarioUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/usuarios/{usuario_id}/configuracoes": {
+            "get": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Obter Configuracoes",
+                "description": "Retorna configurações do usuário",
+                "operationId": "obter_configuracoes_usuarios__usuario_id__configuracoes_get",
+                "parameters": [
+                    {
+                        "name": "usuario_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Usuario Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Atualizar Configuracoes",
+                "description": "Atualiza configurações do usuário",
+                "operationId": "atualizar_configuracoes_usuarios__usuario_id__configuracoes_put",
+                "parameters": [
+                    {
+                        "name": "usuario_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Usuario Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConfiguracaoUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/usuarios/suporte/tickets": {
+            "get": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Listar Tickets Suporte",
+                "description": "Lista tickets do usuário\n\nTODO: Pegar usuario_id do token JWT",
+                "operationId": "listar_tickets_suporte_usuarios_suporte_tickets_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Usuários"
+                ],
+                "summary": "Criar Ticket Suporte",
+                "description": "Cria ticket de suporte\n\nTODO: Pegar usuario_id do token JWT",
+                "operationId": "criar_ticket_suporte_usuarios_suporte_tickets_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SuporteTicketCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/instrutores/{instrutor_id}/veiculos": {
+            "get": {
+                "tags": [
+                    "Veículos"
+                ],
+                "summary": "Listar Veiculos",
+                "description": "Lista veículos do instrutor",
+                "operationId": "listar_veiculos_instrutores__instrutor_id__veiculos_get",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Veículos"
+                ],
+                "summary": "Criar Veiculo",
+                "description": "Cadastra novo veículo do instrutor",
+                "operationId": "criar_veiculo_instrutores__instrutor_id__veiculos_post",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VeiculoCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/instrutores/{instrutor_id}/veiculos/{veiculo_id}": {
+            "put": {
+                "tags": [
+                    "Veículos"
+                ],
+                "summary": "Atualizar Veiculo",
+                "description": "Atualiza veículo do instrutor",
+                "operationId": "atualizar_veiculo_instrutores__instrutor_id__veiculos__veiculo_id__put",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    },
+                    {
+                        "name": "veiculo_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Veiculo Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VeiculoUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Veículos"
+                ],
+                "summary": "Deletar Veiculo",
+                "description": "Remove veículo do instrutor (soft delete)",
+                "operationId": "deletar_veiculo_instrutores__instrutor_id__veiculos__veiculo_id__delete",
+                "parameters": [
+                    {
+                        "name": "instrutor_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Instrutor Id"
+                        }
+                    },
+                    {
+                        "name": "veiculo_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Veiculo Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/conversas": {
+            "get": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Listar Conversas",
+                "description": "Lista conversas do usuário autenticado (REQUER AUTENTICAÇÃO)",
+                "operationId": "listar_conversas_conversas_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/conversas/{conversa_id}/mensagens": {
+            "get": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Listar Mensagens",
+                "description": "Retorna mensagens de uma conversa",
+                "operationId": "listar_mensagens_conversas__conversa_id__mensagens_get",
+                "parameters": [
+                    {
+                        "name": "conversa_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Conversa Id"
+                        }
+                    },
+                    {
+                        "name": "limite",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 50,
+                            "title": "Limite"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Enviar Mensagem",
+                "description": "Envia mensagem (com moderação automática avançada) (REQUER AUTENTICAÇÃO)",
+                "operationId": "enviar_mensagem_conversas__conversa_id__mensagens_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "conversa_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Conversa Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MensagemCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/": {
+            "get": {
+                "summary": "Root",
+                "operationId": "root__get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "summary": "Health Check",
+                "operationId": "health_check_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AgendamentoCreate": {
+                "properties": {
+                    "instrutor_id": {
+                        "type": "string",
+                        "title": "Instrutor Id"
+                    },
+                    "data": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Data"
+                    },
+                    "hora_inicio": {
+                        "type": "string",
+                        "format": "time",
+                        "title": "Hora Inicio"
+                    },
+                    "duracao_minutos": {
+                        "type": "integer",
+                        "maximum": 240,
+                        "minimum": 30,
+                        "title": "Duracao Minutos"
+                    },
+                    "veiculo_instrutor": {
+                        "type": "boolean",
+                        "title": "Veiculo Instrutor",
+                        "default": true
+                    },
+                    "veiculo_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Veiculo Id"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "instrutor_id",
+                    "data",
+                    "hora_inicio",
+                    "duracao_minutos"
+                ],
+                "title": "AgendamentoCreate"
+            },
+            "AgendamentoUpdateStatus": {
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "pattern": "^(CONFIRMADO|CANCELADO|EM_ANDAMENTO|CONCLUIDO)$",
+                        "title": "Status"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "status"
+                ],
+                "title": "AgendamentoUpdateStatus"
+            },
+            "AvaliacaoCreate": {
+                "properties": {
+                    "nota": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1,
+                        "title": "Nota"
+                    },
+                    "comentario": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 500
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Comentario"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "nota"
+                ],
+                "title": "AvaliacaoCreate"
+            },
+            "ConfiguracaoUpdate": {
+                "properties": {
+                    "notificacoes_push": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Notificacoes Push"
+                    },
+                    "notificacoes_email": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Notificacoes Email"
+                    },
+                    "notificacoes_sms": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Notificacoes Sms"
+                    },
+                    "tema_escuro": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Tema Escuro"
+                    },
+                    "idioma": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 5
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Idioma"
+                    }
+                },
+                "type": "object",
+                "title": "ConfiguracaoUpdate"
+            },
+            "DisponibilidadeCreate": {
+                "properties": {
+                    "dia_semana": {
+                        "type": "integer",
+                        "maximum": 6,
+                        "minimum": 0,
+                        "title": "Dia Semana"
+                    },
+                    "hora_inicio": {
+                        "type": "string",
+                        "format": "time",
+                        "title": "Hora Inicio"
+                    },
+                    "hora_fim": {
+                        "type": "string",
+                        "format": "time",
+                        "title": "Hora Fim"
+                    },
+                    "intervalo_inicio": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Intervalo Inicio"
+                    },
+                    "intervalo_fim": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Intervalo Fim"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "dia_semana",
+                    "hora_inicio",
+                    "hora_fim"
+                ],
+                "title": "DisponibilidadeCreate"
+            },
+            "DisponibilidadeUpdate": {
+                "properties": {
+                    "hora_inicio": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Hora Inicio"
+                    },
+                    "hora_fim": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Hora Fim"
+                    },
+                    "intervalo_inicio": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Intervalo Inicio"
+                    },
+                    "intervalo_fim": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Intervalo Fim"
+                    },
+                    "ativo": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ativo"
+                    }
+                },
+                "type": "object",
+                "title": "DisponibilidadeUpdate"
+            },
+            "EnderecoCreate": {
+                "properties": {
+                    "cep": {
+                        "type": "string",
+                        "maxLength": 8,
+                        "minLength": 8,
+                        "title": "Cep"
+                    },
+                    "rua": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 3,
+                        "title": "Rua"
+                    },
+                    "numero": {
+                        "type": "string",
+                        "maxLength": 10,
+                        "minLength": 1,
+                        "title": "Numero"
+                    },
+                    "bairro": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Bairro"
+                    },
+                    "cidade": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Cidade"
+                    },
+                    "estado": {
+                        "type": "string",
+                        "maxLength": 2,
+                        "minLength": 2,
+                        "title": "Estado"
+                    },
+                    "complemento": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Complemento"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "cep",
+                    "rua",
+                    "numero",
+                    "bairro",
+                    "cidade",
+                    "estado"
+                ],
+                "title": "EnderecoCreate"
+            },
+            "GeneroEnum": {
+                "type": "string",
+                "enum": [
+                    "M",
+                    "F",
+                    "Outro"
+                ],
+                "title": "GeneroEnum"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "InstrutorBasicResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "geocoding_sucesso": {
+                        "type": "boolean",
+                        "title": "Geocoding Sucesso"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "geocoding_sucesso"
+                ],
+                "title": "InstrutorBasicResponse"
+            },
+            "InstrutorUpdate": {
+                "properties": {
+                    "valor_hora": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Valor Hora"
+                    },
+                    "experiencia_anos": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Experiencia Anos"
+                    },
+                    "bio": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 500
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Bio"
+                    },
+                    "tags": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Tags"
+                    },
+                    "genero": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Genero"
+                    },
+                    "endereco": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/EnderecoCreate"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "title": "InstrutorUpdate"
+            },
+            "LoginRequest": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email"
+                    },
+                    "senha": {
+                        "type": "string",
+                        "title": "Senha"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "senha"
+                ],
+                "title": "LoginRequest"
+            },
+            "LoginResponse": {
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "title": "Token"
+                    },
+                    "usuario": {
+                        "$ref": "#/components/schemas/UsuarioResponse"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "token",
+                    "usuario"
+                ],
+                "title": "LoginResponse"
+            },
+            "MensagemCreate": {
+                "properties": {
+                    "conteudo": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Conteudo"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "conteudo"
+                ],
+                "title": "MensagemCreate"
+            },
+            "RegistroAlunoRequest": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email"
+                    },
+                    "senha": {
+                        "type": "string",
+                        "minLength": 6,
+                        "title": "Senha"
+                    },
+                    "nome": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Nome"
+                    },
+                    "sobrenome": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Sobrenome"
+                    },
+                    "cpf": {
+                        "type": "string",
+                        "maxLength": 11,
+                        "minLength": 11,
+                        "title": "Cpf"
+                    },
+                    "telefone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 10,
+                        "title": "Telefone"
+                    },
+                    "data_nascimento": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Data Nascimento"
+                    },
+                    "cep": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 8,
+                                "minLength": 8
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Cep"
+                    },
+                    "cidade": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Cidade"
+                    },
+                    "estado": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 2,
+                                "minLength": 2
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Estado"
+                    },
+                    "veiculo": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/VeiculoAlunoCreate"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "senha",
+                    "nome",
+                    "sobrenome",
+                    "cpf",
+                    "telefone",
+                    "data_nascimento"
+                ],
+                "title": "RegistroAlunoRequest"
+            },
+            "RegistroInstrutorRequest": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email"
+                    },
+                    "senha": {
+                        "type": "string",
+                        "minLength": 6,
+                        "title": "Senha"
+                    },
+                    "nome": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Nome"
+                    },
+                    "sobrenome": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Sobrenome"
+                    },
+                    "cpf": {
+                        "type": "string",
+                        "maxLength": 11,
+                        "minLength": 11,
+                        "title": "Cpf"
+                    },
+                    "telefone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 10,
+                        "title": "Telefone"
+                    },
+                    "data_nascimento": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Data Nascimento"
+                    },
+                    "genero": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/GeneroEnum"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "cnh_numero": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 5,
+                        "title": "Cnh Numero"
+                    },
+                    "cnh_categorias": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "minItems": 1,
+                        "title": "Cnh Categorias"
+                    },
+                    "cnh_vencimento": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Cnh Vencimento"
+                    },
+                    "experiencia_anos": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "title": "Experiencia Anos",
+                        "default": 0
+                    },
+                    "valor_hora": {
+                        "type": "number",
+                        "exclusiveMinimum": 0,
+                        "title": "Valor Hora"
+                    },
+                    "bio": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 500
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Bio"
+                    },
+                    "tags": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Tags",
+                        "default": []
+                    },
+                    "endereco": {
+                        "$ref": "#/components/schemas/EnderecoCreate"
+                    },
+                    "veiculo": {
+                        "$ref": "#/components/schemas/VeiculoInstrutorCreate"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "senha",
+                    "nome",
+                    "sobrenome",
+                    "cpf",
+                    "telefone",
+                    "data_nascimento",
+                    "cnh_numero",
+                    "cnh_categorias",
+                    "cnh_vencimento",
+                    "valor_hora",
+                    "endereco",
+                    "veiculo"
+                ],
+                "title": "RegistroInstrutorRequest"
+            },
+            "RegistroResponse": {
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "title": "Token"
+                    },
+                    "usuario": {
+                        "$ref": "#/components/schemas/UsuarioResponse"
+                    },
+                    "instrutor": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/InstrutorBasicResponse"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "token",
+                    "usuario"
+                ],
+                "title": "RegistroResponse"
+            },
+            "SuporteTicketCreate": {
+                "properties": {
+                    "assunto": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 5,
+                        "title": "Assunto"
+                    },
+                    "descricao": {
+                        "type": "string",
+                        "minLength": 10,
+                        "title": "Descricao"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "assunto",
+                    "descricao"
+                ],
+                "title": "SuporteTicketCreate"
+            },
+            "TipoCambioEnum": {
+                "type": "string",
+                "enum": [
+                    "MANUAL",
+                    "AUTOMATICO"
+                ],
+                "title": "TipoCambioEnum"
+            },
+            "UsuarioResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email"
+                    },
+                    "nome": {
+                        "type": "string",
+                        "title": "Nome"
+                    },
+                    "sobrenome": {
+                        "type": "string",
+                        "title": "Sobrenome"
+                    },
+                    "tipo": {
+                        "type": "string",
+                        "title": "Tipo"
+                    },
+                    "foto_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Foto Url"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "email",
+                    "nome",
+                    "sobrenome",
+                    "tipo"
+                ],
+                "title": "UsuarioResponse"
+            },
+            "UsuarioUpdate": {
+                "properties": {
+                    "nome": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100,
+                                "minLength": 2
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Nome"
+                    },
+                    "sobrenome": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100,
+                                "minLength": 2
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sobrenome"
+                    },
+                    "telefone": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 20,
+                                "minLength": 10
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Telefone"
+                    },
+                    "foto_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Foto Url"
+                    },
+                    "cep": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 8,
+                                "minLength": 8
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Cep"
+                    },
+                    "cidade": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Cidade"
+                    },
+                    "estado": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 2,
+                                "minLength": 2
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Estado"
+                    }
+                },
+                "type": "object",
+                "title": "UsuarioUpdate"
+            },
+            "ValidarDisponibilidadeRequest": {
+                "properties": {
+                    "instrutor_id": {
+                        "type": "string",
+                        "title": "Instrutor Id"
+                    },
+                    "inicio": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Inicio"
+                    },
+                    "fim": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Fim"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "instrutor_id",
+                    "inicio",
+                    "fim"
+                ],
+                "title": "ValidarDisponibilidadeRequest"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            },
+            "VeiculoAlunoCreate": {
+                "properties": {
+                    "modelo": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "title": "Modelo"
+                    },
+                    "ano": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "maximum": 2100,
+                                "minimum": 1900
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ano"
+                    },
+                    "placa": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 10
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Placa"
+                    },
+                    "tipo_cambio": {
+                        "$ref": "#/components/schemas/TipoCambioEnum"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "modelo",
+                    "tipo_cambio"
+                ],
+                "title": "VeiculoAlunoCreate"
+            },
+            "VeiculoCreate": {
+                "properties": {
+                    "modelo": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "title": "Modelo"
+                    },
+                    "ano": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "maximum": 2100,
+                                "minimum": 1900
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ano"
+                    },
+                    "placa": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 10
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Placa"
+                    },
+                    "tipo_cambio": {
+                        "$ref": "#/components/schemas/TipoCambioEnum"
+                    },
+                    "aceita_veiculo_aluno": {
+                        "type": "boolean",
+                        "title": "Aceita Veiculo Aluno",
+                        "default": false
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "modelo",
+                    "tipo_cambio"
+                ],
+                "title": "VeiculoCreate"
+            },
+            "VeiculoInstrutorCreate": {
+                "properties": {
+                    "modelo": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "title": "Modelo"
+                    },
+                    "ano": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "maximum": 2100,
+                                "minimum": 1900
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ano"
+                    },
+                    "placa": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 10
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Placa"
+                    },
+                    "tipo_cambio": {
+                        "$ref": "#/components/schemas/TipoCambioEnum"
+                    },
+                    "aceita_veiculo_aluno": {
+                        "type": "boolean",
+                        "title": "Aceita Veiculo Aluno",
+                        "default": false
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "modelo",
+                    "tipo_cambio"
+                ],
+                "title": "VeiculoInstrutorCreate"
+            },
+            "VeiculoUpdate": {
+                "properties": {
+                    "modelo": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Modelo"
+                    },
+                    "ano": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "maximum": 2100,
+                                "minimum": 1900
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ano"
+                    },
+                    "placa": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 10
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Placa"
+                    },
+                    "tipo_cambio": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TipoCambioEnum"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "aceita_veiculo_aluno": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Aceita Veiculo Aluno"
+                    },
+                    "ativo": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ativo"
+                    }
+                },
+                "type": "object",
+                "title": "VeiculoUpdate"
+            }
+        },
+        "securitySchemes": {
+            "HTTPBearer": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
+    }
+}

@@ -1,20 +1,17 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
-import { 
-  AuthState, 
-  Usuario, 
-  AuthAction, 
-  LoginCredentials, 
-  RegisterData
+import {
+  AuthState,
+  Usuario,
+  AuthAction,
+  LoginCredentials,
+  RegisterUser
 } from '../types/auth';
-// Keep imports for future API integration
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { SecureStorageService } from '../services/secureStorage';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { AuthApiService } from '../services/authApi';
+import { authService } from '../services/auth/authService';
+import { queryClient } from '../services/queries/queryClient';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  register: (data: RegisterUser) => Promise<void>;
   loginWithTokens: (usuario: Usuario, token: string, refreshToken: string, expiresIn: number) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (usuario: Usuario) => Promise<void>;
@@ -172,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Check for stored auth data on app start
     initializeAuth();
-    
+
     // Cleanup timeout on unmount
     return () => {
       if (refreshTimeoutRef.current) {
@@ -197,13 +194,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initializeAuth = async () => {
     try {
       dispatch({ type: 'AUTH_LOADING', payload: true });
-      
+
       // For development: Skip API checks and go directly to unauthenticated state
       // This allows us to test the login flows without API integration
-      
+
       // Simulate a small delay to show loading state
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // No valid stored auth data - go to login screen
       dispatch({ type: 'AUTH_LOADING', payload: false });
     } catch (error) {
@@ -220,10 +217,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     //   const now = Date.now();
     //   const timeUntilExpiry = storedData.expiresAt - now;
-      
+
     //   // Schedule refresh 5 minutes before expiry, but at least 1 minute from now
     //   const refreshTime = Math.max(timeUntilExpiry - (5 * 60 * 1000), 60 * 1000);
-      
+
     //   if (refreshTime > 0) {
     //     refreshTimeoutRef.current = setTimeout(() => {
     //       performTokenRefresh().catch(error => {
@@ -243,14 +240,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // try {
     //   const refreshResponse = await AuthApiService.refreshToken();
     //   const expiresAt = Date.now() + (refreshResponse.expiresIn * 1000);
-      
+
     //   // Update stored tokens
     //   await SecureStorageService.updateTokens(
     //     refreshResponse.accessToken,
     //     refreshResponse.refreshToken,
     //     expiresAt
     //   );
-      
+
     //   // Update context state
     //   dispatch({ 
     //     type: 'AUTH_SUCCESS', 
@@ -272,34 +269,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credentials: LoginCredentials) => {
     try {
       dispatch({ type: 'AUTH_LOADING', payload: true });
-      
-      // Mock login for development - check for specific credentials
-      let mockUser: Usuario | null = null;
-      
-      if (credentials.email === 'aluno@drivoo.com' && credentials.password === '123456') {
-        mockUser = mockUsers.aluno;
-      } else if (credentials.email === 'instrutor@drivoo.com' && credentials.password === '123456') {
-        mockUser = mockUsers.instrutor;
-      } else if (credentials.email === 'admin@drivoo.com' && credentials.password === '123456') {
-        mockUser = mockUsers.admin;
-      }
-      
-      if (mockUser) {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        const mockToken = `mock-token-${mockUser.papel}-${Date.now()}`;
-        
-        dispatch({ 
-          type: 'AUTH_SUCCESS', 
-          payload: { 
-            usuario: mockUser, 
-            token: mockToken 
-          } 
-        });
-      } else {
-        throw new Error('Credenciais inválidas. Use:\n• aluno@drivoo.com / 123456\n• instrutor@drivoo.com / 123456\n• admin@drivoo.com / 123456');
-      }
+
+      // Call the real API via authService
+      const response = await authService.login({ email: credentials.email, senha: credentials.password });
+
+      // Map API response to Usuario type
+      const usuario: Usuario = {
+        id: response.user?.id || `user-${Date.now()}`,
+        email: response.user?.email || credentials.email,
+        telefone: response.user?.phone || '',
+        papel: (response.user?.userType || 'student') as 'aluno' | 'instrutor' | 'admin',
+        perfil: {
+          primeiroNome: response.user?.name?.split(' ')[0] || '',
+          ultimoNome: response.user?.name?.split(' ').slice(1).join(' ') || '',
+          dataNascimento: new Date(),
+          endereco: {
+            rua: '',
+            numero: '',
+            bairro: '',
+            cidade: '',
+            estado: '',
+            cep: '',
+            pais: 'BR',
+          },
+          cnh: {
+            categoria: 'B',
+            status: 'nenhuma',
+          },
+          preferencias: {
+            localizacao: { latitude: -23.5505, longitude: -46.6333 },
+            raio: 10,
+          },
+        },
+        criadoEm: response.user?.createdAt ? new Date(response.user.createdAt) : new Date(),
+        atualizadoEm: response.user?.updatedAt ? new Date(response.user.updatedAt) : new Date(),
+      };
+
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: {
+          usuario,
+          token: response.access_token
+        }
+      });
     } catch (error) {
       console.error('Login failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
@@ -313,14 +325,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       dispatch({ type: 'AUTH_LOADING', payload: true });
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       const mockToken = `mock-token-aluno-${Date.now()}`;
-      dispatch({ 
-        type: 'AUTH_SUCCESS', 
-        payload: { 
-          usuario: mockUsers.aluno, 
-          token: mockToken 
-        } 
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: {
+          usuario: mockUsers.aluno,
+          token: mockToken
+        }
       });
     } catch (error) {
       console.error('Mock aluno login failed:', error);
@@ -332,14 +344,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       dispatch({ type: 'AUTH_LOADING', payload: true });
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       const mockToken = `mock-token-instrutor-${Date.now()}`;
-      dispatch({ 
-        type: 'AUTH_SUCCESS', 
-        payload: { 
-          usuario: mockUsers.instrutor, 
-          token: mockToken 
-        } 
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: {
+          usuario: mockUsers.instrutor,
+          token: mockToken
+        }
       });
     } catch (error) {
       console.error('Mock instrutor login failed:', error);
@@ -351,14 +363,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       dispatch({ type: 'AUTH_LOADING', payload: true });
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       const mockToken = `mock-token-admin-${Date.now()}`;
-      dispatch({ 
-        type: 'AUTH_SUCCESS', 
-        payload: { 
-          usuario: mockUsers.admin, 
-          token: mockToken 
-        } 
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: {
+          usuario: mockUsers.admin,
+          token: mockToken
+        }
       });
     } catch (error) {
       console.error('Mock admin login failed:', error);
@@ -366,32 +378,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (data: RegisterData) => {
+  const register = async (data: RegisterUser) => {
     try {
       dispatch({ type: 'AUTH_LOADING', payload: true });
-      
-      // Mock registration for development
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create a mock user based on the registration data
-      const mockUser: Usuario = {
-        id: `mock-${data.papel}-${Date.now()}`,
+
+      // Call the register function for aluno using authService
+      const response = await authService.registerAluno({
+        email: data.email,
+        senha: data.senha,
+        nome: data.nome,
+        sobrenome: data.sobrenome,
+        cpf: data.cpf,
+        telefone: data.telefone,
+        data_nascimento: data.data_nascimento,
+        cep: data.cep,
+        cidade: data.cidade,
+        estado: data.estado,
+        veiculo: data.veiculo,
+      });
+
+      // Create a user from the response
+      const user: Usuario = {
+        id: `user-aluno-${Date.now()}`,
         email: data.email,
         telefone: data.telefone,
-        papel: data.papel,
-        perfil: data.perfil as any, // Type assertion for mock data
+        papel: 'aluno',
+        perfil: {
+          primeiroNome: data.nome,
+          ultimoNome: data.sobrenome,
+          dataNascimento: new Date(data.data_nascimento.split('/').reverse().join('-')),
+          endereco: {
+            rua: '',
+            numero: '',
+            bairro: '',
+            cidade: data.cidade,
+            estado: data.estado,
+            cep: data.cep,
+            pais: 'BR',
+          },
+          cnh: {
+            categoria: 'B',
+            status: 'nenhuma',
+          },
+          preferencias: {
+            localizacao: { latitude: -23.5505, longitude: -46.6333 },
+            raio: 10,
+          },
+        },
         criadoEm: new Date(),
         atualizadoEm: new Date(),
       };
-      
-      const mockToken = `mock-token-${data.papel}-${Date.now()}`;
-      
-      dispatch({ 
-        type: 'AUTH_SUCCESS', 
-        payload: { 
-          usuario: mockUser, 
-          token: mockToken 
-        } 
+
+      const token = response.access_token;
+
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: {
+          usuario: user,
+          token: token
+        }
       });
     } catch (error) {
       console.error('Registration failed:', error);
@@ -401,18 +446,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithTokens = async (usuario: Usuario, token: string, refreshToken: string, expiresIn: number) => {
+  const loginWithTokens = async (usuario: Usuario, token: string, _refreshToken?: string, _expiresIn?: number) => {
     try {
       // For mock mode, just update the state
       // const expiresAt = Date.now() + (expiresIn * 1000);
-      
+
       // await SecureStorageService.storeAuthData({
       //   token,
       //   refreshToken,
       //   user: usuario,
       //   expiresAt,
       // });
-      
+
       dispatch({ type: 'AUTH_SUCCESS', payload: { usuario, token } });
     } catch (error) {
       console.error('Error storing auth data:', error);
@@ -427,12 +472,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         clearTimeout(refreshTimeoutRef.current);
         refreshTimeoutRef.current = null;
       }
-      
+
+      // Clear React Query cache to remove cached user data
+      queryClient.clear();
+
       // For development: Skip API call and just clear local state
       dispatch({ type: 'AUTH_LOGOUT' });
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if logout fails, clear local state
+      // Even if logout fails, clear local state and cache
+      queryClient.clear();
       dispatch({ type: 'AUTH_LOGOUT' });
     }
   };
@@ -448,7 +497,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       //     user: usuario,
       //   });
       // }
-      
+
       dispatch({ type: 'AUTH_UPDATE_PROFILE', payload: usuario });
     } catch (error) {
       console.error('Error updating user:', error);
@@ -476,7 +525,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // For mock mode, just update the state
       // TODO: Call API to update profile on backend
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       dispatch({ type: 'AUTH_UPDATE_PROFILE', payload: updatedUser });
     } catch (error) {
       console.error('Error updating profile:', error);

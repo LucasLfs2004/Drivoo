@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '../../components/common/Button';
@@ -16,8 +16,8 @@ interface LoginFormData extends LoginCredentials {
 }
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
-  const { login, carregando, error, clearError, loginAsAluno, loginAsInstrutor, loginAsAdmin } = useAuth();
-  
+  const { login: contextLogin, carregando, error: contextError, usuario } = useAuth();
+
   const {
     control,
     handleSubmit,
@@ -31,23 +31,27 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     },
   });
 
+  // Navigate based on user type after successful login
+  useEffect(() => {
+    if (usuario) {
+      const userType = usuario.papel;
+
+      if (userType === 'aluno') {
+        navigation.navigate('AlunoTabs' as any);
+      } else if (userType === 'instrutor') {
+        navigation.navigate('InstrutorTabs' as any);
+      } else if (userType === 'admin') {
+        navigation.navigate('AdminDrawer' as any);
+      }
+      reset();
+    }
+  }, [usuario, navigation, reset]);
+
   const onSubmit = async (data: LoginFormData) => {
     try {
-      clearError();
-      await login(data);
-      reset();
-    } catch (loginError) {
-      const errorMessage = loginError instanceof Error ? loginError.message : 'Falha no login. Tente novamente.';
-      Alert.alert('Erro', errorMessage);
-    }
-  };
-
-  const handleQuickLogin = async (loginFunction: () => Promise<void>, userType: string) => {
-    try {
-      clearError();
-      await loginFunction();
-    } catch (quickLoginError) {
-      const errorMessage = quickLoginError instanceof Error ? quickLoginError.message : `Falha no login como ${userType}`;
+      await contextLogin(data);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Falha no login. Tente novamente.';
       Alert.alert('Erro', errorMessage);
     }
   };
@@ -67,118 +71,88 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Entrar no Drivoo</Text>
-        <Text style={styles.subtitle}>
-          Conecte-se com instrutores qualificados
-        </Text>
+      <ScrollView>
 
-        {/* Development Quick Login Section */}
-        <View style={styles.devSection}>
-          <Text style={styles.devTitle}>🚀 Acesso Rápido (Desenvolvimento)</Text>
-          <View style={styles.devButtons}>
-            <Button
-              title="Entrar como Aluno"
-              variant="outline"
-              onPress={() => handleQuickLogin(loginAsAluno, 'aluno')}
-              disabled={carregando}
-              style={styles.devButton}
+        <View style={styles.content}>
+          <Text style={styles.title}>Entrar no Drivoo</Text>
+          <Text style={styles.subtitle}>
+            Conecte-se com instrutores qualificados
+          </Text>
+
+
+          {/* <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>ou</Text>
+            <View style={styles.dividerLine} />
+          </View> */}
+
+          {contextError && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{contextError}</Text>
+            </View>
+          )}
+
+          <View style={styles.form}>
+            <Controller
+              control={control}
+              name="email"
+              rules={{ validate: validateEmail }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <FormInput
+                  label="Email"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholder="Email"
+                  error={errors.email?.message}
+                />
+              )}
             />
-            <Button
-              title="Entrar como Instrutor"
-              variant="outline"
-              onPress={() => handleQuickLogin(loginAsInstrutor, 'instrutor')}
-              disabled={carregando}
-              style={styles.devButton}
+
+            <Controller
+              control={control}
+              name="password"
+              rules={{ validate: validatePassword }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <FormInput
+                  label="Senha"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  secureTextEntry
+                  placeholder="Senha"
+                  error={errors.password?.message}
+                />
+              )}
             />
+
             <Button
-              title="Entrar como Admin"
-              variant="outline"
-              onPress={() => handleQuickLogin(loginAsAdmin, 'admin')}
-              disabled={carregando}
-              style={styles.devButton}
+              title={carregando ? 'Entrando...' : 'Entrar'}
+              onPress={handleSubmit(onSubmit)}
+              disabled={carregando || !isValid}
+              style={styles.loginButton}
             />
           </View>
-        </View>
 
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>ou</Text>
-          <View style={styles.dividerLine} />
-        </View>
+          <View style={styles.footer}>
+            <Button
+              title="Esqueceu a senha?"
+              variant="ghost"
+              onPress={() => navigation.navigate('ForgotPassword')}
+            />
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+            <Button
+              title="Criar conta"
+              variant="outline"
+              onPress={() => navigation.navigate('Register', {})}
+              style={styles.registerButton}
+            />
           </View>
-        )}
 
-        <View style={styles.form}>
-          <Controller
-            control={control}
-            name="email"
-            rules={{ validate: validateEmail }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <FormInput
-                label="Email"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholder="aluno@drivoo.com, instrutor@drivoo.com ou admin@drivoo.com"
-                error={errors.email?.message}
-              />
-            )}
-          />
-          
-          <Controller
-            control={control}
-            name="password"
-            rules={{ validate: validatePassword }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <FormInput
-                label="Senha"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry
-                placeholder="123456"
-                error={errors.password?.message}
-              />
-            )}
-          />
-
-          <Button
-            title={carregando ? 'Entrando...' : 'Entrar'}
-            onPress={handleSubmit(onSubmit)}
-            disabled={carregando || !isValid}
-            style={styles.loginButton}
-          />
         </View>
-
-        <View style={styles.footer}>
-          <Button
-            title="Esqueceu a senha?"
-            variant="ghost"
-            onPress={() => navigation.navigate('ForgotPassword')}
-          />
-          
-          <Button
-            title="Criar conta"
-            variant="outline"
-            onPress={() => navigation.navigate('Register', {})}
-            style={styles.registerButton}
-          />
-        </View>
-
-        <View style={styles.credentialsInfo}>
-          <Text style={styles.credentialsTitle}>Credenciais de Teste:</Text>
-          <Text style={styles.credentialsText}>• aluno@drivoo.com / 123456</Text>
-          <Text style={styles.credentialsText}>• instrutor@drivoo.com / 123456</Text>
-          <Text style={styles.credentialsText}>• admin@drivoo.com / 123456</Text>
-        </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -206,48 +180,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: theme.spacing.xl,
   },
-  devSection: {
-    backgroundColor: theme.colors.background.secondary,
-    padding: theme.spacing.md,
-    borderRadius: theme.borders.radius.md,
-    marginBottom: theme.spacing.lg,
-  },
-  devTitle: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
-    textAlign: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  devButtons: {
-    gap: theme.spacing.sm,
-  },
-  devButton: {
-    backgroundColor: theme.colors.background.primary,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: theme.spacing.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: theme.colors.border.medium,
-  },
-  dividerText: {
-    marginHorizontal: theme.spacing.md,
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-  },
   errorContainer: {
-    backgroundColor: '#FFEBEE', // Light red background
+    backgroundColor: '#FFEBEE',
     padding: theme.spacing.md,
     borderRadius: theme.borders.radius.md,
     marginBottom: theme.spacing.lg,
   },
   errorText: {
-    color: '#C62828', // Dark red text
+    color: '#C62828',
     fontSize: theme.typography.fontSize.sm,
     textAlign: 'center',
   },

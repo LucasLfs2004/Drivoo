@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Alert, ScrollView, Switch, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '../../components/common/Button';
@@ -7,172 +7,233 @@ import { FormInput } from '../../components/forms/FormInput';
 import { useAuth } from '../../contexts/AuthContext';
 import { theme } from '../../themes';
 import type { AuthStackScreenProps } from '../../types/navigation';
-import type { 
-  RegisterData, 
-  RegisterDataAluno, 
-  RegisterDataInstrutor, 
-  UserRole 
-} from '../../types/auth';
+import type { RegisterUser } from '../../types/auth';
 
 type Props = AuthStackScreenProps<'Register'>;
+type UserType = 'aluno' | 'instrutor';
 
 interface RegisterFormData {
+  userType: UserType;
+  nome: string;
+  sobrenome: string;
   email: string;
-  password: string;
-  confirmPassword: string;
+  senha: string;
+  confirmarSenha: string;
+  cpf: string;
   telefone: string;
-  primeiroNome: string;
-  ultimoNome: string;
-  // Aluno specific fields
-  dataNascimento?: string;
-  endereco?: {
-    rua: string;
-    numero: string;
-    bairro: string;
-    cidade: string;
-    estado: string;
-    cep: string;
-  };
-  // Instrutor specific fields
-  detranId?: string;
-  licencaNumero?: string;
-  veiculoMarca?: string;
-  veiculoModelo?: string;
-  veiculoAno?: string;
-  veiculoPlaca?: string;
-  valorHora?: string;
+  data_nascimento: string;
+  cep: string;
+  cidade: string;
+  estado: string;
+  // Campos do aluno
+  possuiVeiculo?: boolean;
+  veiculo_modelo?: string;
+  veiculo_ano?: string;
+  veiculo_placa?: string;
+  veiculo_tipo_cambio?: 'MANUAL' | 'AUTOMATICO';
+  // Campos do instrutor
+  cnh_numero?: string;
+  cnh_categorias?: string[];
+  cnh_vencimento?: string;
+  valor_hora?: string;
+  bio?: string;
+  veiculo_marca?: string;
+  veiculo_modelo_instrutor?: string;
+  veiculo_ano_instrutor?: string;
+  veiculo_placa_instrutor?: string;
+  veiculo_tipo_cambio_instrutor?: 'MANUAL' | 'AUTOMATICO';
 }
 
 export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
-  const [userType, setUserType] = useState<UserRole>(
-    route.params?.userType || 'aluno'
-  );
   const { register, carregando, error, clearError } = useAuth();
-  
+  const [userType, setUserType] = useState<UserType>(route.params?.userType || 'aluno');
+  const [possuiVeiculo, setPossuiVeiculo] = useState(false);
+
   const {
     control,
     handleSubmit,
     formState: { errors, isValid },
     watch,
-    reset,
+    reset: resetForm,
   } = useForm<RegisterFormData>({
     mode: 'onChange',
     defaultValues: {
+      userType: userType,
+      nome: '',
+      sobrenome: '',
       email: '',
-      password: '',
-      confirmPassword: '',
+      senha: '',
+      confirmarSenha: '',
+      cpf: '',
       telefone: '',
-      primeiroNome: '',
-      ultimoNome: '',
-      dataNascimento: '',
-      endereco: {
-        rua: '',
-        numero: '',
-        bairro: '',
-        cidade: 'São Paulo',
-        estado: 'SP',
-        cep: '',
-      },
-      detranId: '',
-      licencaNumero: '',
-      veiculoMarca: '',
-      veiculoModelo: '',
-      veiculoAno: '',
-      veiculoPlaca: '',
-      valorHora: '',
+      data_nascimento: '',
+      cep: '',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      possuiVeiculo: false,
+      veiculo_modelo: '',
+      veiculo_ano: '',
+      veiculo_placa: '',
+      veiculo_tipo_cambio: 'MANUAL',
+      cnh_numero: '',
+      cnh_categorias: [],
+      cnh_vencimento: '',
+      valor_hora: '',
+      bio: '',
+      veiculo_marca: '',
+      veiculo_modelo_instrutor: '',
+      veiculo_ano_instrutor: '',
+      veiculo_placa_instrutor: '',
+      veiculo_tipo_cambio_instrutor: 'MANUAL',
     },
   });
 
-  const password = watch('password');
+  const senhaWatch = watch('senha');
+
+  const handleUserTypeChange = (type: UserType) => {
+    setUserType(type);
+    resetForm({ ...watch(), userType: type });
+  };
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
       clearError();
-      
-      let registerData: RegisterData;
-      
+
+      console.log('Data de nascimento recebida:', data.data_nascimento);
+
+      // Função auxiliar para converter data de forma segura
+      const formatarDataParaAPI = (dataString: string, verifyBirthRules: boolean = true): string => {
+        if (!dataString) {
+          throw new Error('Data de nascimento é obrigatória');
+        }
+
+        // Verificar formato DD/MM/AAAA
+        const dataRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+        if (!dataRegex.test(dataString)) {
+          throw new Error('Formato de data inválido. Use DD/MM/AAAA');
+        }
+
+        // Converter para objeto Date
+        const [dia, mes, ano] = dataString.split('/').map(Number);
+        const dataObj = new Date(ano, mes - 1, dia);
+
+        // Verificar se a data é válida
+        if (isNaN(dataObj.getTime())) {
+          throw new Error('Data de nascimento inválida');
+        }
+
+        // Verificar se a data não é futura
+        if (verifyBirthRules) {
+          const hoje = new Date();
+          if (dataObj > hoje) {
+            throw new Error('Data de nascimento não pode ser futura');
+          }
+
+          // Verificar idade mínima (16 anos)
+          const idadeMinima = new Date();
+          idadeMinima.setFullYear(idadeMinima.getFullYear() - 16);
+          if (dataObj > idadeMinima) {
+            throw new Error('É necessário ter pelo menos 16 anos');
+          }
+
+          // Verificar idade máxima (100 anos)
+          const idadeMaxima = new Date();
+          idadeMaxima.setFullYear(idadeMaxima.getFullYear() - 100);
+          if (dataObj < idadeMaxima) {
+            throw new Error('Data de nascimento inválida');
+          }
+        }
+
+
+        // Formatar para YYYY-MM-DD
+        return `${ano}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+      };
+
       if (userType === 'aluno') {
-        registerData = {
+        const registerData: RegisterUser = {
+          nome: data.nome,
+          sobrenome: data.sobrenome,
           email: data.email,
-          password: data.password,
-          telefone: data.telefone,
-          papel: 'aluno',
-          perfil: {
-            primeiroNome: data.primeiroNome,
-            ultimoNome: data.ultimoNome,
-            dataNascimento: new Date(data.dataNascimento!),
-            endereco: {
-              ...data.endereco!,
-              pais: 'BR',
-            },
-            cnh: {
-              categoria: 'B',
-              status: 'nenhuma',
-            },
-            preferencias: {
-              localizacao: { latitude: -23.5505, longitude: -46.6333 }, // São Paulo default
-              raio: 10,
-            },
-          },
-        } as RegisterDataAluno;
-      } else {
-        registerData = {
+          senha: data.senha,
+          cpf: data.cpf.replace(/\D/g, ''),
+          telefone: data.telefone.replace(/\D/g, ''),
+          data_nascimento: formatarDataParaAPI(data.data_nascimento),
+          cep: data.cep.replace(/\D/g, ''),
+          cidade: data.cidade,
+          estado: data.estado,
+        };
+
+        // Adicionar veículo se habilitado
+        if (possuiVeiculo && data.veiculo_modelo && data.veiculo_ano && data.veiculo_placa) {
+          registerData.veiculo = {
+            modelo: data.veiculo_modelo,
+            ano: parseInt(data.veiculo_ano, 10),
+            placa: data.veiculo_placa,
+            tipo_cambio: data.veiculo_tipo_cambio || 'MANUAL',
+          };
+        }
+
+        console.log('Dados de registro (Aluno):', registerData);
+        await register(registerData);
+      } else if (userType === 'instrutor') {
+        if (!data.cnh_numero || !data.cnh_vencimento || !data.valor_hora) {
+          throw new Error('Dados da CNH e valor/hora são obrigatórios');
+        }
+
+        if (!data.veiculo_marca || !data.veiculo_modelo_instrutor || !data.veiculo_ano_instrutor || !data.veiculo_placa_instrutor) {
+          throw new Error('Dados do veículo são obrigatórios para instrutores');
+        }
+
+        const registerData: RegisterUser = {
+          nome: data.nome,
+          sobrenome: data.sobrenome,
           email: data.email,
-          password: data.password,
-          telefone: data.telefone,
-          papel: 'instrutor',
-          perfil: {
-            primeiroNome: data.primeiroNome,
-            ultimoNome: data.ultimoNome,
-            detranId: data.detranId!,
-            licenca: {
-              numero: data.licencaNumero!,
-              dataVencimento: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
-              categorias: ['B'],
-            },
-            veiculo: {
-              marca: data.veiculoMarca!,
-              modelo: data.veiculoModelo!,
-              ano: parseInt(data.veiculoAno!, 10),
-              transmissao: 'manual',
-              placa: data.veiculoPlaca!,
-            },
-            disponibilidade: {
-              segunda: { disponivel: false, horarios: [] },
-              terca: { disponivel: false, horarios: [] },
-              quarta: { disponivel: false, horarios: [] },
-              quinta: { disponivel: false, horarios: [] },
-              sexta: { disponivel: false, horarios: [] },
-              sabado: { disponivel: false, horarios: [] },
-              domingo: { disponivel: false, horarios: [] },
-            },
-            precos: {
-              valorHora: parseFloat(data.valorHora!),
-              moeda: 'BRL',
-            },
-            localizacao: {
-              localizacaoBase: { latitude: -23.5505, longitude: -46.6333 },
-              raioAtendimento: 15,
-            },
-            avaliacoes: {
-              media: 0,
-              quantidade: 0,
-            },
+          senha: data.senha,
+          cpf: data.cpf.replace(/\D/g, ''),
+          telefone: data.telefone.replace(/\D/g, ''),
+          data_nascimento: formatarDataParaAPI(data.data_nascimento),
+          cep: data.cep.replace(/\D/g, ''),
+          cidade: data.cidade,
+          estado: data.estado,
+          cnh_numero: data.cnh_numero,
+          cnh_categorias: data.cnh_categorias || ['B'],
+          cnh_vencimento: formatarDataParaAPI(data.cnh_vencimento, false),
+          valor_hora: parseFloat(data.valor_hora),
+          bio: data.bio,
+          veiculo: {
+            marca: data.veiculo_marca,
+            modelo: data.veiculo_modelo_instrutor,
+            ano: parseInt(data.veiculo_ano_instrutor, 10),
+            placa: data.veiculo_placa_instrutor,
+            tipo_cambio: data.veiculo_tipo_cambio_instrutor || 'MANUAL',
           },
-        } as RegisterDataInstrutor;
+        };
+
+        console.log('Dados de registro (Instrutor):', registerData);
+        await register(registerData);
       }
-      
-      await register(registerData);
-      reset();
+
+      // Navegar para a tela principal após registro bem-sucedido
       Alert.alert(
         'Sucesso',
         'Conta criada com sucesso! Bem-vindo ao Drivoo.',
-        [{ text: 'OK' }]
+        [{
+          text: 'OK', onPress: () => {
+            // A navegação será automática pelo RootNavigator
+          }
+        }]
       );
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Falha no registro. Tente novamente.';
-      Alert.alert('Erro', errorMessage);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Falha no registro. Tente novamente.';
+      Alert.alert('Erro', errorMessage, [
+        { text: 'OK', onPress: () => navigation.navigate('Login') }
+      ]);
     }
+  };
+
+  const validateRequired = (value: string | undefined): string | true => {
+    if (!value || value.trim() === '') return 'Campo obrigatório';
+    return true;
   };
 
   const validateEmail = (email: string): string | true => {
@@ -182,28 +243,73 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     return true;
   };
 
-  const validatePassword = (password: string): string | true => {
-    if (!password) return 'Senha é obrigatória';
-    if (password.length < 6) return 'Senha deve ter pelo menos 6 caracteres';
+  const validateSenha = (senha: string): string | true => {
+    if (!senha) return 'Senha é obrigatória';
+    if (senha.length < 6) return 'Senha deve ter pelo menos 6 caracteres';
     return true;
   };
 
-  const validateConfirmPassword = (confirmPassword: string): string | true => {
-    if (!confirmPassword) return 'Confirmação de senha é obrigatória';
-    if (confirmPassword !== password) return 'Senhas não coincidem';
+  const validateConfirmarSenha = (confirmarSenha: string): string | true => {
+    if (!confirmarSenha) return 'Confirmação de senha é obrigatória';
+    if (confirmarSenha !== senhaWatch) return 'Senhas não coincidem';
     return true;
   };
 
-  const validatePhone = (phone: string): string | true => {
-    if (!phone) return 'Telefone é obrigatório';
-    const phoneRegex = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
-    if (!phoneRegex.test(phone)) return 'Formato: (11) 99999-9999';
+  const validateCPF = (cpf: string): string | true => {
+    if (!cpf) return 'CPF é obrigatório';
+    const cpfRegex = /^\d{11}$/;
+    if (!cpfRegex.test(cpf.replace(/\D/g, ''))) return 'CPF deve conter 11 dígitos';
     return true;
   };
 
-  const validateRequired = (value: string | undefined): string | true => {
-    if (!value || value.trim() === '') return 'Campo obrigatório';
+  const validateTelefone = (telefone: string): string | true => {
+    if (!telefone) return 'Telefone é obrigatório';
+    const telefoneLimpo = telefone.replace(/\D/g, '');
+    if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) return 'Telefone inválido';
     return true;
+  };
+
+  const validateDataNascimento = (data: string | undefined): string | true => {
+    if (!data) return 'Data de nascimento é obrigatória';
+    const dataRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+    if (!dataRegex.test(data)) return 'Formato: DD/MM/AAAA';
+    return true;
+  };
+
+  const validateCEP = (cep: string): string | true => {
+    if (!cep) return 'CEP é obrigatório';
+    const cepLimpo = cep.replace(/\D/g, '');
+    if (cepLimpo.length !== 8) return 'CEP inválido';
+    return true;
+  };
+
+  const formatCPF = (value: string): string => {
+    const cpfLimpo = value.replace(/\D/g, '');
+    if (cpfLimpo.length <= 3) return cpfLimpo;
+    if (cpfLimpo.length <= 6) return `${cpfLimpo.slice(0, 3)}.${cpfLimpo.slice(3)}`;
+    if (cpfLimpo.length <= 9) return `${cpfLimpo.slice(0, 3)}.${cpfLimpo.slice(3, 6)}.${cpfLimpo.slice(6)}`;
+    return `${cpfLimpo.slice(0, 3)}.${cpfLimpo.slice(3, 6)}.${cpfLimpo.slice(6, 9)}-${cpfLimpo.slice(9, 11)}`;
+  };
+
+  const formatTelefone = (value: string): string => {
+    const telefoneLimpo = value.replace(/\D/g, '');
+    if (telefoneLimpo.length <= 2) return telefoneLimpo;
+    if (telefoneLimpo.length <= 6) return `(${telefoneLimpo.slice(0, 2)}) ${telefoneLimpo.slice(2)}`;
+    if (telefoneLimpo.length <= 10) return `(${telefoneLimpo.slice(0, 2)}) ${telefoneLimpo.slice(2, 6)}-${telefoneLimpo.slice(6)}`;
+    return `(${telefoneLimpo.slice(0, 2)}) ${telefoneLimpo.slice(2, 7)}-${telefoneLimpo.slice(7, 11)}`;
+  };
+
+  const formatDataNascimento = (value: string): string => {
+    const dataLimpa = value.replace(/\D/g, '');
+    if (dataLimpa.length <= 2) return dataLimpa;
+    if (dataLimpa.length <= 4) return `${dataLimpa.slice(0, 2)}/${dataLimpa.slice(2)}`;
+    return `${dataLimpa.slice(0, 2)}/${dataLimpa.slice(2, 4)}/${dataLimpa.slice(4, 8)}`;
+  };
+
+  const formatCEP = (value: string): string => {
+    const cepLimpo = value.replace(/\D/g, '');
+    if (cepLimpo.length <= 5) return cepLimpo;
+    return `${cepLimpo.slice(0, 5)}-${cepLimpo.slice(5, 8)}`;
   };
 
   return (
@@ -215,34 +321,58 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
             Junte-se à comunidade Drivoo
           </Text>
 
-          <View style={styles.userTypeContainer}>
-            <Button
-              title="Aluno"
-              variant={userType === 'aluno' ? 'primary' : 'outline'}
-              onPress={() => setUserType('aluno')}
-              style={styles.userTypeButton}
-            />
-            <Button
-              title="Instrutor"
-              variant={userType === 'instrutor' ? 'primary' : 'outline'}
-              onPress={() => setUserType('instrutor')}
-              style={styles.userTypeButton}
-            />
-          </View>
-
           {error && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
 
+          {/* Seleção de Tipo de Usuário */}
+          <View style={styles.userTypeContainer}>
+            <Text style={styles.userTypeLabel}>Tipo de Conta</Text>
+            <View style={styles.userTypeButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.userTypeButton,
+                  userType === 'aluno' && styles.userTypeButtonActive,
+                ]}
+                onPress={() => handleUserTypeChange('aluno')}
+              >
+                <Text
+                  style={[
+                    styles.userTypeButtonText,
+                    userType === 'aluno' && styles.userTypeButtonTextActive,
+                  ]}
+                >
+                  Aluno
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.userTypeButton,
+                  userType === 'instrutor' && styles.userTypeButtonActive,
+                ]}
+                onPress={() => handleUserTypeChange('instrutor')}
+              >
+                <Text
+                  style={[
+                    styles.userTypeButtonText,
+                    userType === 'instrutor' && styles.userTypeButtonTextActive,
+                  ]}
+                >
+                  Instrutor
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <View style={styles.form}>
-            {/* Basic Information */}
-            <Text style={styles.sectionTitle}>Informações Básicas</Text>
-            
+            <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+
             <Controller
               control={control}
-              name="primeiroNome"
+              name="nome"
               rules={{ validate: validateRequired }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <FormInput
@@ -251,14 +381,14 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                   onChangeText={onChange}
                   onBlur={onBlur}
                   placeholder="Seu nome"
-                  error={errors.primeiroNome?.message}
+                  error={errors.nome?.message}
                 />
               )}
             />
-            
+
             <Controller
               control={control}
-              name="ultimoNome"
+              name="sobrenome"
               rules={{ validate: validateRequired }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <FormInput
@@ -267,11 +397,64 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                   onChangeText={onChange}
                   onBlur={onBlur}
                   placeholder="Seu sobrenome"
-                  error={errors.ultimoNome?.message}
+                  error={errors.sobrenome?.message}
                 />
               )}
             />
-            
+
+            <Controller
+              control={control}
+              name="cpf"
+              rules={{ validate: validateCPF }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <FormInput
+                  label="CPF"
+                  value={formatCPF(value)}
+                  onChangeText={(text) => onChange(formatCPF(text))}
+                  onBlur={onBlur}
+                  keyboardType="numeric"
+                  placeholder="000.000.000-00"
+                  error={errors.cpf?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="data_nascimento"
+              rules={{ validate: validateDataNascimento }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <FormInput
+                  label="Data de Nascimento"
+                  value={formatDataNascimento(value)}
+                  onChangeText={(text) => onChange(formatDataNascimento(text))}
+                  onBlur={onBlur}
+                  keyboardType="numeric"
+                  placeholder="DD/MM/AAAA"
+                  error={errors.data_nascimento?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="telefone"
+              rules={{ validate: validateTelefone }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <FormInput
+                  label="Telefone"
+                  value={formatTelefone(value)}
+                  onChangeText={(text) => onChange(formatTelefone(text))}
+                  onBlur={onBlur}
+                  keyboardType="phone-pad"
+                  placeholder="(11) 99999-9999"
+                  error={errors.telefone?.message}
+                />
+              )}
+            />
+
+            <Text style={styles.sectionTitle}>Informações de Contato</Text>
+
             <Controller
               control={control}
               name="email"
@@ -289,28 +472,11 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                 />
               )}
             />
-            
+
             <Controller
               control={control}
-              name="telefone"
-              rules={{ validate: validatePhone }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <FormInput
-                  label="Telefone"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  keyboardType="phone-pad"
-                  placeholder="(11) 99999-9999"
-                  error={errors.telefone?.message}
-                />
-              )}
-            />
-            
-            <Controller
-              control={control}
-              name="password"
-              rules={{ validate: validatePassword }}
+              name="senha"
+              rules={{ validate: validateSenha }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <FormInput
                   label="Senha"
@@ -319,15 +485,15 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                   onBlur={onBlur}
                   secureTextEntry
                   placeholder="Sua senha"
-                  error={errors.password?.message}
+                  error={errors.senha?.message}
                 />
               )}
             />
-            
+
             <Controller
               control={control}
-              name="confirmPassword"
-              rules={{ validate: validateConfirmPassword }}
+              name="confirmarSenha"
+              rules={{ validate: validateConfirmarSenha }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <FormInput
                   label="Confirmar Senha"
@@ -336,125 +502,110 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                   onBlur={onBlur}
                   secureTextEntry
                   placeholder="Confirme sua senha"
-                  error={errors.confirmPassword?.message}
+                  error={errors.confirmarSenha?.message}
                 />
               )}
             />
 
-            {/* Role-specific fields */}
-            {userType === 'aluno' && (
+            <Text style={styles.sectionTitle}>Endereço</Text>
+
+            <Controller
+              control={control}
+              name="cep"
+              rules={{ validate: validateCEP }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <FormInput
+                  label="CEP"
+                  value={formatCEP(value)}
+                  onChangeText={(text) => onChange(formatCEP(text))}
+                  onBlur={onBlur}
+                  keyboardType="numeric"
+                  placeholder="00000-000"
+                  error={errors.cep?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="cidade"
+              rules={{ validate: validateRequired }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <FormInput
+                  label="Cidade"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  placeholder="Sua cidade"
+                  error={errors.cidade?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="estado"
+              rules={{ validate: validateRequired }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <FormInput
+                  label="Estado"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  placeholder="UF"
+                  error={errors.estado?.message}
+                />
+              )}
+            />
+
+            <Text style={styles.sectionTitle}>Veículo (Opcional)</Text>
+
+            <View style={styles.switchContainer}>
+              <Text style={styles.switchLabel}>Possuo veículo particular</Text>
+              <Switch
+                value={possuiVeiculo}
+                onValueChange={setPossuiVeiculo}
+                trackColor={{ false: theme.colors.border.medium, true: theme.colors.primary[500] }}
+                thumbColor={possuiVeiculo ? theme.colors.primary[500] : theme.colors.border.light}
+              />
+            </View>
+
+            {possuiVeiculo && (
               <>
-                <Text style={styles.sectionTitle}>Informações do Aluno</Text>
-                
                 <Controller
                   control={control}
-                  name="dataNascimento"
-                  rules={{ validate: validateRequired }}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <FormInput
-                      label="Data de Nascimento"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      placeholder="DD/MM/AAAA"
-                      error={errors.dataNascimento?.message}
-                    />
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="endereco.cep"
-                  rules={{ validate: validateRequired }}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <FormInput
-                      label="CEP"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      placeholder="00000-000"
-                      keyboardType="numeric"
-                      error={errors.endereco?.cep?.message}
-                    />
-                  )}
-                />
-              </>
-            )}
-
-            {userType === 'instrutor' && (
-              <>
-                <Text style={styles.sectionTitle}>Informações do Instrutor</Text>
-                
-                <Controller
-                  control={control}
-                  name="detranId"
-                  rules={{ validate: validateRequired }}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <FormInput
-                      label="ID DETRAN"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      placeholder="Seu ID do DETRAN"
-                      error={errors.detranId?.message}
-                    />
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="licencaNumero"
-                  rules={{ validate: validateRequired }}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <FormInput
-                      label="Número da Licença"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      placeholder="Número da sua licença"
-                      error={errors.licencaNumero?.message}
-                    />
-                  )}
-                />
-
-                <Text style={styles.sectionTitle}>Informações do Veículo</Text>
-
-                <Controller
-                  control={control}
-                  name="veiculoMarca"
-                  rules={{ validate: validateRequired }}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <FormInput
-                      label="Marca do Veículo"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      placeholder="Ex: Volkswagen"
-                      error={errors.veiculoMarca?.message}
-                    />
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="veiculoModelo"
-                  rules={{ validate: validateRequired }}
+                  name="veiculo_modelo"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <FormInput
                       label="Modelo do Veículo"
                       value={value}
                       onChangeText={onChange}
                       onBlur={onBlur}
-                      placeholder="Ex: Gol"
-                      error={errors.veiculoModelo?.message}
+                      placeholder="Ex: Gol, Uno, etc."
+                      error={errors.veiculo_modelo?.message}
                     />
                   )}
                 />
 
                 <Controller
                   control={control}
-                  name="veiculoPlaca"
-                  rules={{ validate: validateRequired }}
+                  name="veiculo_ano"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Ano do Veículo"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      keyboardType="numeric"
+                      placeholder="Ex: 2020"
+                      error={errors.veiculo_ano?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="veiculo_placa"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <FormInput
                       label="Placa do Veículo"
@@ -462,25 +613,241 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                       onChangeText={onChange}
                       onBlur={onBlur}
                       placeholder="ABC-1234"
-                      error={errors.veiculoPlaca?.message}
+                      error={errors.veiculo_placa?.message}
                     />
                   )}
                 />
 
                 <Controller
                   control={control}
-                  name="valorHora"
-                  rules={{ validate: validateRequired }}
+                  name="veiculo_tipo_cambio"
+                  render={({ field: { onChange, value } }) => (
+                    <View style={styles.cambioContainer}>
+                      <Text style={styles.cambioLabel}>Tipo de Câmbio</Text>
+                      <View style={styles.cambioButtons}>
+                        <TouchableOpacity
+                          style={[
+                            styles.cambioButton,
+                            value === 'MANUAL' && styles.cambioButtonActive,
+                          ]}
+                          onPress={() => onChange('MANUAL')}
+                        >
+                          <Text
+                            style={[
+                              styles.cambioButtonText,
+                              value === 'MANUAL' && styles.cambioButtonTextActive,
+                            ]}
+                          >
+                            Manual
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[
+                            styles.cambioButton,
+                            value === 'AUTOMATICO' && styles.cambioButtonActive,
+                          ]}
+                          onPress={() => onChange('AUTOMATICO')}
+                        >
+                          <Text
+                            style={[
+                              styles.cambioButtonText,
+                              value === 'AUTOMATICO' && styles.cambioButtonTextActive,
+                            ]}
+                          >
+                            Automático
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                />
+              </>
+            )}
+
+            {/* Campos específicos do Instrutor */}
+            {userType === 'instrutor' && (
+              <>
+                <Text style={styles.sectionTitle}>Informações da CNH</Text>
+
+                <Controller
+                  control={control}
+                  name="cnh_numero"
+                  rules={{ required: 'Número da CNH é obrigatório' }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Número da CNH"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="Seu número de CNH"
+                      error={errors.cnh_numero?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="cnh_vencimento"
+                  rules={{ validate: (value) => validateDataNascimento(value) }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Vencimento da CNH"
+                      value={formatDataNascimento(value || '')}
+                      onChangeText={(text) => onChange(formatDataNascimento(text))}
+                      onBlur={onBlur}
+                      keyboardType="numeric"
+                      placeholder="DD/MM/AAAA"
+                      error={errors.cnh_vencimento?.message}
+                    />
+                  )}
+                />
+
+                <Text style={styles.sectionTitle}>Informações Profissionais</Text>
+
+                <Controller
+                  control={control}
+                  name="valor_hora"
+                  rules={{ required: 'Valor/hora é obrigatório' }}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <FormInput
                       label="Valor por Hora (R$)"
                       value={value}
                       onChangeText={onChange}
                       onBlur={onBlur}
-                      placeholder="80.00"
-                      keyboardType="numeric"
-                      error={errors.valorHora?.message}
+                      keyboardType="decimal-pad"
+                      placeholder="Ex: 80.00"
+                      error={errors.valor_hora?.message}
                     />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="bio"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Biografia (Opcional)"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="Conte um pouco sobre você"
+                      multiline
+                      numberOfLines={4}
+                      error={errors.bio?.message}
+                    />
+                  )}
+                />
+
+                <Text style={styles.sectionTitle}>Veículo</Text>
+
+                <Controller
+                  control={control}
+                  name="veiculo_marca"
+                  rules={{ required: 'Marca do veículo é obrigatória' }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Marca do Veículo"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="Ex: Volkswagen, Fiat, etc."
+                      error={errors.veiculo_marca?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="veiculo_modelo_instrutor"
+                  rules={{ required: 'Modelo do veículo é obrigatório' }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Modelo do Veículo"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="Ex: Gol, Uno, etc."
+                      error={errors.veiculo_modelo_instrutor?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="veiculo_ano_instrutor"
+                  rules={{ required: 'Ano do veículo é obrigatório' }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Ano do Veículo"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      keyboardType="numeric"
+                      placeholder="Ex: 2020"
+                      error={errors.veiculo_ano_instrutor?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="veiculo_placa_instrutor"
+                  rules={{ required: 'Placa do veículo é obrigatória' }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Placa do Veículo"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="ABC-1234"
+                      error={errors.veiculo_placa_instrutor?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="veiculo_tipo_cambio_instrutor"
+                  render={({ field: { onChange, value } }) => (
+                    <View style={styles.cambioContainer}>
+                      <Text style={styles.cambioLabel}>Tipo de Câmbio</Text>
+                      <View style={styles.cambioButtons}>
+                        <TouchableOpacity
+                          style={[
+                            styles.cambioButton,
+                            value === 'MANUAL' && styles.cambioButtonActive,
+                          ]}
+                          onPress={() => onChange('MANUAL')}
+                        >
+                          <Text
+                            style={[
+                              styles.cambioButtonText,
+                              value === 'MANUAL' && styles.cambioButtonTextActive,
+                            ]}
+                          >
+                            Manual
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[
+                            styles.cambioButton,
+                            value === 'AUTOMATICO' && styles.cambioButtonActive,
+                          ]}
+                          onPress={() => onChange('AUTOMATICO')}
+                        >
+                          <Text
+                            style={[
+                              styles.cambioButtonText,
+                              value === 'AUTOMATICO' && styles.cambioButtonTextActive,
+                            ]}
+                          >
+                            Automático
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
                   )}
                 />
               </>
@@ -532,22 +899,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: theme.spacing.lg,
   },
-  userTypeContainer: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-  },
-  userTypeButton: {
-    flex: 1,
-  },
   errorContainer: {
-    backgroundColor: '#FFEBEE', // Light red background
+    backgroundColor: '#FFEBEE',
     padding: theme.spacing.md,
     borderRadius: theme.borders.radius.md,
     marginBottom: theme.spacing.lg,
   },
   errorText: {
-    color: '#C62828', // Dark red text
+    color: '#C62828',
     fontSize: theme.typography.fontSize.sm,
     textAlign: 'center',
   },
@@ -566,5 +925,92 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
+  },
+  userTypeContainer: {
+    marginBottom: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.light,
+  },
+  userTypeLabel: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+  },
+  userTypeButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  userTypeButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borders.radius.md,
+    borderWidth: 2,
+    borderColor: theme.colors.border.medium,
+    backgroundColor: theme.colors.background.secondary,
+    alignItems: 'center',
+  },
+  userTypeButtonActive: {
+    borderColor: theme.colors.primary[500],
+    backgroundColor: theme.colors.primary[500],
+  },
+  userTypeButtonText: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.secondary,
+  },
+  userTypeButtonTextActive: {
+    color: theme.colors.text.inverse,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borders.radius.md,
+    marginBottom: theme.spacing.lg,
+  },
+  switchLabel: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.text.primary,
+  },
+  cambioContainer: {
+    marginBottom: theme.spacing.lg,
+  },
+  cambioLabel: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+  },
+  cambioButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  cambioButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borders.radius.md,
+    borderWidth: 2,
+    borderColor: theme.colors.border.medium,
+    backgroundColor: theme.colors.background.secondary,
+    alignItems: 'center',
+  },
+  cambioButtonActive: {
+    borderColor: theme.colors.primary[500],
+    backgroundColor: theme.colors.primary[500],
+  },
+  cambioButtonText: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.text.secondary,
+  },
+  cambioButtonTextActive: {
+    color: theme.colors.text.inverse,
   },
 });

@@ -1,0 +1,7 @@
+{
+  "specType": "feature",
+  "workflowType": "requirements-first",
+  "featureName": "api-integration",
+  "displayName": "API Integration",
+  "description": "Integração com API backend usando Axios e React Query"
+}

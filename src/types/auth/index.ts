@@ -117,7 +117,7 @@ export interface AuthState {
 }
 
 // Authentication action types
-export type AuthActionType = 
+export type AuthActionType =
   | 'AUTH_LOADING'
   | 'AUTH_SUCCESS'
   | 'AUTH_ERROR'
@@ -212,4 +212,33 @@ export interface FormErrors {
 export interface ValidationResult {
   isValid: boolean;
   errors: FormErrors;
+}
+
+export interface RegisterUser {
+  nome: string;
+  sobrenome: string;
+  email: string;
+  senha: string;
+  cpf: string;
+  telefone: string;
+  data_nascimento: string;
+  cep: string;
+  cidade: string;
+  estado: string;
+  veiculo?: VehicleUser;
+  // Campos do instrutor
+  cnh_numero?: string;
+  cnh_categorias?: string[];
+  cnh_vencimento?: string;
+  valor_hora?: number;
+  bio?: string;
+}
+
+
+export interface VehicleUser {
+  marca?: string;
+  modelo: string;
+  ano: number;
+  placa: string;
+  tipo_cambio: "MANUAL" | "AUTOMATICO"
 }

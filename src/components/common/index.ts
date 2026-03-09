@@ -5,5 +5,7 @@ export * from './Button';
 export * from './Card';
 export * from './Container';
 export * from './Divider';
+export * from './ErrorAlert';
+export * from './ErrorBoundary';
 export * from './IconButton';
 export * from './Typography';

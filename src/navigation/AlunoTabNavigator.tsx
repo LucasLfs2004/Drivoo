@@ -19,6 +19,7 @@ import {
   SettingsScreen,
 } from '../screens/client';
 import { InstructorDetailsScreen } from '../screens/client/InstructorDetailsScreen';
+import { ProgressDetailsScreen } from '../screens/client/ProgressDetailsScreen';
 import { ChatListScreen } from '../screens/shared/ChatListScreen';
 import { ComponentShowcaseScreen } from '../screens/shared/ComponentShowcaseScreen';
 import { DesignSystemScreen } from '../screens/shared/DesignSystemScreen';
@@ -46,6 +47,7 @@ const HomeStackNavigator = () => (
   <HomeStack.Navigator screenOptions={{ headerShown: false }}>
     <HomeStack.Screen name="HomeScreen" component={AlunoHomeScreen} />
     <HomeStack.Screen name="InstructorDetails" component={InstructorDetailsScreen} />
+    <HomeStack.Screen name="ProgressDetails" component={ProgressDetailsScreen} />
     <HomeStack.Screen name="ComponentShowcase" component={ComponentShowcaseScreen} />
     <HomeStack.Screen name="DesignSystem" component={DesignSystemScreen} />
   </HomeStack.Navigator>
