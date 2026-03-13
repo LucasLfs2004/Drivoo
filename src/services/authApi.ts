@@ -2,11 +2,11 @@ import { SecureStorageService } from './secureStorage';
 import {
   LoginCredentials,
   RegisterData,
-  AuthResponse,
   TokenData,
   ForgotPasswordRequest,
   ResetPasswordRequest
 } from '../types/auth';
+import type { LoginResponse, RegisterResponse, TokenResponse } from './api/types';
 
 /**
  * Authentication API service
@@ -14,6 +14,7 @@ import {
  */
 export class AuthApiService {
   private static readonly BASE_URL = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
+  private static readonly ACCESS_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 
   /**
    * Refresh access token using refresh token
@@ -32,7 +33,7 @@ export class AuthApiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          refreshToken,
+          refresh_token: refreshToken,
         }),
       });
 
@@ -43,8 +44,13 @@ export class AuthApiService {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data: TokenData = await response.json();
-      return data;
+      const data: TokenResponse = await response.json();
+      return {
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        expiresIn: this.ACCESS_TOKEN_TTL_SECONDS,
+        tokenType: 'Bearer',
+      };
     } catch (error) {
       console.error('Token refresh failed:', error);
       throw error;
@@ -54,7 +60,7 @@ export class AuthApiService {
   /**
    * Login user and get tokens
    */
-  static async login(credentials: LoginCredentials): Promise<AuthResponse['data']> {
+  static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
       const response = await fetch(`${this.BASE_URL}/auth/login`, {
         method: 'POST',
@@ -69,13 +75,7 @@ export class AuthApiService {
         throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const authResponse: AuthResponse = await response.json();
-
-      if (!authResponse.success || !authResponse.data) {
-        throw new Error(authResponse.message || 'Login failed');
-      }
-
-      return authResponse.data;
+      return await response.json();
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -184,7 +184,7 @@ export class AuthApiService {
   /**
    * Register new user
    */
-  static async register(data: RegisterData): Promise<AuthResponse> {
+  static async register(data: RegisterData): Promise<RegisterResponse> {
     try {
       const response = await fetch(`${this.BASE_URL}/auth/register`, {
         method: 'POST',
@@ -194,10 +194,10 @@ export class AuthApiService {
         body: JSON.stringify(data),
       });
 
-      const authResponse: AuthResponse = await response.json();
+      const authResponse: RegisterResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error(authResponse.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       return authResponse;

@@ -16,6 +16,7 @@ import { FormInput } from '../../components/forms/FormInput';
 import { useAuth } from '../../contexts/AuthContext';
 import { theme } from '../../themes';
 import { AlunoProfileStackParamList } from '../../types/navigation';
+import type { Usuario } from '../../types/auth';
 
 type Props = NativeStackScreenProps<AlunoProfileStackParamList, 'EditProfile'>;
 
@@ -47,17 +48,13 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
   const onSubmit = async (data: EditProfileFormData) => {
     try {
       setLoading(true);
-
-      // Simula chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // TODO: Chamar API real para atualizar perfil
       if (authContext.updateProfile) {
         await authContext.updateProfile({
           perfil: {
+            ...usuario?.perfil,
             primeiroNome: data.primeiroNome,
             ultimoNome: data.ultimoNome,
-          },
+          } as Usuario['perfil'],
           telefone: data.telefone,
           email: data.email,
         });

@@ -1,7 +1,7 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
-import apiClient from '../api/client';
-import { useAuth } from '../auth/authContext';
-import type { User } from '../api/types';
+import { useAuth } from '../../contexts/AuthContext';
+import { userService } from '../userService';
+import type { Usuario } from '../../types/auth';
 
 /**
  * Hook to fetch current user data
@@ -17,15 +17,13 @@ import type { User } from '../api/types';
  * if (error) return <Text>Error: {error.message}</Text>;
  * return <Text>Welcome, {user?.name}</Text>;
  */
-export const useUserQuery = (): UseQueryResult<User, Error> => {
-    const { isSignedIn } = useAuth();
+export const useUserQuery = (): UseQueryResult<Usuario, Error> => {
+    const { isAuthenticated, refreshCurrentUser, usuario } = useAuth();
 
     return useQuery({
-        queryKey: ['user'],
-        queryFn: async () => {
-            const response = await apiClient.get<{ data: User }>('/users/me');
-            return response.data.data;
-        },
-        enabled: isSignedIn,
+        queryKey: ['current-user'],
+        queryFn: async () => (await refreshCurrentUser()) ?? userService.getCurrentUser(),
+        initialData: usuario ?? undefined,
+        enabled: isAuthenticated,
     });
 };

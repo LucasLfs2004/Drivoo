@@ -83,7 +83,6 @@ export const authService = {
      */
     async login(credentials: LoginCredentials): Promise<LoginResponse> {
         try {
-            console.log("Credentials in login: ", credentials)
             // Validate input
             if (!credentials.email || !credentials.senha) {
                 throw new Error('Email e senha são obrigatórios');
@@ -96,9 +95,7 @@ export const authService = {
             );
 
             const { access_token, refresh_token } = response.data;
-            console.log("RESPONSE_DATA", response.data)
             // Store tokens securely
-            console.log(access_token);
             await setToken(access_token);
             await setRefreshToken(refresh_token);
 
@@ -159,13 +156,10 @@ export const authService = {
             if (data.telefone.length < 10 || data.telefone.length > 20) {
                 throw new Error('Telefone inválido');
             }
-            console.log("Registrando novo aluno: ", data)
-
             const response = await apiClient.post<RegisterResponse>(
                 '/auth/registro/aluno',
                 data
             );
-            console.log("Registro de aluno: ", response.data);
             const { refresh_token, access_token } = response.data;
 
             // Store tokens securely
@@ -304,10 +298,9 @@ export const authService = {
             }
 
             // Delegate to specific register function based on user type
-            // Note: credentials.userType uses 'student'/'instructor' but we map to 'aluno'/'instrutor'
-            if (credentials.userType === 'student') {
+            if (credentials.userType === 'aluno') {
                 return await this.registerAluno(credentials as any);
-            } else if (credentials.userType === 'instructor') {
+            } else if (credentials.userType === 'instrutor') {
                 return await this.registerInstrutor(credentials as any);
             } else {
                 throw new Error('Tipo de usuário inválido');

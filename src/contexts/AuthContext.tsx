@@ -7,7 +7,10 @@ import {
   RegisterUser
 } from '../types/auth';
 import { authService } from '../services/auth/authService';
+import { getRefreshToken, getToken, removeToken } from '../services/auth/tokenStorage';
 import { queryClient } from '../services/queries/queryClient';
+import { SecureStorageService } from '../services/secureStorage';
+import { mapApiUserToUsuario, userService } from '../services/userService';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -16,6 +19,7 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   updateUser: (usuario: Usuario) => Promise<void>;
   updateProfile: (data: Partial<Usuario>) => Promise<void>;
+  refreshCurrentUser: () => Promise<Usuario | null>;
   refreshToken: () => Promise<void>;
   clearError: () => void;
   // Mock functions for development
@@ -65,6 +69,9 @@ const initialState: AuthState = {
   carregando: true,
   error: null,
 };
+
+const ACCESS_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const REFRESH_FALLBACK_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
@@ -194,18 +201,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initializeAuth = async () => {
     try {
       dispatch({ type: 'AUTH_LOADING', payload: true });
+      const storedToken = await SecureStorageService.getAccessToken();
+      const storedRefreshToken = await SecureStorageService.getRefreshToken();
+      const fallbackToken = storedToken ?? (await getToken());
+      const fallbackRefreshToken = storedRefreshToken ?? (await getRefreshToken());
 
-      // For development: Skip API checks and go directly to unauthenticated state
-      // This allows us to test the login flows without API integration
+      if (!fallbackToken) {
+        dispatch({ type: 'AUTH_LOADING', payload: false });
+        return;
+      }
 
-      // Simulate a small delay to show loading state
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!storedToken || !storedRefreshToken) {
+        await SecureStorageService.updateTokens(
+          fallbackToken,
+          fallbackRefreshToken ?? '',
+          Date.now() + ACCESS_TOKEN_TTL_MS
+        );
+      }
 
-      // No valid stored auth data - go to login screen
-      dispatch({ type: 'AUTH_LOADING', payload: false });
+      const currentUser = await userService.getCurrentUser();
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: {
+          usuario: currentUser,
+          token: fallbackToken,
+        },
+      });
+      queryClient.setQueryData(['current-user'], currentUser);
     } catch (error) {
       console.error('Error initializing auth:', error);
-      dispatch({ type: 'AUTH_ERROR', payload: 'Failed to initialize authentication' });
+      await SecureStorageService.clearAuthData();
+      await removeToken();
+      dispatch({ type: 'AUTH_LOGOUT' });
     }
   };
 
@@ -272,38 +299,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Call the real API via authService
       const response = await authService.login({ email: credentials.email, senha: credentials.password });
+      const usuario = response.usuario
+        ? mapApiUserToUsuario({
+            id: response.usuario.id,
+            email: response.usuario.email,
+            nome: response.usuario.nome,
+            sobrenome: response.usuario.sobrenome,
+            tipo: response.usuario.tipo,
+            telefone: response.usuario.telefone,
+          })
+        : await userService.getCurrentUser();
 
-      // Map API response to Usuario type
-      const usuario: Usuario = {
-        id: response.user?.id || `user-${Date.now()}`,
-        email: response.user?.email || credentials.email,
-        telefone: response.user?.phone || '',
-        papel: (response.user?.userType || 'student') as 'aluno' | 'instrutor' | 'admin',
-        perfil: {
-          primeiroNome: response.user?.name?.split(' ')[0] || '',
-          ultimoNome: response.user?.name?.split(' ').slice(1).join(' ') || '',
-          dataNascimento: new Date(),
-          endereco: {
-            rua: '',
-            numero: '',
-            bairro: '',
-            cidade: '',
-            estado: '',
-            cep: '',
-            pais: 'BR',
-          },
-          cnh: {
-            categoria: 'B',
-            status: 'nenhuma',
-          },
-          preferencias: {
-            localizacao: { latitude: -23.5505, longitude: -46.6333 },
-            raio: 10,
-          },
-        },
-        criadoEm: response.user?.createdAt ? new Date(response.user.createdAt) : new Date(),
-        atualizadoEm: response.user?.updatedAt ? new Date(response.user.updatedAt) : new Date(),
-      };
+      await SecureStorageService.storeAuthData({
+        token: response.access_token,
+        refreshToken: response.refresh_token,
+        user: usuario,
+        expiresAt: Date.now() + ACCESS_TOKEN_TTL_MS,
+      });
 
       dispatch({
         type: 'AUTH_SUCCESS',
@@ -312,6 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           token: response.access_token
         }
       });
+      queryClient.setQueryData(['current-user'], usuario);
     } catch (error) {
       console.error('Login failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
@@ -430,6 +443,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       const token = response.access_token;
+      await SecureStorageService.storeAuthData({
+        token,
+        refreshToken: response.refresh_token || '',
+        user,
+        expiresAt: Date.now() + ACCESS_TOKEN_TTL_MS,
+      });
 
       dispatch({
         type: 'AUTH_SUCCESS',
@@ -438,6 +457,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           token: token
         }
       });
+      queryClient.setQueryData(['current-user'], user);
     } catch (error) {
       console.error('Registration failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
@@ -448,17 +468,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithTokens = async (usuario: Usuario, token: string, _refreshToken?: string, _expiresIn?: number) => {
     try {
-      // For mock mode, just update the state
-      // const expiresAt = Date.now() + (expiresIn * 1000);
-
-      // await SecureStorageService.storeAuthData({
-      //   token,
-      //   refreshToken,
-      //   user: usuario,
-      //   expiresAt,
-      // });
+      await SecureStorageService.storeAuthData({
+        token,
+        refreshToken: _refreshToken ?? '',
+        user: usuario,
+        expiresAt: Date.now() + ((_expiresIn ? _expiresIn * 1000 : REFRESH_FALLBACK_TTL_MS)),
+      });
 
       dispatch({ type: 'AUTH_SUCCESS', payload: { usuario, token } });
+      queryClient.setQueryData(['current-user'], usuario);
     } catch (error) {
       console.error('Error storing auth data:', error);
       throw error;
@@ -475,8 +493,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Clear React Query cache to remove cached user data
       queryClient.clear();
-
-      // For development: Skip API call and just clear local state
+      await SecureStorageService.clearAuthData();
+      await removeToken();
       dispatch({ type: 'AUTH_LOGOUT' });
     } catch (error) {
       console.error('Logout error:', error);
@@ -488,17 +506,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUser = async (usuario: Usuario) => {
     try {
-      // For mock mode, just update the state
-      // Update user in secure storage
-      // const storedData = await SecureStorageService.getAuthData();
-      // if (storedData) {
-      //   await SecureStorageService.storeAuthData({
-      //     ...storedData,
-      //     user: usuario,
-      //   });
-      // }
+      const storedData = await SecureStorageService.getAuthData();
+      if (storedData) {
+        await SecureStorageService.storeAuthData({
+          ...storedData,
+          user: usuario,
+        });
+      }
 
       dispatch({ type: 'AUTH_UPDATE_PROFILE', payload: usuario });
+      queryClient.setQueryData(['current-user'], usuario);
     } catch (error) {
       console.error('Error updating user:', error);
       throw error;
@@ -510,27 +527,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!state.usuario) {
         throw new Error('No user logged in');
       }
+      const updatedFromApi = await userService.updateCurrentUser(state.usuario.id, {
+        nome: data.perfil?.primeiroNome,
+        sobrenome: data.perfil?.ultimoNome,
+        telefone: data.telefone,
+        email: data.email,
+      });
 
-      // Merge the updated data with existing user data
       const updatedUser: Usuario = {
         ...state.usuario,
-        ...data,
+        ...updatedFromApi,
+        telefone: updatedFromApi.telefone || data.telefone || state.usuario.telefone,
         perfil: {
           ...state.usuario.perfil,
+          ...updatedFromApi.perfil,
           ...data.perfil,
         },
+        email: updatedFromApi.email || data.email || state.usuario.email,
         atualizadoEm: new Date(),
       };
 
-      // For mock mode, just update the state
-      // TODO: Call API to update profile on backend
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      dispatch({ type: 'AUTH_UPDATE_PROFILE', payload: updatedUser });
+      await updateUser(updatedUser);
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
     }
+  };
+
+  const refreshCurrentUser = async (): Promise<Usuario | null> => {
+    if (!state.token) {
+      return null;
+    }
+
+    const currentUser = await userService.getCurrentUser();
+    await updateUser(currentUser);
+    return currentUser;
   };
 
   const refreshToken = async () => {
@@ -549,6 +580,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     updateUser,
     updateProfile,
+    refreshCurrentUser,
     refreshToken,
     clearError,
     loginAsAluno,

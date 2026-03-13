@@ -16,54 +16,56 @@ import { Card } from '../../components/common/Card';
 import { FormDatePicker } from '../../components/forms/FormDatePicker';
 import { theme } from '../../themes';
 import { AlunoSearchStackParamList } from '../../types/navigation';
-import { InstrutorDisponivel } from '../../types/search';
-import { mockInstructors } from '../../mock/instructors';
+import type { InstructorDetails, InstructorAvailableSlot } from '../../types/instructor';
+import { instructorService } from '../../services/instructorService';
+import { MapPin, UserPlus } from 'lucide-react-native';
+import { scale } from '@/utils';
 
 type Props = NativeStackScreenProps<AlunoSearchStackParamList, 'InstructorDetails'>;
 
-interface TimeSlot {
-  id: string;
-  time: string;
-  available: boolean;
-}
-
-interface DaySchedule {
-  date: Date;
-  slots: TimeSlot[];
-}
-
 export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { instructorId } = route.params;
-  
-  const [instructor, setInstructor] = useState<InstrutorDisponivel | null>(null);
+  const { instructorId, instructorSummary } = route.params;
+  const bookingLocationFallback = 'Local informado após aceite do instrutor';
+
+  const formatDateToApi = useCallback((date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  const [instructor, setInstructor] = useState<InstructorDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<DaySchedule[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<InstructorAvailableSlot[]>([]);
+
+  const loadAvailableSlots = useCallback(async (date: Date) => {
+    const dateString = formatDateToApi(date);
+    const slots = await instructorService.getAvailableSlots(instructorId, dateString);
+    setAvailableSlots(slots);
+    setSelectedTimeSlot(null);
+  }, [formatDateToApi, instructorId]);
 
   const loadInstructorDetails = useCallback(async () => {
     try {
       setLoading(true);
-      // Simulate API call - in real app this would be an API request
-      const foundInstructor = mockInstructors.find(i => i.id === instructorId);
-      
-      if (foundInstructor) {
-        setInstructor(foundInstructor);
-        // Set default date to tomorrow
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        setSelectedDate(tomorrow);
-      } else {
-        Alert.alert('Erro', 'Instrutor não encontrado');
-        navigation.goBack();
-      }
-    } catch (_error) {
+      setAvailableSlots([]);
+      setSelectedTimeSlot(null);
+      const foundInstructor = await instructorService.getDetails(instructorId);
+      setInstructor(foundInstructor);
+
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setSelectedDate(tomorrow);
+    } catch (error) {
+      console.error('Error loading instructor details:', error);
       Alert.alert('Erro', 'Erro ao carregar detalhes do instrutor');
-      navigation.goBack();
     } finally {
       setLoading(false);
     }
-  }, [instructorId, navigation]);
+  }, [instructorId]);
 
   useEffect(() => {
     loadInstructorDetails();
@@ -71,25 +73,12 @@ export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) 
 
   useEffect(() => {
     if (selectedDate) {
-      loadAvailableSlots(selectedDate);
+      loadAvailableSlots(selectedDate).catch(error => {
+        console.error('Error loading available slots:', error);
+        Alert.alert('Erro', 'Erro ao carregar horários disponíveis');
+      });
     }
-  }, [selectedDate]);
-
-  const loadAvailableSlots = async (date: Date) => {
-    // Simulate API call to get available time slots for the selected date
-    const slots: TimeSlot[] = [
-      { id: '1', time: '08:00', available: true },
-      { id: '2', time: '09:00', available: false },
-      { id: '3', time: '10:00', available: true },
-      { id: '4', time: '11:00', available: true },
-      { id: '5', time: '14:00', available: true },
-      { id: '6', time: '15:00', available: false },
-      { id: '7', time: '16:00', available: true },
-      { id: '8', time: '17:00', available: true },
-    ];
-
-    setAvailableSlots([{ date, slots }]);
-  };
+  }, [selectedDate, loadAvailableSlots]);
 
   const handleTimeSlotSelect = (slotId: string) => {
     setSelectedTimeSlot(slotId);
@@ -101,7 +90,7 @@ export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) 
       return;
     }
 
-    const selectedSlot = availableSlots[0]?.slots.find(slot => slot.id === selectedTimeSlot);
+    const selectedSlot = availableSlots.find(slot => slot.id === selectedTimeSlot);
     if (!selectedSlot) {
       Alert.alert('Erro', 'Horário selecionado não encontrado');
       return;
@@ -118,12 +107,12 @@ export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) 
       price: instructor?.precos.valorHora || 0,
       currency: 'BRL', // Código ISO para Real Brasileiro
       vehicleInfo: {
-        marca: instructor?.veiculo.marca || '',
+        marca: '',
         modelo: instructor?.veiculo.modelo || '',
         transmissao: instructor?.veiculo.transmissao || 'manual',
       },
       location: {
-        endereco: instructor?.localizacao.endereco || '',
+        endereco: bookingLocationFallback,
       },
       status: 'pending' as const,
     };
@@ -143,7 +132,7 @@ export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) 
     if (hasHalfStar) {
       stars.push('⭐');
     }
-    
+
     return stars.join('');
   };
 
@@ -151,11 +140,11 @@ export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) 
     if (instructor?.avatar) {
       return <Image source={{ uri: instructor.avatar }} style={styles.avatar} />;
     }
-    
+
     const initials = instructor
       ? `${instructor.primeiroNome[0]}${instructor.ultimoNome[0]}`.toUpperCase()
       : '';
-    
+
     return (
       <View style={styles.defaultAvatar}>
         <Text style={styles.avatarText}>{initials}</Text>
@@ -164,19 +153,9 @@ export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) 
   };
 
   const renderTimeSlots = () => {
-    if (availableSlots.length === 0) {
-      return (
-        <Text style={styles.noSlotsText}>
-          Selecione uma data para ver os horários disponíveis
-        </Text>
-      );
-    }
-
-    const daySchedule = availableSlots[0];
-    
     return (
       <View style={styles.slotsGrid}>
-        {daySchedule.slots.map((slot) => (
+        {availableSlots.map((slot) => (
           <TouchableOpacity
             key={slot.id}
             style={[
@@ -228,6 +207,14 @@ export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) 
     );
   }
 
+  const distanceLabel = instructorSummary?.localizacao.distancia != null
+    ? `${instructorSummary.localizacao.distancia.toFixed(1)} km • Atende na região`
+    : 'Atende na região';
+
+  const vehicleLabel = instructor.veiculo.modelo
+    ? `🚗 ${instructor.veiculo.modelo} • ${instructor.veiculo.transmissao === 'automatico' ? 'Automático' : 'Manual'}`
+    : `🚗 ${instructor.veiculo.transmissao === 'automatico' ? 'Automático' : 'Manual'}`;
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -249,67 +236,57 @@ export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) 
               <Text style={styles.instructorName}>
                 {instructor.primeiroNome} {instructor.ultimoNome}
               </Text>
-              <View style={styles.ratingContainer}>
-                <Text style={styles.stars}>{renderStars(instructor.avaliacoes.media)}</Text>
-                <Text style={styles.ratingText}>{instructor.avaliacoes.media}</Text>
-                <Text style={styles.reviewText}>({instructor.avaliacoes.quantidade} avaliações)</Text>
+              {
+                instructor.isNovoInstrutor ?
+                  (
+                    <View style={styles.iconTextView}>
+                      <UserPlus width={scale(18)} color={theme.colors.text.tertiary} />
+                      <Text style={styles.metaInfoText}>
+                        Novo instrutor
+                      </Text>
+                    </View>
+                  ) :
+                  <View style={styles.ratingContainer}>
+                    <Text style={styles.stars}>{renderStars(instructor.avaliacoes.media)}</Text>
+                    <Text style={styles.ratingText}>{instructor.avaliacoes.media}</Text>
+                    <Text style={styles.reviewText}>({instructor.avaliacoes.quantidade} avaliações)</Text>
+                  </View>
+
+              }
+              <View style={styles.iconTextView}>
+                <MapPin color={theme.colors.secondary[500]} width={scale(18)} />
+                <Text style={styles.locationText}>{distanceLabel}</Text>
               </View>
-              <Text style={styles.locationText}>
-                📍 {instructor.localizacao.endereco} • {instructor.localizacao.distancia} km
-              </Text>
             </View>
           </View>
-
-          <View style={styles.priceContainer}>
-            <Text style={styles.priceLabel}>Valor por hora</Text>
-            <Text style={styles.priceValue}>
-              R$ {instructor.precos.valorHora}
-            </Text>
+          <View style={styles.classInfo}>
+            <View style={styles.priceContainer}>
+              <Text style={styles.priceValue}>
+                R$ {instructor.precos.valorHora}
+              </Text>
+              <Text style={styles.priceLabel}> / hora</Text>
+            </View>
+            <View style={styles.vehicleInfo}>
+              <Text style={styles.vehicleText}>{vehicleLabel}</Text>
+            </View>
           </View>
-        </Card>
-
-        {/* Vehicle Information */}
-        <Card style={styles.vehicleCard}>
-          <Text style={styles.sectionTitle}>Veículo</Text>
-          <View style={styles.vehicleInfo}>
-            <Text style={styles.vehicleText}>
-              🚗 {instructor.veiculo.marca} {instructor.veiculo.modelo}
-            </Text>
-            <Text style={styles.vehicleText}>
-              ⚙️ {instructor.veiculo.transmissao === 'automatico' ? 'Automático' : 'Manual'}
-            </Text>
-          </View>
-        </Card>
-
-        {/* Specialties */}
-        <Card style={styles.specialtiesCard}>
-          <Text style={styles.sectionTitle}>Especialidades</Text>
-          <View style={styles.specialtiesContainer}>
-            {instructor.especialidades.map((specialty, index) => (
-              <View key={index} style={styles.specialtyBadge}>
-                <Text style={styles.specialtyText}>{specialty}</Text>
+          {instructor.especialidades.length > 0 ? (
+            <View style={styles.specialtiesInfo}>
+              <Text style={styles.sectionTitle}>Especialidades</Text>
+              <View style={styles.specialtiesContainer}>
+                {instructor.especialidades.map((specialty, index) => (
+                  <View key={`${specialty}-${index}`} style={styles.specialtyBadge}>
+                    <Text style={styles.specialtyText}>{specialty}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </View>
+          ) : null}
         </Card>
 
-        {/* Availability */}
-        <Card style={styles.availabilityCard}>
-          <Text style={styles.sectionTitle}>Disponibilidade</Text>
-          <Text style={styles.availabilityInfo}>
-            {instructor.disponibilidade.slotsDisponiveis} horários disponíveis nos próximos 7 dias
-          </Text>
-          {instructor.disponibilidade.proximoSlot && (
-            <Text style={styles.nextSlotText}>
-              Próximo horário: {instructor.disponibilidade.proximoSlot.toLocaleDateString('pt-BR')}
-            </Text>
-          )}
-        </Card>
-
-        {/* Booking Section */}
         <Card style={styles.bookingCard}>
           <Text style={styles.sectionTitle}>Agendar Aula</Text>
-          
+
           <FormDatePicker
             label="Selecione a data"
             value={selectedDate || undefined}
@@ -319,10 +296,10 @@ export const InstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) 
           />
 
           {selectedDate && (
-            <View style={styles.timeSlotsSection}>
-              <Text style={styles.timeSlotsTitle}>
+            <View>
+              {/* <Text style={styles.timeSlotsTitle}>
                 Horários disponíveis para {selectedDate.toLocaleDateString('pt-BR')}
-              </Text>
+              </Text> */}
               {renderTimeSlots()}
             </View>
           )}
@@ -347,7 +324,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
   },
   loadingContainer: {
     flex: 1,
@@ -384,21 +361,23 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     marginBottom: theme.spacing.lg,
+    rowGap: theme.spacing.md
   },
   profileHeader: {
     flexDirection: 'row',
-    marginBottom: theme.spacing.lg,
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: scale(64),
+    height: scale(64),
+    borderRadius: scale(40),
     marginRight: theme.spacing.lg,
   },
   defaultAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: scale(64),
+    height: scale(64),
+    borderRadius: scale(40),
     backgroundColor: theme.colors.primary[500],
     justifyContent: 'center',
     alignItems: 'center',
@@ -406,22 +385,25 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: theme.colors.text.inverse,
-    fontSize: theme.typography.fontSize.xl,
+    fontSize: theme.typography.fontSize.sm,
     fontWeight: theme.typography.fontWeight.bold,
   },
   profileInfo: {
     flex: 1,
+    rowGap: theme.spacing.xs,
+  },
+  classInfo: {
+    gap: theme.spacing.md,
   },
   instructorName: {
-    fontSize: theme.typography.fontSize.xl,
+    fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
+    // marginBottom: theme.spacing.sm,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
   },
   stars: {
     fontSize: theme.typography.fontSize.md,
@@ -437,34 +419,40 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
   },
+  iconTextView: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  metaInfoText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+  },
   locationText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
   },
   priceContainer: {
     alignItems: 'center',
-    paddingTop: theme.spacing.lg,
+    flexDirection: 'row',
+    paddingTop: theme.spacing.sm,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.light,
   },
   priceLabel: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
   priceValue: {
-    fontSize: theme.typography.fontSize['2xl'],
+    fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.semantic.success,
   },
-  vehicleCard: {
-    marginBottom: theme.spacing.lg,
-  },
   sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
+    fontSize: theme.typography.fontSize.sm,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
   },
   vehicleInfo: {
     gap: theme.spacing.sm,
@@ -473,43 +461,27 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.primary,
   },
-  specialtiesCard: {
-    marginBottom: theme.spacing.lg,
+  specialtiesInfo: {
+    gap: theme.spacing.md,
   },
   specialtiesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
   },
   specialtyBadge: {
     backgroundColor: theme.colors.primary[100],
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
     borderRadius: theme.borders.radius.full,
   },
   specialtyText: {
     fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.primary[700],
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  availabilityCard: {
-    marginBottom: theme.spacing.lg,
-  },
-  availabilityInfo: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  nextSlotText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.semantic.success,
-    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.primary[600],
+    fontWeight: theme.typography.fontWeight.normal,
   },
   bookingCard: {
-    marginBottom: theme.spacing.xl,
-  },
-  timeSlotsSection: {
-    marginTop: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
   timeSlotsTitle: {
     fontSize: theme.typography.fontSize.md,
@@ -521,14 +493,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
+    // marginBottom: theme.spacing.sm,
   },
   timeSlot: {
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borders.radius.md,
     borderWidth: 1,
-    borderColor: theme.colors.border.light,
+    borderTopColor: theme.colors.border.light,
     backgroundColor: theme.colors.background.primary,
     minWidth: 80,
     alignItems: 'center',
@@ -551,13 +523,6 @@ const styles = StyleSheet.create({
   },
   timeSlotTextUnavailable: {
     color: theme.colors.text.disabled,
-  },
-  noSlotsText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginBottom: theme.spacing.lg,
   },
   bookButton: {
     marginTop: theme.spacing.md,

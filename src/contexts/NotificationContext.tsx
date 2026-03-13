@@ -21,19 +21,19 @@ interface NotificationProviderProps {
 }
 
 export function NotificationProvider({ children }: NotificationProviderProps) {
-  const { user } = useAuth();
-  const userId = user?.id || '';
+  const { usuario } = useAuth();
+  const userId = usuario?.id || '';
   
   const notificationState = useNotifications(userId);
 
   // Auto-register for push notifications when user logs in
   useEffect(() => {
-    if (user?.id && notificationState.permissions?.granted) {
-      notificationState.registerForPush(user.id).catch(err => {
+    if (usuario?.id && notificationState.permissions?.granted) {
+      notificationState.registerForPush(usuario.id).catch(err => {
         console.error('[NotificationProvider] Auto-register failed:', err);
       });
     }
-  }, [user?.id, notificationState.permissions?.granted]);
+  }, [usuario?.id, notificationState.permissions?.granted]);
 
   const value: NotificationContextValue = {
     ...notificationState,

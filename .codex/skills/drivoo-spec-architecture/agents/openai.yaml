@@ -1,0 +1,4 @@
+version: 1
+display_name: Drivoo Spec Architecture
+short_description: Guides Drivoo work with feature-based architecture and spec-first workflow.
+default_prompt: Use the Drivoo feature-based architecture and follow spec, design, tasks, then implementation for non-trivial work.

@@ -1,10 +1,12 @@
+import { scale } from '@/utils';
+import { MapPin, UserPlus } from 'lucide-react-native';
 import React from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
   Image,
   StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
   ViewStyle,
 } from 'react-native';
 import { theme } from '../../themes';
@@ -28,7 +30,7 @@ export interface InstructorCardProps {
 }
 
 export const InstructorCard: React.FC<InstructorCardProps> = ({
-  id,
+  id: _id,
   name,
   avatar,
   rating,
@@ -55,7 +57,7 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
     if (hasHalfStar) {
       stars.push('⭐'); // Simplified - in real app you'd use half star icon
     }
-    
+
     return stars.join('');
   };
 
@@ -63,7 +65,7 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
     if (avatar) {
       return <Image source={{ uri: avatar }} style={styles.avatar} />;
     }
-    
+
     // Default avatar with initials
     const initials = name
       .split(' ')
@@ -71,7 +73,7 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
       .join('')
       .toUpperCase()
       .slice(0, 2);
-    
+
     return (
       <View style={styles.defaultAvatar}>
         <Text style={styles.avatarText}>{initials}</Text>
@@ -79,22 +81,14 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
     );
   };
 
-  const renderSpecialties = () => {
-    if (specialties.length === 0) return null;
-    
-    return (
-      <View style={styles.specialtiesContainer}>
-        {specialties.slice(0, 3).map((specialty, index) => (
-          <View key={index} style={styles.specialtyBadge}>
-            <Text style={styles.specialtyText}>{specialty}</Text>
-          </View>
-        ))}
-        {specialties.length > 3 && (
-          <Text style={styles.moreSpecialties}>+{specialties.length - 3}</Text>
-        )}
-      </View>
-    );
-  };
+  const vehicleLabel =
+    vehicleType === 'manual'
+      ? 'Manual'
+      : vehicleType === 'automatic'
+        ? 'Automático'
+        : undefined;
+
+  const metaLine = [distance, vehicleLabel].filter(Boolean).join(' • ');
 
   if (compact) {
     return (
@@ -132,11 +126,18 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
         {renderAvatar()}
         <View style={styles.headerInfo}>
           <Text style={styles.name}>{name}</Text>
-          <View style={styles.ratingContainer}>
-            <Text style={styles.stars}>{renderStars(rating)}</Text>
-            <Text style={styles.ratingText}>{rating}</Text>
-            <Text style={styles.reviewText}>({reviewCount})</Text>
-          </View>
+          {reviewCount === 0 ? (
+            <View style={styles.iconTextView}>
+              <UserPlus width={scale(18)} color={theme.colors.neutral[500]} />
+              <Text style={styles.reviewText}>Novo instrutor</Text>
+            </View>
+          ) : (
+            <View style={styles.ratingContainer}>
+              <Text style={styles.stars}>{renderStars(rating)}</Text>
+              <Text style={styles.ratingText}>{rating}</Text>
+              <Text style={styles.reviewText}>({reviewCount})</Text>
+            </View>
+          )}
           {availability && (
             <Text style={styles.availability}>{availability}</Text>
           )}
@@ -148,20 +149,25 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
         </View>
       </View>
 
-      {renderSpecialties()}
-
       <View style={styles.footer}>
         <View style={styles.footerInfo}>
-          {distance && (
-            <Text style={styles.distance}>📍 {distance}</Text>
-          )}
-          {vehicleType && (
-            <Text style={styles.vehicleType}>
-              🚗 {vehicleType === 'manual' ? 'Manual' : 'Automático'}
-            </Text>
-          )}
+          {metaLine ? (
+            <View style={styles.iconTextView}>
+              <MapPin color={theme.colors.secondary[500]} width={scale(18)} />
+              <Text style={styles.vehicleType}>{metaLine}</Text>
+            </View>
+          ) : null}
+          {/* {specialties.length > 0 ? (
+            <View style={styles.specialtiesContainer}>
+              {specialties.slice(0, 3).map(specialty => (
+                <View key={specialty} style={styles.specialtyBadge}>
+                  <Text style={styles.specialtyText}>{specialty}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null} */}
         </View>
-        
+
         {onBookPress && (
           <TouchableOpacity
             style={styles.bookButton}
@@ -180,7 +186,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: theme.colors.background.primary,
     borderRadius: theme.borders.radius.lg,
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
     marginBottom: theme.spacing.md,
     ...theme.shadows.md,
     borderWidth: theme.borders.width.thin,
@@ -205,15 +212,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: scale(46),
+    height: scale(46),
+    borderRadius: theme.borders.radius.full,
     marginRight: theme.spacing.md,
   },
   defaultAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: scale(46),
+    height: scale(46),
+    borderRadius: theme.borders.radius.full,
     backgroundColor: theme.colors.primary[500],
     justifyContent: 'center',
     alignItems: 'center',
@@ -287,19 +294,10 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.semantic.success,
   },
-  specialtiesContainer: {
+  iconTextView: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
     alignItems: 'center',
-  },
-  specialtyBadge: {
-    backgroundColor: theme.colors.primary[100],
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borders.radius.full,
-    marginRight: theme.spacing.xs,
-    marginBottom: theme.spacing.xs,
   },
   specialtyText: {
     fontSize: theme.typography.fontSize.xs,
@@ -312,21 +310,32 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.medium,
   },
   footer: {
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border.light,
+    paddingTop: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   footerInfo: {
     flex: 1,
-  },
-  distance: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
+    gap: theme.spacing.xs,
   },
   vehicleType: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
+  },
+  specialtiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
+  },
+  specialtyBadge: {
+    backgroundColor: theme.colors.primary[100],
+    borderRadius: theme.borders.radius.full,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
   },
   bookButton: {
     backgroundColor: theme.colors.primary[500],

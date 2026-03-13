@@ -48,7 +48,7 @@ export type AdminDrawerParamList = {
 // Stack Parameter Lists
 export type AlunoHomeStackParamList = {
   HomeScreen: undefined;
-  InstructorDetails: { instructorId: string };
+  InstructorDetails: { instructorId: string; instructorSummary?: InstrutorDisponivel };
   ProgressDetails: undefined;
   ComponentShowcase: undefined;
   DesignSystem: undefined
@@ -57,7 +57,7 @@ export type AlunoHomeStackParamList = {
 export type AlunoSearchStackParamList = {
   SearchScreen: undefined;
   SearchResults: { filters?: any };
-  InstructorDetails: { instructorId: string };
+  InstructorDetails: { instructorId: string; instructorSummary?: InstrutorDisponivel };
   BookingConfirmation: { bookingData: any };
   PaymentConfirmation: { bookingData: any };
 };
@@ -143,3 +143,4 @@ declare global {
     interface RootParamList extends RootStackParamList { }
   }
 }
+import type { InstrutorDisponivel } from '../search';

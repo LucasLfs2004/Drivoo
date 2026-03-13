@@ -11,7 +11,6 @@ export interface TokenResponse {
     access_token: string;
     refresh_token: string;
     token_type: string;
-    expires_in: number;
 }
 
 export interface TokenPayload {
@@ -19,7 +18,7 @@ export interface TokenPayload {
     email: string;
     iat: number; // Issued at
     exp: number; // Expiration time
-    userType: 'student' | 'instructor' | 'admin';
+    userType: 'aluno' | 'instrutor' | 'admin';
 }
 
 // ============================================================================
@@ -35,7 +34,7 @@ export interface RegisterCredentials {
     name: string;
     email: string;
     password: string;
-    userType: 'student' | 'instructor' | 'admin';
+    userType: 'aluno' | 'instrutor' | 'admin';
 }
 
 export interface RefreshTokenRequest {
@@ -46,21 +45,20 @@ export interface RefreshTokenRequest {
 // User Types
 // ============================================================================
 
-export type UserType = 'student' | 'instructor' | 'admin';
+export type UserType = 'aluno' | 'instrutor' | 'admin';
 
 export interface User {
     id: string;
     email: string;
-    name: string;
-    userType: UserType;
-    avatar?: string;
-    phone?: string;
-    createdAt: string;
-    updatedAt: string;
+    nome: string;
+    sobrenome: string;
+    tipo: UserType;
+    foto_url?: string | null;
+    telefone?: string | null;
 }
 
 export interface StudentUser extends User {
-    userType: 'student';
+    tipo: 'aluno';
     cpf?: string;
     dateOfBirth?: string;
     address?: string;
@@ -70,7 +68,7 @@ export interface StudentUser extends User {
 }
 
 export interface InstructorUser extends User {
-    userType: 'instructor';
+    tipo: 'instrutor';
     crn?: string; // Carteira de Registro Nacional
     rating?: number;
     totalRatings?: number;
@@ -80,7 +78,7 @@ export interface InstructorUser extends User {
 }
 
 export interface AdminUser extends User {
-    userType: 'admin';
+    tipo: 'admin';
     permissions?: string[];
 }
 
@@ -91,18 +89,20 @@ export interface AdminUser extends User {
 export interface AuthResponse {
     access_token: string;
     refresh_token: string;
-    // token: string;
-    user: User;
+    token_type?: string;
+    usuario: User;
+    instrutor?: {
+        id: string;
+        geocoding_sucesso: boolean;
+    } | null;
 }
 
 export interface LoginResponse extends AuthResponse {
-    token_type: string;
-    expires_in: number;
+    token_type?: string;
 }
 
 export interface RegisterResponse extends AuthResponse {
-    token_type: string;
-    expires_in: number;
+    token_type?: string;
 }
 
 export interface LogoutResponse {
@@ -119,14 +119,13 @@ export interface UserProfileResponse {
 }
 
 export interface UserUpdateRequest {
-    name?: string;
-    phone?: string;
-    avatar?: string;
-    bio?: string;
-    address?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
+    nome?: string;
+    sobrenome?: string;
+    telefone?: string;
+    foto_url?: string | null;
+    cep?: string;
+    cidade?: string;
+    estado?: string;
 }
 
 export interface UserUpdateResponse {

@@ -42,18 +42,19 @@ export interface InstrutorDisponivel {
     moeda: 'BRL';
   };
   veiculo: {
-    marca: string;
+    marca?: string;
     modelo: string;
     transmissao: 'manual' | 'automatico';
+    aceitaVeiculoAluno?: boolean;
   };
   localizacao: {
-    distancia: number; // km
-    endereco: string;
+    distancia?: number; // km
+    endereco?: string;
     coordenadas?: Coordenadas;
   };
   disponibilidade: {
     proximoSlot?: Date;
-    slotsDisponiveis: number;
+    slotsDisponiveis?: number;
   };
   especialidades: string[];
   genero: 'masculino' | 'feminino';

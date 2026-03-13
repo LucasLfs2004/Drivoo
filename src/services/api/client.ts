@@ -3,9 +3,11 @@ import { SecureStorageService } from '../secureStorage';
 import { AuthApiService } from '../authApi';
 import { handleApiError } from './errorHandler';
 import { apiLogger } from './logger';
+import { getToken } from '../auth/tokenStorage';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
 const API_TIMEOUT = 30000; // 30 seconds
+const ACCESS_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * Axios instance for API requests
@@ -50,7 +52,9 @@ const processQueue = (error: any, token: string | null = null) => {
 apiClient.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {
         try {
-            const accessToken = await SecureStorageService.getAccessToken();
+            const accessToken =
+                (await SecureStorageService.getAccessToken()) ??
+                (await getToken());
 
             if (accessToken) {
                 config.headers.Authorization = `Bearer ${accessToken}`;
@@ -111,7 +115,7 @@ apiClient.interceptors.response.use(
                 // Attempt to refresh the token
                 const refreshResponse = await AuthApiService.refreshToken();
 
-                const expiresAt = Date.now() + (refreshResponse.expiresIn * 1000);
+                const expiresAt = Date.now() + ACCESS_TOKEN_TTL_MS;
 
                 // Update stored tokens
                 await SecureStorageService.updateTokens(

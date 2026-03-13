@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
             setIsLoading(true);
             const response = await authService.login({ email, senha: password });
-            setUser(response.user);
+            setUser(response.usuario);
         } finally {
             setIsLoading(false);
         }
@@ -113,9 +113,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     name,
                     email,
                     password,
-                    userType: userType as 'student' | 'instructor' | 'admin',
+                    userType: userType as 'aluno' | 'instrutor' | 'admin',
                 });
-                setUser(response.user);
+                setUser(response.usuario);
             } finally {
                 setIsLoading(false);
             }

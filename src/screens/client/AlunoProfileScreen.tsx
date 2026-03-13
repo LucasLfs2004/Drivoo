@@ -13,7 +13,7 @@ import { AlunoProfileStackParamList } from '../../types/navigation';
 type Props = NativeStackScreenProps<AlunoProfileStackParamList, 'ProfileScreen'>;
 
 export const AlunoProfileScreen: React.FC<Props> = ({ navigation }) => {
-  const { logout } = useAuth();
+  const { logout, usuario } = useAuth();
   const { data: user, isLoading, error, refetch } = useUserQuery();
 
   const handleLogout = async () => {
@@ -125,7 +125,11 @@ export const AlunoProfileScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.headerTop}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {getInitials(user?.name)}
+                {getInitials(
+                  [user?.perfil?.primeiroNome, user?.perfil?.ultimoNome]
+                    .filter(Boolean)
+                    .join(' ')
+                )}
               </Text>
             </View>
             <TouchableOpacity
@@ -139,9 +143,11 @@ export const AlunoProfileScreen: React.FC<Props> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           <Text style={styles.name}>
-            {user?.name || 'Usuário'}
+            {[user?.perfil?.primeiroNome, user?.perfil?.ultimoNome]
+              .filter(Boolean)
+              .join(' ') || 'Usuário'}
           </Text>
-          <Text style={styles.email}>{user?.email}</Text>
+          <Text style={styles.email}>{user?.email || usuario?.email}</Text>
 
           <TouchableOpacity
             style={styles.editButton}
