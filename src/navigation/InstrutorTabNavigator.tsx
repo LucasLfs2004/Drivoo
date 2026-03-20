@@ -24,6 +24,8 @@ import type {
   InstrutorProfileStackParamList,
   ChatStackParamList,
 } from '../types/navigation';
+import { tabBarItemStyle, tabBarStyle } from './utils';
+import { scale } from '@/utils';
 
 const Tab = createBottomTabNavigator<InstrutorTabParamList>();
 const DashboardStack = createNativeStackNavigator<InstrutorDashboardStackParamList>();
@@ -70,16 +72,12 @@ export const InstrutorTabNavigator: React.FC = () => {
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary[500],
         tabBarInactiveTintColor: theme.colors.text.secondary,
-        tabBarStyle: {
-          backgroundColor: theme.colors.background.primary,
-          borderTopColor: theme.colors.border.light,
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 60,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
+        animation: 'shift',
+        tabBarItemStyle: tabBarItemStyle,
+        tabBarStyle: tabBarStyle,
+        tabBarIconStyle: {
+          width: 32,
+          height: 32,
         },
       }}
     >
@@ -88,8 +86,8 @@ export const InstrutorTabNavigator: React.FC = () => {
         component={DashboardStackNavigator}
         options={{
           tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <LayoutDashboard color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <LayoutDashboard color={color} size={scale(24)} />
           ),
         }}
       />
@@ -98,8 +96,8 @@ export const InstrutorTabNavigator: React.FC = () => {
         component={ScheduleStackNavigator}
         options={{
           tabBarLabel: 'Agenda',
-          tabBarIcon: ({ color, size }) => (
-            <Calendar color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <Calendar color={color} size={scale(24)} />
           ),
         }}
       />
@@ -108,8 +106,8 @@ export const InstrutorTabNavigator: React.FC = () => {
         component={EarningsStackNavigator}
         options={{
           tabBarLabel: 'Ganhos',
-          tabBarIcon: ({ color, size }) => (
-            <DollarSign color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <DollarSign color={color} size={scale(24)} />
           ),
         }}
       />
@@ -118,8 +116,8 @@ export const InstrutorTabNavigator: React.FC = () => {
         component={ChatStackNavigator}
         options={{
           tabBarLabel: 'Chat',
-          tabBarIcon: ({ color, size }) => (
-            <MessageCircle color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <MessageCircle color={color} size={scale(24)} />
           ),
         }}
       />
@@ -128,12 +126,11 @@ export const InstrutorTabNavigator: React.FC = () => {
         component={ProfileStackNavigator}
         options={{
           tabBarLabel: 'Perfil',
-          tabBarIcon: ({ color, size }) => (
-            <User color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <User color={color} size={scale(24)} />
           ),
         }}
       />
     </Tab.Navigator>
   );
 };
-

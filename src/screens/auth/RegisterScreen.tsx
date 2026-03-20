@@ -23,6 +23,9 @@ interface RegisterFormData {
   telefone: string;
   data_nascimento: string;
   cep: string;
+  rua?: string;
+  numero?: string;
+  bairro?: string;
   cidade: string;
   estado: string;
   // Campos do aluno
@@ -68,6 +71,9 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
       telefone: '',
       data_nascimento: '',
       cep: '',
+      rua: '',
+      numero: '',
+      bairro: '',
       cidade: 'São Paulo',
       estado: 'SP',
       possuiVeiculo: false,
@@ -92,6 +98,9 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handleUserTypeChange = (type: UserType) => {
     setUserType(type);
+    if (type !== 'aluno') {
+      setPossuiVeiculo(false);
+    }
     resetForm({ ...watch(), userType: type });
   };
 
@@ -151,6 +160,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
 
       if (userType === 'aluno') {
         const registerData: RegisterUser = {
+          userType: 'aluno',
           nome: data.nome,
           sobrenome: data.sobrenome,
           email: data.email,
@@ -180,11 +190,20 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
           throw new Error('Dados da CNH e valor/hora são obrigatórios');
         }
 
+        if (!data.cnh_categorias?.length) {
+          throw new Error('Selecione pelo menos uma categoria de CNH');
+        }
+
+        if (!data.rua || !data.numero || !data.bairro) {
+          throw new Error('Rua, número e bairro são obrigatórios para instrutores');
+        }
+
         if (!data.veiculo_marca || !data.veiculo_modelo_instrutor || !data.veiculo_ano_instrutor || !data.veiculo_placa_instrutor) {
           throw new Error('Dados do veículo são obrigatórios para instrutores');
         }
 
         const registerData: RegisterUser = {
+          userType: 'instrutor',
           nome: data.nome,
           sobrenome: data.sobrenome,
           email: data.email,
@@ -193,10 +212,13 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
           telefone: data.telefone.replace(/\D/g, ''),
           data_nascimento: formatarDataParaAPI(data.data_nascimento),
           cep: data.cep.replace(/\D/g, ''),
+          rua: data.rua,
+          numero: data.numero,
+          bairro: data.bairro,
           cidade: data.cidade,
           estado: data.estado,
           cnh_numero: data.cnh_numero,
-          cnh_categorias: data.cnh_categorias || ['B'],
+          cnh_categorias: data.cnh_categorias,
           cnh_vencimento: formatarDataParaAPI(data.cnh_vencimento, false),
           valor_hora: parseFloat(data.valor_hora),
           bio: data.bio,
@@ -225,9 +247,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
       );
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Falha no registro. Tente novamente.';
-      Alert.alert('Erro', errorMessage, [
-        { text: 'OK', onPress: () => navigation.navigate('Login') }
-      ]);
+      Alert.alert('Erro', errorMessage);
     }
   };
 
@@ -558,110 +578,114 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
               )}
             />
 
-            <Text style={styles.sectionTitle}>Veículo (Opcional)</Text>
-
-            <View style={styles.switchContainer}>
-              <Text style={styles.switchLabel}>Possuo veículo particular</Text>
-              <Switch
-                value={possuiVeiculo}
-                onValueChange={setPossuiVeiculo}
-                trackColor={{ false: theme.colors.border.medium, true: theme.colors.primary[500] }}
-                thumbColor={possuiVeiculo ? theme.colors.primary[500] : theme.colors.border.light}
-              />
-            </View>
-
-            {possuiVeiculo && (
+            {userType === 'aluno' && (
               <>
-                <Controller
-                  control={control}
-                  name="veiculo_modelo"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <FormInput
-                      label="Modelo do Veículo"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      placeholder="Ex: Gol, Uno, etc."
-                      error={errors.veiculo_modelo?.message}
+                <Text style={styles.sectionTitle}>Veículo (Opcional)</Text>
+
+                <View style={styles.switchContainer}>
+                  <Text style={styles.switchLabel}>Possuo veículo particular</Text>
+                  <Switch
+                    value={possuiVeiculo}
+                    onValueChange={setPossuiVeiculo}
+                    trackColor={{ false: theme.colors.border.medium, true: theme.colors.primary[500] }}
+                    thumbColor={possuiVeiculo ? theme.colors.primary[500] : theme.colors.border.light}
+                  />
+                </View>
+
+                {possuiVeiculo && (
+                  <>
+                    <Controller
+                      control={control}
+                      name="veiculo_modelo"
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <FormInput
+                          label="Modelo do Veículo"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          placeholder="Ex: Gol, Uno, etc."
+                          error={errors.veiculo_modelo?.message}
+                        />
+                      )}
                     />
-                  )}
-                />
 
-                <Controller
-                  control={control}
-                  name="veiculo_ano"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <FormInput
-                      label="Ano do Veículo"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      keyboardType="numeric"
-                      placeholder="Ex: 2020"
-                      error={errors.veiculo_ano?.message}
+                    <Controller
+                      control={control}
+                      name="veiculo_ano"
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <FormInput
+                          label="Ano do Veículo"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          keyboardType="numeric"
+                          placeholder="Ex: 2020"
+                          error={errors.veiculo_ano?.message}
+                        />
+                      )}
                     />
-                  )}
-                />
 
-                <Controller
-                  control={control}
-                  name="veiculo_placa"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <FormInput
-                      label="Placa do Veículo"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      placeholder="ABC-1234"
-                      error={errors.veiculo_placa?.message}
+                    <Controller
+                      control={control}
+                      name="veiculo_placa"
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <FormInput
+                          label="Placa do Veículo"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          placeholder="ABC-1234"
+                          error={errors.veiculo_placa?.message}
+                        />
+                      )}
                     />
-                  )}
-                />
 
-                <Controller
-                  control={control}
-                  name="veiculo_tipo_cambio"
-                  render={({ field: { onChange, value } }) => (
-                    <View style={styles.cambioContainer}>
-                      <Text style={styles.cambioLabel}>Tipo de Câmbio</Text>
-                      <View style={styles.cambioButtons}>
-                        <TouchableOpacity
-                          style={[
-                            styles.cambioButton,
-                            value === 'MANUAL' && styles.cambioButtonActive,
-                          ]}
-                          onPress={() => onChange('MANUAL')}
-                        >
-                          <Text
-                            style={[
-                              styles.cambioButtonText,
-                              value === 'MANUAL' && styles.cambioButtonTextActive,
-                            ]}
-                          >
-                            Manual
-                          </Text>
-                        </TouchableOpacity>
+                    <Controller
+                      control={control}
+                      name="veiculo_tipo_cambio"
+                      render={({ field: { onChange, value } }) => (
+                        <View style={styles.cambioContainer}>
+                          <Text style={styles.cambioLabel}>Tipo de Câmbio</Text>
+                          <View style={styles.cambioButtons}>
+                            <TouchableOpacity
+                              style={[
+                                styles.cambioButton,
+                                value === 'MANUAL' && styles.cambioButtonActive,
+                              ]}
+                              onPress={() => onChange('MANUAL')}
+                            >
+                              <Text
+                                style={[
+                                  styles.cambioButtonText,
+                                  value === 'MANUAL' && styles.cambioButtonTextActive,
+                                ]}
+                              >
+                                Manual
+                              </Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity
-                          style={[
-                            styles.cambioButton,
-                            value === 'AUTOMATICO' && styles.cambioButtonActive,
-                          ]}
-                          onPress={() => onChange('AUTOMATICO')}
-                        >
-                          <Text
-                            style={[
-                              styles.cambioButtonText,
-                              value === 'AUTOMATICO' && styles.cambioButtonTextActive,
-                            ]}
-                          >
-                            Automático
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  )}
-                />
+                            <TouchableOpacity
+                              style={[
+                                styles.cambioButton,
+                                value === 'AUTOMATICO' && styles.cambioButtonActive,
+                              ]}
+                              onPress={() => onChange('AUTOMATICO')}
+                            >
+                              <Text
+                                style={[
+                                  styles.cambioButtonText,
+                                  value === 'AUTOMATICO' && styles.cambioButtonTextActive,
+                                ]}
+                              >
+                                Automático
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      )}
+                    />
+                  </>
+                )}
               </>
             )}
 
@@ -699,6 +723,111 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                       keyboardType="numeric"
                       placeholder="DD/MM/AAAA"
                       error={errors.cnh_vencimento?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="cnh_categorias"
+                  rules={{
+                    validate: (value) =>
+                      value && value.length > 0 ? true : 'Selecione pelo menos uma categoria de CNH'
+                  }}
+                  render={({ field: { onChange, value } }) => {
+                    const categoriasSelecionadas = value || [];
+
+                    const toggleCategoria = (categoria: string) => {
+                      if (categoriasSelecionadas.includes(categoria)) {
+                        onChange(categoriasSelecionadas.filter(item => item !== categoria));
+                        return;
+                      }
+
+                      onChange([...categoriasSelecionadas, categoria]);
+                    };
+
+                    return (
+                      <View style={styles.cnhCategoriasContainer}>
+                        <Text style={styles.cambioLabel}>Categorias da CNH</Text>
+                        <View style={styles.cambioButtons}>
+                          {['A', 'B'].map(categoria => {
+                            const selecionada = categoriasSelecionadas.includes(categoria);
+
+                            return (
+                              <TouchableOpacity
+                                key={categoria}
+                                style={[
+                                  styles.cambioButton,
+                                  selecionada && styles.cambioButtonActive,
+                                ]}
+                                onPress={() => toggleCategoria(categoria)}
+                              >
+                                <Text
+                                  style={[
+                                    styles.cambioButtonText,
+                                    selecionada && styles.cambioButtonTextActive,
+                                  ]}
+                                >
+                                  {categoria}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                        {errors.cnh_categorias?.message && (
+                          <Text style={styles.fieldErrorText}>{errors.cnh_categorias.message}</Text>
+                        )}
+                      </View>
+                    );
+                  }}
+                />
+
+                <Text style={styles.sectionTitle}>Endereço do Instrutor</Text>
+
+                <Controller
+                  control={control}
+                  name="rua"
+                  rules={{ validate: userType === 'instrutor' ? validateRequired : undefined }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Rua"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="Ex: Rua das Flores"
+                      error={errors.rua?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="numero"
+                  rules={{ validate: userType === 'instrutor' ? validateRequired : undefined }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Número"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="Ex: 123"
+                      error={errors.numero?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="bairro"
+                  rules={{ validate: userType === 'instrutor' ? validateRequired : undefined }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <FormInput
+                      label="Bairro"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="Ex: Vila Madalena"
+                      error={errors.bairro?.message}
                     />
                   )}
                 />
@@ -979,6 +1108,9 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.medium,
     color: theme.colors.text.primary,
   },
+  cnhCategoriasContainer: {
+    marginBottom: theme.spacing.lg,
+  },
   cambioContainer: {
     marginBottom: theme.spacing.lg,
   },
@@ -1012,5 +1144,10 @@ const styles = StyleSheet.create({
   },
   cambioButtonTextActive: {
     color: theme.colors.text.inverse,
+  },
+  fieldErrorText: {
+    marginTop: theme.spacing.sm,
+    color: '#C62828',
+    fontSize: theme.typography.fontSize.sm,
   },
 });

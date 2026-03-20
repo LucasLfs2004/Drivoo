@@ -395,52 +395,136 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       dispatch({ type: 'AUTH_LOADING', payload: true });
 
-      // Call the register function for aluno using authService
-      const response = await authService.registerAluno({
-        email: data.email,
-        senha: data.senha,
-        nome: data.nome,
-        sobrenome: data.sobrenome,
-        cpf: data.cpf,
-        telefone: data.telefone,
-        data_nascimento: data.data_nascimento,
-        cep: data.cep,
-        cidade: data.cidade,
-        estado: data.estado,
-        veiculo: data.veiculo,
-      });
+      const registrationUserType = data.userType ?? (data.cnh_numero ? 'instrutor' : 'aluno');
 
-      // Create a user from the response
-      const user: Usuario = {
-        id: `user-aluno-${Date.now()}`,
-        email: data.email,
-        telefone: data.telefone,
-        papel: 'aluno',
-        perfil: {
-          primeiroNome: data.nome,
-          ultimoNome: data.sobrenome,
-          dataNascimento: new Date(data.data_nascimento.split('/').reverse().join('-')),
-          endereco: {
-            rua: '',
-            numero: '',
-            bairro: '',
+      const response = registrationUserType === 'instrutor'
+        ? await authService.registerInstrutor({
+            email: data.email,
+            senha: data.senha,
+            nome: data.nome,
+            sobrenome: data.sobrenome,
+            cpf: data.cpf,
+            telefone: data.telefone,
+            data_nascimento: data.data_nascimento,
+            cnh_numero: data.cnh_numero ?? '',
+            cnh_categorias: data.cnh_categorias ?? [],
+            cnh_vencimento: data.cnh_vencimento ?? '',
+            valor_hora: data.valor_hora ?? 0,
+            bio: data.bio,
+            endereco: {
+              rua: data.rua ?? '',
+              numero: data.numero ?? '',
+              bairro: data.bairro ?? '',
+              cidade: data.cidade,
+              estado: data.estado,
+              cep: data.cep,
+              pais: 'BR',
+            },
+            veiculo: data.veiculo!,
+          })
+        : await authService.registerAluno({
+            email: data.email,
+            senha: data.senha,
+            nome: data.nome,
+            sobrenome: data.sobrenome,
+            cpf: data.cpf,
+            telefone: data.telefone,
+            data_nascimento: data.data_nascimento,
+            cep: data.cep,
             cidade: data.cidade,
             estado: data.estado,
-            cep: data.cep,
-            pais: 'BR',
-          },
-          cnh: {
-            categoria: 'B',
-            status: 'nenhuma',
-          },
-          preferencias: {
-            localizacao: { latitude: -23.5505, longitude: -46.6333 },
-            raio: 10,
-          },
+            veiculo: data.veiculo,
+          });
+
+      const user = mapApiUserToUsuario(
+        {
+          id: response.usuario.id,
+          email: response.usuario.email,
+          nome: response.usuario.nome,
+          sobrenome: response.usuario.sobrenome,
+          tipo: response.usuario.tipo,
+          telefone: response.usuario.telefone ?? data.telefone,
         },
-        criadoEm: new Date(),
-        atualizadoEm: new Date(),
-      };
+        registrationUserType === 'instrutor'
+          ? {
+              id: response.usuario.id,
+              email: data.email,
+              telefone: data.telefone,
+              papel: 'instrutor',
+              perfil: {
+                primeiroNome: data.nome,
+                ultimoNome: data.sobrenome,
+                detranId: '',
+                licenca: {
+                  numero: data.cnh_numero ?? '',
+                  dataVencimento: data.cnh_vencimento ? new Date(`${data.cnh_vencimento}T00:00:00`) : new Date(),
+                  categorias: (data.cnh_categorias?.filter(
+                    (categoria): categoria is 'A' | 'B' => categoria === 'A' || categoria === 'B'
+                  ) ?? ['B']),
+                },
+                veiculo: {
+                  marca: data.veiculo?.marca ?? '',
+                  modelo: data.veiculo?.modelo ?? '',
+                  ano: data.veiculo?.ano ?? new Date().getFullYear(),
+                  transmissao: data.veiculo?.tipo_cambio === 'AUTOMATICO' ? 'automatico' : 'manual',
+                  placa: data.veiculo?.placa ?? '',
+                },
+                disponibilidade: {
+                  segunda: { disponivel: false, horarios: [] },
+                  terca: { disponivel: false, horarios: [] },
+                  quarta: { disponivel: false, horarios: [] },
+                  quinta: { disponivel: false, horarios: [] },
+                  sexta: { disponivel: false, horarios: [] },
+                  sabado: { disponivel: false, horarios: [] },
+                  domingo: { disponivel: false, horarios: [] },
+                },
+                precos: {
+                  valorHora: data.valor_hora ?? 0,
+                  moeda: 'BRL',
+                },
+                localizacao: {
+                  localizacaoBase: { latitude: 0, longitude: 0 },
+                  raioAtendimento: 0,
+                },
+                avaliacoes: {
+                  media: 0,
+                  quantidade: 0,
+                },
+              },
+              criadoEm: new Date(),
+              atualizadoEm: new Date(),
+            }
+          : {
+              id: response.usuario.id,
+              email: data.email,
+              telefone: data.telefone,
+              papel: 'aluno',
+              perfil: {
+                primeiroNome: data.nome,
+                ultimoNome: data.sobrenome,
+                dataNascimento: new Date(`${data.data_nascimento}T00:00:00`),
+                endereco: {
+                  rua: '',
+                  numero: '',
+                  bairro: '',
+                  cidade: data.cidade,
+                  estado: data.estado,
+                  cep: data.cep,
+                  pais: 'BR',
+                },
+                cnh: {
+                  categoria: 'B',
+                  status: 'nenhuma',
+                },
+                preferencias: {
+                  localizacao: { latitude: -23.5505, longitude: -46.6333 },
+                  raio: 10,
+                },
+              },
+              criadoEm: new Date(),
+              atualizadoEm: new Date(),
+            }
+      );
 
       const token = response.access_token;
       await SecureStorageService.storeAuthData({

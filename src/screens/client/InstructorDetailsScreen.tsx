@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borders.radius.md,
     borderWidth: 1,
-    borderTopColor: theme.colors.border.light,
+    borderColor: theme.colors.border.light,
     backgroundColor: theme.colors.background.primary,
     minWidth: 80,
     alignItems: 'center',

@@ -215,6 +215,7 @@ export interface ValidationResult {
 }
 
 export interface RegisterUser {
+  userType: 'aluno' | 'instrutor';
   nome: string;
   sobrenome: string;
   email: string;
@@ -223,6 +224,9 @@ export interface RegisterUser {
   telefone: string;
   data_nascimento: string;
   cep: string;
+  rua?: string;
+  numero?: string;
+  bairro?: string;
   cidade: string;
   estado: string;
   veiculo?: VehicleUser;
