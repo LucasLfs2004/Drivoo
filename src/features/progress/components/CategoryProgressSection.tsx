@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Bike, Car } from 'lucide-react-native';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import { Typography, Badge } from '../../../shared/ui/base';
 import { LessonCounter } from './LessonCounter';
 

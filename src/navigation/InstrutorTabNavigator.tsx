@@ -15,7 +15,7 @@ import {
 } from '../features/instructor-panel';
 import { InstrutorProfileScreen } from '../features/profile';
 import { ChatListScreen } from '../screens/shared/ChatListScreen';
-import { theme } from '../themes';
+import { theme } from '../theme';
 import type {
   InstrutorTabParamList,
   InstrutorDashboardStackParamList,

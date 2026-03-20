@@ -11,9 +11,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { Card } from '../../../shared/ui/base/Card';
 import { Button } from '../../../shared/ui/base/Button';
-import { FormInput } from '../../../components/forms/FormInput';
-import { FormImagePicker } from '../../../components/forms/FormImagePicker';
-import { theme } from '../../../themes';
+import { FormImagePicker, FormInput } from '../../../shared/ui/forms';
+import { theme } from '../../../theme';
 
 interface InstructorProfileFormData {
   primeiroNome: string;

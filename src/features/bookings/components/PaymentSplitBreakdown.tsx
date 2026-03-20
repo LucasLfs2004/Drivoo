@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import { formatCurrency } from '../../../utils/currency';
 import { PaymentSplitInfo } from '../types/domain';
 

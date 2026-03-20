@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Card } from '../../../shared/ui/base/Card';
 import { Button } from '../../../shared/ui/base/Button';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { AlunoTabParamList } from '../../../types/navigation';
 

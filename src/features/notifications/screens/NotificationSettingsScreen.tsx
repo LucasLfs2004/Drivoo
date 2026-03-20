@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useNotificationContext } from '../../../contexts/NotificationContext';
 import type { NotificationSettings } from '../types/domain';
-import { colors, spacing, typography } from '../../../themes/variables';
+import { colors, spacing, typography } from '../../../theme/variables';
 
 export function NotificationSettingsScreen() {
   const {

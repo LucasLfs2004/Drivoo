@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Card, Typography } from '../../../shared/ui/base';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 
 interface Achievement {
   id: string;

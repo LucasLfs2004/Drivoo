@@ -1,2 +1,2 @@
-export * from '../themes';
-export { default } from '../themes';
+export * from './variables';
+export { theme as default } from './variables';

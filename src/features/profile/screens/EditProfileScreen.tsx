@@ -12,9 +12,9 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useForm, Controller } from 'react-hook-form';
 import { Card } from '../../../shared/ui/base/Card';
 import { Button } from '../../../shared/ui/base/Button';
-import { FormInput } from '../../../components/forms/FormInput';
+import { FormInput } from '../../../shared/ui/forms';
 import { useAuth } from '../../../core/auth';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import { AlunoProfileStackParamList } from '../../../types/navigation';
 import type { Usuario } from '../../../types/auth';
 

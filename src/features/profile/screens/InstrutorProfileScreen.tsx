@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../../shared/ui/base/Card';
 import { Button } from '../../../shared/ui/base/Button';
 import { useAuth } from '../../../core/auth';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import type { PerfilInstrutor } from '../../../types/auth';
 
 interface NavigationLike {

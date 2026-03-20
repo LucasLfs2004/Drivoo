@@ -11,9 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '../../../shared/ui/base/Button';
-import { FormInput } from '../../../components/forms/FormInput';
+import { FormInput } from '../../../shared/ui/forms';
 import { useAuth } from '../../../core/auth';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import type { AuthStackScreenProps } from '../../../types/navigation';
 import type { RegisterUser } from '../../../types/auth';
 

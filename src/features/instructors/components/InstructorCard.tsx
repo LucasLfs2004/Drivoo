@@ -9,7 +9,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 
 export interface InstructorCardProps {
   id: string;

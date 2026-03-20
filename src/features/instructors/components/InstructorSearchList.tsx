@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import type { InstrutorDisponivel } from '../types/domain';
 import { InstructorCard } from './InstructorCard';
 

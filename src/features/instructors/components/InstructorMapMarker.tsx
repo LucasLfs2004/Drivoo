@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 
 interface InstructorMapMarkerProps {
   instructor: {

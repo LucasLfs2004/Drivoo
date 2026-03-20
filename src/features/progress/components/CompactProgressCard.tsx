@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import { Card, Typography } from '../../../shared/ui/base';
 import { loadProgress } from '../../../services/progressStorage';
 

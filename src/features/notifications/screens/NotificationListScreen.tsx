@@ -10,7 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useNotificationContext } from '../../../contexts/NotificationContext';
 import type { NotificationData } from '../types/domain';
-import { colors, spacing, typography } from '../../../themes/variables';
+import { colors, spacing, typography } from '../../../theme/variables';
 
 export function NotificationListScreen() {
   const navigation = useNavigation();

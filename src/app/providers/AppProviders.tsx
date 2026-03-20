@@ -4,8 +4,8 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '../../core/auth';
-import { queryClient } from '../../services/queries/queryClient';
 import { STRIPE_PUBLISHABLE_KEY } from '../../services/stripeService';
+import { queryClient } from './queryClient';
 
 interface AppProvidersProps {
   children: React.ReactNode;

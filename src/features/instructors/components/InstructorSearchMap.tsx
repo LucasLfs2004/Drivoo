@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import { InstructorMapMarker } from './InstructorMapMarker';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import type { InstrutorDisponivel } from '../types/domain';
 
 interface InstructorSearchMapProps {

@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button } from '../../../shared/ui/base/Button';
 import { Card } from '../../../shared/ui/base/Card';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import { AlunoSearchStackParamList } from '../../../types/navigation';
 import { calculateBookingPaymentInfo } from '../utils/payment';
 import { validateBookingData } from '../utils/validation';

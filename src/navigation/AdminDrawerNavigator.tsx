@@ -9,7 +9,7 @@ import {
   AdminUsersScreen,
 } from '../features/admin';
 import { useAuth } from '../core/auth';
-import { theme } from '../themes';
+import { theme } from '../theme';
 import type {
   AdminDrawerParamList,
   AdminAnalyticsStackParamList,

@@ -10,7 +10,7 @@ import {
     IconButton,
 } from '../../shared/ui/base';
 import { Home, Heart, Settings, Bell } from 'lucide-react-native';
-import { theme } from '../../themes';
+import { theme } from '../../theme';
 
 export const DesignSystemScreen: React.FC = () => {
     return (

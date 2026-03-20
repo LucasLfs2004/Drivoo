@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Lightbulb } from 'lucide-react-native';
 import { Button, Card, Typography } from '../../../shared/ui/base';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 
 interface TipCardProps {
   title?: string;

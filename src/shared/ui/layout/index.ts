@@ -1,2 +1,2 @@
-export { HeaderBar } from '../../../components/navigation/HeaderBar';
-export { TabBar } from '../../../components/navigation/TabBar';
+export { HeaderBar } from './HeaderBar';
+export { TabBar } from './TabBar';

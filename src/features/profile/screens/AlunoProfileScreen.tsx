@@ -14,7 +14,7 @@ import { RefreshCw } from 'lucide-react-native';
 import { Card } from '../../../shared/ui/base/Card';
 import { Button } from '../../../shared/ui/base/Button';
 import { useAuth } from '../../../core/auth';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import { AlunoProfileStackParamList } from '../../../types/navigation';
 import { useUserQuery } from '../hooks/useUserQuery';
 

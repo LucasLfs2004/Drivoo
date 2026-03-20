@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../shared/ui/base/Card';
-import { theme } from '../../themes';
+import { theme } from '../../theme';
 
 export const ChatListScreen: React.FC = () => {
   return (

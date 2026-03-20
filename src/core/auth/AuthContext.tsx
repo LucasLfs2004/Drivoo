@@ -8,8 +8,8 @@ import {
 } from '../../types/auth';
 import { authService } from '../../features/auth/api/authService';
 import { getRefreshToken, getToken, removeToken } from '../storage';
-import { queryClient } from '../../services/queries/queryClient';
 import { SecureStorageService } from '../storage';
+import { queryClient } from '../../app/providers/queryClient';
 import {
   mapApiUserToUsuario,
   userProfileApi as userService,

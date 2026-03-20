@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '../../../shared/ui/base/Button';
-import { FormInput } from '../../../components/forms/FormInput';
+import { FormInput } from '../../../shared/ui/forms';
 import { AuthApiService } from '../api/authApiService';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import type { AuthStackScreenProps } from '../../../types/navigation';
 import type { ForgotPasswordRequest } from '../../../types/auth';
 

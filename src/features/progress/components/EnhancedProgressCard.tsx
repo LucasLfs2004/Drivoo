@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, Vibration } from 'react-native';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import { Card, Typography, Divider } from '../../../shared/ui/base';
 import { CategoryProgressSection } from './CategoryProgressSection';
 import { loadProgress, saveProgress } from '../../../services/progressStorage';

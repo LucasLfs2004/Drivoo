@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Card } from '../../../shared/ui/base/Card';
 import { Button } from '../../../shared/ui/base/Button';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import { AlunoProfileStackParamList } from '../../../types/navigation';
 
 type Props = NativeStackScreenProps<AlunoProfileStackParamList, 'Settings'>;

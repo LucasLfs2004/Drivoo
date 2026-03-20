@@ -12,8 +12,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import MapView, { Region } from 'react-native-maps';
 import { InstructorSearchList } from '../components/InstructorSearchList';
 import { InstructorSearchMap } from '../components/InstructorSearchMap';
-import { FiltersModal } from '../../../components/forms/FiltersModal';
-import { theme } from '../../../themes';
+import { FiltersModal } from '../../../shared/ui/forms';
+import { theme } from '../../../theme';
 import {
   FiltrosBusca,
   InstrutorDisponivel,

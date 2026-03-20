@@ -3,13 +3,13 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import Header from '@/components/shared/header';
 import { Button, Card } from '../../../shared/ui/base';
 import { CompactProgressCard } from '../../../features/progress';
-import { theme } from '../../../themes';
+import { theme } from '../../../theme';
 import type { AlunoHomeStackParamList } from '../../../types/navigation';
 import { AchievementsCard } from '../components/AchievementsCard';
 import { EnhancedLessonCard } from '../components/EnhancedLessonCard';
+import { HomeHeader } from '../components/HomeHeader';
 import { TipCard } from '../components/TipCard';
 
 type NavigationProp = NativeStackNavigationProp<AlunoHomeStackParamList>;
@@ -40,7 +40,7 @@ export const AlunoHomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <ScrollView style={styles.content}>
-        <Header />
+        <HomeHeader />
 
         <CompactProgressCard onPress={handleProgressPress} />
 

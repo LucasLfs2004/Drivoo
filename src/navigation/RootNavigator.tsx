@@ -6,7 +6,7 @@ import { AuthStackNavigator } from './AuthStackNavigator';
 import { AlunoTabNavigator } from './AlunoTabNavigator';
 import { InstrutorTabNavigator } from './InstrutorTabNavigator';
 import { AdminDrawerNavigator } from './AdminDrawerNavigator';
-import { theme } from '../themes';
+import { theme } from '../theme';
 import type { RootStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

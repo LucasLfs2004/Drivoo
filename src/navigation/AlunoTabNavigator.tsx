@@ -27,7 +27,7 @@ import { ProgressDetailsScreen } from '../features/progress';
 import { ChatListScreen } from '../screens/shared/ChatListScreen';
 import { ComponentShowcaseScreen } from '../screens/shared/ComponentShowcaseScreen';
 import { DesignSystemScreen } from '../screens/shared/DesignSystemScreen';
-import { theme } from '../themes';
+import { theme } from '../theme';
 import type {
   AlunoTabParamList,
   AlunoHomeStackParamList,
