@@ -1,5 +1,4 @@
-import { authService } from '../../services/auth/authService';
-import { AuthApiService } from '../../services/authApi';
+import { AuthApiService } from '../../features/auth/api/authApiService';
 
 // Mock do console.log para não poluir os logs
 const originalConsoleLog = console.log;
@@ -82,7 +81,7 @@ describe('Registro de Instrutor', () => {
             expect(result).toHaveProperty('access_token');
             expect(result).toHaveProperty('instrutor');
             expect(result.instrutor.valor_hora).toBe(80.00);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro no teste:', error);
             throw error;
         }
@@ -126,7 +125,7 @@ describe('Registro de Instrutor', () => {
         try {
             await AuthApiService.registerInstrutor(instrutorData);
             fail('Deveria ter lançado um erro de CNH obrigatória');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toContain('CNH');
         }
     });
@@ -169,7 +168,7 @@ describe('Registro de Instrutor', () => {
         try {
             await AuthApiService.registerInstrutor(instrutorData);
             fail('Deveria ter lançado um erro de categorias da CNH');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toContain('categoria');
         }
     });
@@ -212,7 +211,7 @@ describe('Registro de Instrutor', () => {
         try {
             await AuthApiService.registerInstrutor(instrutorData);
             fail('Deveria ter lançado um erro de valor/hora inválido');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toContain('valor/hora');
         }
     });
@@ -247,7 +246,7 @@ describe('Registro de Instrutor', () => {
         try {
             await AuthApiService.registerInstrutor(instrutorData);
             fail('Deveria ter lançado um erro de endereço obrigatório');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toContain('endereço');
         }
     });
@@ -284,7 +283,7 @@ describe('Registro de Instrutor', () => {
         try {
             await AuthApiService.registerInstrutor(instrutorData);
             fail('Deveria ter lançado um erro de veículo obrigatório');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toContain('veículo');
         }
     });
@@ -327,7 +326,7 @@ describe('Registro de Instrutor', () => {
         try {
             await AuthApiService.registerInstrutor(instrutorData);
             fail('Deveria ter lançado um erro de CNH inválida');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toContain('CNH');
         }
     });

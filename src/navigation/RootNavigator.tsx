@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../core/auth';
 import { AuthStackNavigator } from './AuthStackNavigator';
 import { AlunoTabNavigator } from './AlunoTabNavigator';
 import { InstrutorTabNavigator } from './InstrutorTabNavigator';

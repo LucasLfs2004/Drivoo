@@ -1,5 +1,4 @@
-import { authService } from '../../services/auth/authService';
-import { AuthApiService } from '../../services/authApi';
+import { AuthApiService } from '../../features/auth/api/authApiService';
 
 // Mock do console.log para não poluir os logs
 const originalConsoleLog = console.log;
@@ -74,12 +73,13 @@ describe('Login', () => {
         };
 
         try {
-            const result = await AuthApiService.login(credentials);
+            const result: any = await AuthApiService.login(credentials);
+            const usuario = result.usuario ?? result.data?.usuario;
             expect(result).toBeDefined();
-            expect(result).toHaveProperty('usuario');
-            expect(result.usuario.email).toBe('aluno@teste.com');
-            expect(result.usuario.papel).toBe('aluno');
-        } catch (error) {
+            expect(usuario).toBeDefined();
+            expect(usuario.email).toBe('aluno@teste.com');
+            expect(usuario.papel).toBe('aluno');
+        } catch (error: any) {
             console.error('Erro no teste:', error);
             throw error;
         }
@@ -105,7 +105,7 @@ describe('Login', () => {
         try {
             await AuthApiService.login(credentials);
             fail('Deveria ter lançado um erro de credenciais inválidas');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toBeDefined();
             expect(error.message).toContain('Credenciais');
         }
@@ -120,7 +120,7 @@ describe('Login', () => {
         try {
             await AuthApiService.login(credentials);
             fail('Deveria ter lançado um erro de email obrigatório');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toBeDefined();
         }
     });
@@ -134,7 +134,7 @@ describe('Login', () => {
         try {
             await AuthApiService.login(credentials);
             fail('Deveria ter lançado um erro de senha obrigatória');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toBeDefined();
         }
     });
@@ -148,7 +148,7 @@ describe('Login', () => {
         try {
             await AuthApiService.login(credentials);
             fail('Deveria ter lançado um erro de email inválido');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toBeDefined();
         }
     });
@@ -165,7 +165,7 @@ describe('Login', () => {
         try {
             await AuthApiService.login(credentials);
             fail('Deveria ter lançado um erro de rede');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toBeDefined();
             expect(error.message).toContain('rede');
         }
@@ -191,7 +191,7 @@ describe('Login', () => {
         try {
             await AuthApiService.login(credentials);
             fail('Deveria ter lançado um erro de servidor');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toBeDefined();
             expect(error.message).toContain('servidor');
         }
@@ -212,7 +212,7 @@ describe('Login', () => {
         try {
             await AuthApiService.login(credentials);
             fail('Deveria ter lançado um erro de timeout');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toBeDefined();
             expect(error.message).toContain('expirou');
         }
@@ -272,9 +272,9 @@ describe('Login', () => {
         };
 
         try {
-            const alunoResult = await AuthApiService.login(alunoCredentials);
-            expect(alunoResult.usuario.papel).toBe('aluno');
-        } catch (error) {
+            const alunoResult: any = await AuthApiService.login(alunoCredentials);
+            expect((alunoResult.usuario ?? alunoResult.data?.usuario).papel).toBe('aluno');
+        } catch (error: any) {
             console.error('Erro no teste de aluno:', error);
             throw error;
         }
@@ -348,9 +348,9 @@ describe('Login', () => {
         };
 
         try {
-            const instrutorResult = await AuthApiService.login(instrutorCredentials);
-            expect(instrutorResult.usuario.papel).toBe('instrutor');
-        } catch (error) {
+            const instrutorResult: any = await AuthApiService.login(instrutorCredentials);
+            expect((instrutorResult.usuario ?? instrutorResult.data?.usuario).papel).toBe('instrutor');
+        } catch (error: any) {
             console.error('Erro no teste de instrutor:', error);
             throw error;
         }

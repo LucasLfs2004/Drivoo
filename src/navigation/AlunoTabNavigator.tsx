@@ -9,17 +9,21 @@ import {
   User,
 } from 'lucide-react-native';
 import {
-  AlunoHomeScreen,
-  AlunoSearchScreen,
   AlunoBookingsScreen,
-  AlunoProfileScreen,
   BookingConfirmationScreen,
   PaymentConfirmationScreen,
+} from '../features/bookings';
+import {
+  AlunoInstructorDetailsScreen as InstructorDetailsScreen,
+  AlunoInstructorSearchScreen as AlunoSearchScreen,
+} from '../features/instructors';
+import {
+  AlunoProfileScreen,
   EditProfileScreen,
   SettingsScreen,
-} from '../screens/client';
-import { InstructorDetailsScreen } from '../screens/client/InstructorDetailsScreen';
-import { ProgressDetailsScreen } from '../screens/client/ProgressDetailsScreen';
+} from '../features/profile';
+import { AlunoHomeScreen } from '../features/home';
+import { ProgressDetailsScreen } from '../features/progress';
 import { ChatListScreen } from '../screens/shared/ChatListScreen';
 import { ComponentShowcaseScreen } from '../screens/shared/ComponentShowcaseScreen';
 import { DesignSystemScreen } from '../screens/shared/DesignSystemScreen';
@@ -33,7 +37,7 @@ import type {
   ChatStackParamList,
 } from '../types/navigation';
 import { tabBarItemStyle, tabBarStyle } from './utils';
-import { scale } from '@/utils';
+import { scale } from '../utils';
 
 const Tab = createBottomTabNavigator<AlunoTabParamList>();
 const HomeStack = createNativeStackNavigator<AlunoHomeStackParamList>();
@@ -170,4 +174,3 @@ export const AlunoTabNavigator: React.FC = () => {
     </Tab.Navigator>
   );
 };
-

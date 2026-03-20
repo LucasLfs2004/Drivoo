@@ -19,7 +19,7 @@ describe('Instructor Search', () => {
     const resultado = await searchInstructors(filtros, 1, 10);
 
     expect(resultado.instrutores.length).toBeGreaterThan(0);
-    resultado.instrutores.forEach(instrutor => {
+    resultado.instrutores.forEach((instrutor: any) => {
       expect(instrutor.genero).toBe('feminino');
     });
   });
@@ -31,7 +31,7 @@ describe('Instructor Search', () => {
     const resultado = await searchInstructors(filtros, 1, 10);
 
     expect(resultado.instrutores.length).toBeGreaterThan(0);
-    resultado.instrutores.forEach(instrutor => {
+    resultado.instrutores.forEach((instrutor: any) => {
       expect(instrutor.veiculo.transmissao).toBe('automatico');
     });
   });
@@ -43,7 +43,7 @@ describe('Instructor Search', () => {
     const resultado = await searchInstructors(filtros, 1, 10);
 
     expect(resultado.instrutores.length).toBeGreaterThan(0);
-    resultado.instrutores.forEach(instrutor => {
+    resultado.instrutores.forEach((instrutor: any) => {
       expect(instrutor.precos.valorHora).toBeLessThanOrEqual(85);
     });
   });
@@ -55,7 +55,7 @@ describe('Instructor Search', () => {
     const resultado = await searchInstructors(filtros, 1, 10);
 
     expect(resultado.instrutores.length).toBeGreaterThan(0);
-    resultado.instrutores.forEach(instrutor => {
+    resultado.instrutores.forEach((instrutor: any) => {
       expect(instrutor.avaliacoes.media).toBeGreaterThanOrEqual(4.8);
     });
   });
@@ -70,7 +70,7 @@ describe('Instructor Search', () => {
     const resultado = await searchInstructors(filtros, 1, 10);
 
     expect(resultado.instrutores.length).toBeGreaterThan(0);
-    resultado.instrutores.forEach(instrutor => {
+    resultado.instrutores.forEach((instrutor: any) => {
       expect(instrutor.localizacao.distancia).toBeLessThanOrEqual(3);
     });
   });
@@ -83,7 +83,7 @@ describe('Instructor Search', () => {
     };
     const resultado = await searchInstructors(filtros, 1, 10);
 
-    resultado.instrutores.forEach(instrutor => {
+    resultado.instrutores.forEach((instrutor: any) => {
       expect(instrutor.genero).toBe('feminino');
       expect(instrutor.veiculo.transmissao).toBe('automatico');
       expect(instrutor.precos.valorHora).toBeLessThanOrEqual(100);

@@ -4,11 +4,11 @@ import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@rea
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   AdminAnalyticsScreen,
-  AdminUsersScreen,
   AdminInstructorsScreen,
   AdminSettingsScreen,
-} from '../screens/admin';
-import { useAuth } from '../contexts/AuthContext';
+  AdminUsersScreen,
+} from '../features/admin';
+import { useAuth } from '../core/auth';
 import { theme } from '../themes';
 import type {
   AdminDrawerParamList,

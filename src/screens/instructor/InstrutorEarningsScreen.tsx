@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
-import { Card } from '../../components/common/Card';
-import { Button } from '../../components/common/Button';
+import { Card } from '../../shared/ui/base/Card';
+import { Button } from '../../shared/ui/base/Button';
 import { theme } from '../../themes';
 import { formatCurrency } from '../../utils/currency';
 

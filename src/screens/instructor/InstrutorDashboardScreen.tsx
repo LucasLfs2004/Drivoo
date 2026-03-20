@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card } from '../../components/common/Card';
-import { Button } from '../../components/common/Button';
-import { useAuth } from '../../contexts/AuthContext';
+import { Card } from '../../shared/ui/base/Card';
+import { Button } from '../../shared/ui/base/Button';
+import { useAuth } from '../../core/auth';
 import { theme } from '../../themes';
 
 export const InstrutorDashboardScreen: React.FC = () => {

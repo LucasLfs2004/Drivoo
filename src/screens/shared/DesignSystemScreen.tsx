@@ -8,7 +8,7 @@ import {
     Divider,
     Avatar,
     IconButton,
-} from '../../components/common';
+} from '../../shared/ui/base';
 import { Home, Heart, Settings, Bell } from 'lucide-react-native';
 import { theme } from '../../themes';
 

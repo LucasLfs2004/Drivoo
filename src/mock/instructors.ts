@@ -313,12 +313,18 @@ export const searchInstructors = (
 
       if (filtros.localizacao?.raio) {
         resultados = resultados.filter(
-          (instrutor) => instrutor.localizacao.distancia <= filtros.localizacao.raio
+          (instrutor) =>
+            (instrutor.localizacao.distancia ?? Number.POSITIVE_INFINITY) <=
+            filtros.localizacao.raio
         );
       }
 
       // Sort by distance by default
-      resultados.sort((a, b) => a.localizacao.distancia - b.localizacao.distancia);
+      resultados.sort(
+        (a, b) =>
+          (a.localizacao.distancia ?? Number.POSITIVE_INFINITY) -
+          (b.localizacao.distancia ?? Number.POSITIVE_INFINITY)
+      );
 
       // Pagination
       const inicio = (pagina - 1) * limite;

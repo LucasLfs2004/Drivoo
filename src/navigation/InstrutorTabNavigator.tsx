@@ -10,10 +10,10 @@ import {
 } from 'lucide-react-native';
 import {
   InstrutorDashboardScreen,
-  InstrutorScheduleScreen,
   InstrutorEarningsScreen,
-  InstrutorProfileScreen,
-} from '../screens/instructor';
+  InstrutorScheduleScreen,
+} from '../features/instructor-panel';
+import { InstrutorProfileScreen } from '../features/profile';
 import { ChatListScreen } from '../screens/shared/ChatListScreen';
 import { theme } from '../themes';
 import type {
@@ -25,7 +25,7 @@ import type {
   ChatStackParamList,
 } from '../types/navigation';
 import { tabBarItemStyle, tabBarStyle } from './utils';
-import { scale } from '@/utils';
+import { scale } from '../utils';
 
 const Tab = createBottomTabNavigator<InstrutorTabParamList>();
 const DashboardStack = createNativeStackNavigator<InstrutorDashboardStackParamList>();

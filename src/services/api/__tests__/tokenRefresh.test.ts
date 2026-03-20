@@ -30,6 +30,7 @@ describe('Token Refresh Interceptor', () => {
                 accessToken: newAccessToken,
                 refreshToken: mockRefreshToken,
                 expiresIn: 3600,
+                tokenType: 'Bearer',
             });
             (SecureStorageService.updateTokens as jest.Mock).mockResolvedValue(
                 undefined
@@ -44,7 +45,7 @@ describe('Token Refresh Interceptor', () => {
                 config: {
                     url: '/api/test',
                     method: 'get',
-                    headers: {},
+                    headers: {} as any,
                 },
                 data: { message: 'Token expired' },
             };
@@ -64,6 +65,7 @@ describe('Token Refresh Interceptor', () => {
                 accessToken: newAccessToken,
                 refreshToken: mockRefreshToken,
                 expiresIn: 3600,
+                tokenType: 'Bearer',
             });
 
             // Verify the refresh token method is called
@@ -81,6 +83,7 @@ describe('Token Refresh Interceptor', () => {
                 accessToken: newAccessToken,
                 refreshToken: newRefreshToken,
                 expiresIn,
+                tokenType: 'Bearer',
             });
 
             const result = await AuthApiService.refreshToken();

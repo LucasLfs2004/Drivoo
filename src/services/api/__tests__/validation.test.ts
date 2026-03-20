@@ -53,13 +53,13 @@ describe('API Configuration Validation', () => {
         it('should have request interceptor', () => {
             expect(apiClient.interceptors.request).toBeDefined();
             expect(apiClient.interceptors.request.handlers).toBeDefined();
-            expect(apiClient.interceptors.request.handlers.length).toBeGreaterThan(0);
+            expect(apiClient.interceptors.request.handlers?.length ?? 0).toBeGreaterThan(0);
         });
 
         it('should have response interceptor', () => {
             expect(apiClient.interceptors.response).toBeDefined();
             expect(apiClient.interceptors.response.handlers).toBeDefined();
-            expect(apiClient.interceptors.response.handlers.length).toBeGreaterThan(0);
+            expect(apiClient.interceptors.response.handlers?.length ?? 0).toBeGreaterThan(0);
         });
     });
 
@@ -138,13 +138,13 @@ describe('API Configuration Validation', () => {
         it('should add Authorization header in request interceptor', async () => {
             // This test verifies the interceptor is registered
             // Actual token injection is tested in auth tests
-            expect(apiClient.interceptors.request.handlers.length).toBeGreaterThan(0);
+            expect(apiClient.interceptors.request.handlers?.length ?? 0).toBeGreaterThan(0);
         });
 
         it('should handle 401 responses in response interceptor', async () => {
             // This test verifies the interceptor is registered
             // Actual token refresh is tested in auth tests
-            expect(apiClient.interceptors.response.handlers.length).toBeGreaterThan(0);
+            expect(apiClient.interceptors.response.handlers?.length ?? 0).toBeGreaterThan(0);
         });
     });
 

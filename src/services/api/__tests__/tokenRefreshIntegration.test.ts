@@ -24,6 +24,7 @@ describe('Token Refresh Integration - Property 2: Automatic Token Renewal', () =
             accessToken: newAccessToken,
             refreshToken: newRefreshToken,
             expiresIn: 3600,
+            tokenType: 'Bearer',
         });
 
         const result = await AuthApiService.refreshToken();
@@ -45,6 +46,7 @@ describe('Token Refresh Integration - Property 2: Automatic Token Renewal', () =
             accessToken: newAccessToken,
             refreshToken,
             expiresIn: 3600,
+            tokenType: 'Bearer',
         });
 
         const refreshPromises = [

@@ -5,7 +5,10 @@
  */
 
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { useNotifications, UseNotificationsResult } from '../hooks/useNotifications';
+import {
+  useNotifications,
+  UseNotificationsResult,
+} from '../features/notifications/hooks/useNotifications';
 import { useAuth } from './AuthContext';
 
 interface NotificationContextValue extends UseNotificationsResult {

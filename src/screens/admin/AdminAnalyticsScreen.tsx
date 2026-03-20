@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card } from '../../components/common/Card';
+import { Card } from '../../shared/ui/base/Card';
 import { theme } from '../../themes';
 
 export const AdminAnalyticsScreen: React.FC = () => {

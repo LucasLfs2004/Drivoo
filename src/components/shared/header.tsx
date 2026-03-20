@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/core/auth";
 import theme from "@/themes";
 import { View, Text, StyleSheet } from "react-native";
 import { Avatar } from "../common";

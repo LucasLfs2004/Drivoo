@@ -1,5 +1,4 @@
-import { authService } from '../../services/auth/authService';
-import { AuthApiService } from '../../services/authApi';
+import { AuthApiService } from '../../features/auth/api/authApiService';
 
 // Mock do console.log para não poluir os logs
 const originalConsoleLog = console.log;
@@ -55,7 +54,7 @@ describe('Registro de Aluno', () => {
             const result = await AuthApiService.registerAluno(alunoData);
             expect(result).toBeDefined();
             expect(result).toHaveProperty('access_token');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro no teste:', error);
             throw error;
         }
@@ -78,7 +77,7 @@ describe('Registro de Aluno', () => {
         try {
             await AuthApiService.registerAluno(alunoData);
             fail('Deveria ter lançado um erro');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toBeDefined();
         }
     });
@@ -100,7 +99,7 @@ describe('Registro de Aluno', () => {
         try {
             await AuthApiService.registerAluno(alunoData);
             fail('Deveria ter lançado um erro de CPF inválido');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toContain('CPF');
         }
     });
@@ -122,7 +121,7 @@ describe('Registro de Aluno', () => {
         try {
             await AuthApiService.registerAluno(alunoData);
             fail('Deveria ter lançado um erro de senha curta');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toContain('senha');
         }
     });
@@ -144,7 +143,7 @@ describe('Registro de Aluno', () => {
         try {
             await AuthApiService.registerAluno(alunoData);
             fail('Deveria ter lançado um erro de telefone inválido');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toContain('telefone');
         }
     });
@@ -166,7 +165,7 @@ describe('Registro de Aluno', () => {
         try {
             await AuthApiService.registerAluno(alunoData);
             fail('Deveria ter lançado um erro de data inválida');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toBeDefined();
         }
     });
@@ -188,7 +187,7 @@ describe('Registro de Aluno', () => {
         try {
             await AuthApiService.registerAluno(alunoData);
             fail('Deveria ter lançado um erro de email vazio');
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).toContain('email');
         }
     });

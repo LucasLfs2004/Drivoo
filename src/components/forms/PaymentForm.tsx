@@ -11,7 +11,7 @@ import {
   useStripe,
   CardFieldInput,
 } from '@stripe/stripe-react-native';
-import { Button } from '../common/Button';
+import { Button } from '../../shared/ui/base/Button';
 import { theme } from '../../themes';
 import { formatCurrency } from '../../utils/currency';
 
@@ -93,6 +93,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     return formatCurrency(value, currency);
   };
 
+  const cardFieldStyles = {
+    backgroundColor: theme.colors.background.primary,
+    textColor: theme.colors.text.primary,
+    borderColor: theme.colors.border.medium,
+    borderWidth: 1,
+    borderRadius: theme.borders.radius.md,
+  } as any;
+
   return (
     <View style={styles.container}>
       <View style={styles.amountContainer}>
@@ -107,26 +115,26 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           placeholders={{
             number: '4242 4242 4242 4242',
           }}
-          cardStyle={styles.cardField}
+          cardStyle={cardFieldStyles}
           style={styles.cardFieldWrapper}
           onCardChange={handleCardChange}
           disabled={disabled || loading}
         />
       </View>
 
-      <Button
-        onPress={handlePayment}
-        disabled={!cardComplete || disabled || loading}
-        style={styles.payButton}
-      >
-        {loading ? (
-          <ActivityIndicator color={theme.colors.text.inverse} />
-        ) : (
-          <Text style={styles.payButtonText}>
-            Pagar {formatValue(amount)}
-          </Text>
+      <View style={styles.payButtonContainer}>
+        <Button
+          title={loading ? 'Processando pagamento...' : `Pagar ${formatValue(amount)}`}
+          onPress={handlePayment}
+          disabled={!cardComplete || disabled || loading}
+          style={styles.payButton}
+        />
+        {loading && (
+          <View style={styles.payButtonLoader}>
+            <ActivityIndicator color={theme.colors.text.inverse} />
+          </View>
         )}
-      </Button>
+      </View>
 
       {isMockMode && (
         <View style={styles.mockNotice}>
@@ -177,20 +185,19 @@ const styles = StyleSheet.create({
   cardFieldWrapper: {
     height: 50,
   },
-  cardField: {
-    backgroundColor: theme.colors.background.primary,
-    textColor: theme.colors.text.primary,
-    borderColor: theme.colors.border.medium,
-    borderWidth: 1,
-    borderRadius: theme.borders.radius.md,
-  },
-  payButton: {
+  payButtonContainer: {
+    position: 'relative',
     marginBottom: theme.spacing.md,
   },
-  payButtonText: {
-    color: theme.colors.text.inverse,
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
+  payButton: {
+    marginBottom: 0,
+  },
+  payButtonLoader: {
+    position: 'absolute',
+    left: theme.spacing.md,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
   },
   mockNotice: {
     backgroundColor: theme.colors.warning[50],
