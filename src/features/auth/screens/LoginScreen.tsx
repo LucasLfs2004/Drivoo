@@ -14,7 +14,13 @@ type Props = AuthStackScreenProps<'Login'>;
 interface LoginFormData extends LoginCredentials {}
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
-  const { login: contextLogin, carregando, error: contextError, usuario } = useAuth();
+  const {
+    login: contextLogin,
+    carregando,
+    error: contextError,
+    usuario,
+    needsOnboarding,
+  } = useAuth();
 
   const {
     control,
@@ -30,6 +36,11 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   });
 
   useEffect(() => {
+    if (needsOnboarding) {
+      navigation.navigate('Onboarding');
+      return;
+    }
+
     if (!usuario) return;
 
     if (usuario.papel === 'aluno') {
@@ -40,7 +51,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
       navigation.navigate('AdminDrawer' as any);
     }
     reset();
-  }, [usuario, navigation, reset]);
+  }, [needsOnboarding, usuario, navigation, reset]);
 
   const onSubmit = async (data: LoginFormData) => {
     try {

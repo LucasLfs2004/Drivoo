@@ -1,4 +1,4 @@
-import type { Coordenadas } from '../../../types/auth';
+import type { AgendaSemanal, Coordenadas } from '../../../types/auth';
 
 export interface ResultadoBusca {
   instrutores: InstrutorDisponivel[];
@@ -69,7 +69,7 @@ export interface InstructorDetails {
     coordenadas?: Coordenadas;
   };
   especialidades: string[];
-  genero: 'masculino' | 'feminino';
+  genero: 'masculino' | 'feminino' | 'outro' | null;
   categorias: ('A' | 'B')[];
   isNovoInstrutor: boolean;
   totalAulas: number;
@@ -79,4 +79,64 @@ export interface InstructorAvailableSlot {
   id: string;
   time: string;
   available: boolean;
+}
+
+export interface InstructorVehicle {
+  id: string;
+  modelo: string;
+  ano?: number;
+  placa?: string;
+  transmissao: 'manual' | 'automatico';
+  aceitaVeiculoAluno: boolean;
+  ativo: boolean;
+}
+
+export interface InstructorAvailability {
+  id: string;
+  dayIndex: number;
+  dayName: string;
+  startTime: string;
+  endTime: string;
+  breakStart?: string;
+  breakEnd?: string;
+  active: boolean;
+}
+
+export interface InstructorSchedule {
+  agenda: AgendaSemanal;
+  availabilities: InstructorAvailability[];
+}
+
+export type InstructorPaymentStatus = 'paid' | 'pending' | 'failed' | 'unknown';
+
+export interface InstructorRecentPayment {
+  id: string;
+  description: string;
+  amount: number;
+  date?: Date;
+  status: InstructorPaymentStatus;
+}
+
+export interface InstructorEarningsTrendPoint {
+  id: string;
+  label: string;
+  value: number;
+  date?: Date;
+}
+
+export interface InstructorEarningsOverview {
+  totalEarnings: number;
+  currentMonthEarnings: number;
+  historyCount: number;
+  historyItems: InstructorRecentPayment[];
+  recentPayments: InstructorRecentPayment[];
+  paymentSummary: {
+    totalCount: number;
+    totalPaid: number;
+    totalPending: number;
+  };
+  trend: {
+    points: InstructorEarningsTrendPoint[];
+    unavailable: boolean;
+  };
 }

@@ -18,6 +18,7 @@ describe('SecureStorageService', () => {
   const mockAuthData: StoredAuthData = {
     token: 'access-token-123',
     refreshToken: 'refresh-token-456',
+    sessionEmail: 'test@example.com',
     user: {
       id: '1',
       email: 'test@example.com',
@@ -60,7 +61,13 @@ describe('SecureStorageService', () => {
       expect(mockAsyncStorage.setItem).toHaveBeenCalledTimes(4);
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith('auth_token', mockAuthData.token);
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith('refresh_token', mockAuthData.refreshToken);
-      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith('user_data', JSON.stringify(mockAuthData.user));
+      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+        'user_data',
+        JSON.stringify({
+          user: mockAuthData.user,
+          sessionEmail: mockAuthData.sessionEmail,
+        })
+      );
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith('token_expiry', mockAuthData.expiresAt.toString());
     });
 
@@ -76,19 +83,40 @@ describe('SecureStorageService', () => {
       mockAsyncStorage.getItem
         .mockResolvedValueOnce(mockAuthData.token)
         .mockResolvedValueOnce(mockAuthData.refreshToken)
-        .mockResolvedValueOnce(JSON.stringify(mockAuthData.user))
+        .mockResolvedValueOnce(
+          JSON.stringify({
+            user: mockAuthData.user,
+            sessionEmail: mockAuthData.sessionEmail,
+          })
+        )
         .mockResolvedValueOnce(mockAuthData.expiresAt.toString());
 
       const result = await SecureStorageService.getAuthData();
 
-      expect(result).toEqual(mockAuthData);
+      expect(result).toMatchObject({
+        token: mockAuthData.token,
+        refreshToken: mockAuthData.refreshToken,
+        sessionEmail: mockAuthData.sessionEmail,
+        expiresAt: mockAuthData.expiresAt,
+        user: expect.objectContaining({
+          id: mockAuthData.user?.id,
+          email: mockAuthData.user?.email,
+          telefone: mockAuthData.user?.telefone,
+          papel: mockAuthData.user?.papel,
+        }),
+      });
     });
 
     it('should return null when any required data is missing', async () => {
       mockAsyncStorage.getItem
         .mockResolvedValueOnce(null) // token missing
         .mockResolvedValueOnce(mockAuthData.refreshToken)
-        .mockResolvedValueOnce(JSON.stringify(mockAuthData.user))
+        .mockResolvedValueOnce(
+          JSON.stringify({
+            user: mockAuthData.user,
+            sessionEmail: mockAuthData.sessionEmail,
+          })
+        )
         .mockResolvedValueOnce(mockAuthData.expiresAt.toString());
 
       const result = await SecureStorageService.getAuthData();

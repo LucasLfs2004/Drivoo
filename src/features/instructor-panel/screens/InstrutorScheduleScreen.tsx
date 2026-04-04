@@ -1,5 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
@@ -8,53 +15,154 @@ import { Button } from '../../../shared/ui/base/Button';
 import { WeeklyScheduleEditor } from '../../../shared/ui/forms/WeeklyScheduleEditor';
 import { theme } from '../../../theme';
 import { AgendaSemanal, SlotTempo } from '../../../types/auth';
-import { BookingData } from '../../../types/booking';
+import {
+  useCreateInstructorAvailabilityMutation,
+  useDeleteInstructorAvailabilityMutation,
+  useInstructorScheduleQuery,
+  useUpdateInstructorAvailabilityMutation,
+} from '../../instructors';
 
 dayjs.locale('pt-br');
 
-// Mock de agendamentos para demonstração
-const MOCK_BOOKINGS: BookingData[] = [
-  {
-    id: '1',
-    instructorId: 'inst-1',
-    instructorName: 'João Silva',
-    date: dayjs().add(1, 'day').hour(10).minute(0).toDate(),
-    timeSlot: '10:00 - 12:00',
-    duration: 120,
-    price: 150,
-    currency: 'BRL',
-    vehicleInfo: {
-      marca: 'Volkswagen',
-      modelo: 'Gol',
-      transmissao: 'manual',
-    },
-    location: {
-      endereco: 'Av. Paulista, 1000 - São Paulo, SP',
-    },
-    status: 'confirmed',
-  },
-];
+const DAY_KEYS = [
+  'segunda',
+  'terca',
+  'quarta',
+  'quinta',
+  'sexta',
+  'sabado',
+  'domingo',
+] as const;
+
+const dayKeyToIndex: Record<(typeof DAY_KEYS)[number], number> = {
+  segunda: 0,
+  terca: 1,
+  quarta: 2,
+  quinta: 3,
+  sexta: 4,
+  sabado: 5,
+  domingo: 6,
+};
+
+const EMPTY_AVAILABILITIES: {
+  id: string;
+  dayIndex: number;
+  dayName: string;
+  startTime: string;
+  endTime: string;
+  breakStart?: string;
+  breakEnd?: string;
+  active: boolean;
+}[] = [];
+
+const buildSlotKey = (dayIndex: number, startTime: string, endTime: string) =>
+  `${dayIndex}-${startTime}-${endTime}`;
 
 export const InstrutorScheduleScreen: React.FC = () => {
   const [showEditor, setShowEditor] = useState(false);
-  const [schedule, setSchedule] = useState<AgendaSemanal | null>(null);
-  const [bookings] = useState<BookingData[]>(MOCK_BOOKINGS);
+  const {
+    data: scheduleData,
+    isLoading,
+    isError,
+    refetch,
+  } = useInstructorScheduleQuery();
+  const createAvailabilityMutation = useCreateInstructorAvailabilityMutation();
+  const updateAvailabilityMutation = useUpdateInstructorAvailabilityMutation();
+  const deleteAvailabilityMutation = useDeleteInstructorAvailabilityMutation();
 
-  const handleSaveSchedule = (newSchedule: AgendaSemanal) => {
-    setSchedule(newSchedule);
-    setShowEditor(false);
-    Alert.alert(
-      'Sucesso',
-      'Sua disponibilidade foi atualizada com sucesso!',
-      [{ text: 'OK' }]
-    );
-  };
+  const schedule = scheduleData?.agenda ?? null;
+  const availabilities = scheduleData?.availabilities ?? EMPTY_AVAILABILITIES;
 
-  const getBookingsForDay = (dayOffset: number): BookingData[] => {
-    const targetDate = dayjs().add(dayOffset, 'day');
-    return bookings.filter(booking =>
-      dayjs(booking.date).isSame(targetDate, 'day')
+  const hasConfiguredAvailability = useMemo(
+    () => availabilities.some(availability => availability.active),
+    [availabilities]
+  );
+
+  const handleSaveSchedule = async (newSchedule: AgendaSemanal) => {
+    const selectedSlots = new Map<
+      string,
+      { dayIndex: number; startTime: string; endTime: string }
+    >();
+
+    for (const dayKey of DAY_KEYS) {
+      const daySchedule = newSchedule[dayKey];
+      if (!daySchedule.disponivel) {
+        continue;
+      }
+
+      const dayIndex = dayKeyToIndex[dayKey];
+      for (const slot of daySchedule.horarios) {
+        if (!slot.disponivel) {
+          continue;
+        }
+
+        selectedSlots.set(buildSlotKey(dayIndex, slot.horaInicio, slot.horaFim), {
+          dayIndex,
+          startTime: `${slot.horaInicio}:00`,
+          endTime: `${slot.horaFim}:00`,
+        });
+      }
+    }
+
+    const existingSlots = new Map(
+      availabilities.map(availability => [
+        buildSlotKey(availability.dayIndex, availability.startTime, availability.endTime),
+        availability,
+      ])
     );
+
+    const createPromises: Promise<unknown>[] = [];
+    const updatePromises: Promise<unknown>[] = [];
+    const deletePromises: Promise<unknown>[] = [];
+
+    for (const [slotKey, slot] of selectedSlots.entries()) {
+      const existingAvailability = existingSlots.get(slotKey);
+
+      if (!existingAvailability) {
+        createPromises.push(
+          createAvailabilityMutation.mutateAsync({
+            dia_semana: slot.dayIndex,
+            hora_inicio: slot.startTime,
+            hora_fim: slot.endTime,
+            intervalo_inicio: null,
+            intervalo_fim: null,
+          })
+        );
+        continue;
+      }
+
+      if (!existingAvailability.active) {
+        updatePromises.push(
+          updateAvailabilityMutation.mutateAsync({
+            availabilityId: existingAvailability.id,
+            payload: { ativo: true },
+          })
+        );
+      }
+    }
+
+    for (const [slotKey, availability] of existingSlots.entries()) {
+      if (selectedSlots.has(slotKey)) {
+        continue;
+      }
+
+      deletePromises.push(deleteAvailabilityMutation.mutateAsync(availability.id));
+    }
+
+    try {
+      await Promise.all([...createPromises, ...updatePromises, ...deletePromises]);
+      setShowEditor(false);
+      Alert.alert(
+        'Sucesso',
+        'Sua disponibilidade foi atualizada com sucesso!',
+        [{ text: 'OK' }]
+      );
+    } catch {
+      Alert.alert(
+        'Erro',
+        'Nao foi possível atualizar sua disponibilidade. Tente novamente.'
+      );
+    }
   };
 
   const getDaySchedule = (dayKey: keyof AgendaSemanal): SlotTempo[] => {
@@ -75,7 +183,6 @@ export const InstrutorScheduleScreen: React.FC = () => {
 
     return weekDays.map(day => {
       const date = dayjs().add(day.offset, 'day');
-      const dayBookings = getBookingsForDay(day.offset);
       const availableSlots = getDaySchedule(day.key);
 
       return (
@@ -92,48 +199,53 @@ export const InstrutorScheduleScreen: React.FC = () => {
             )}
           </View>
 
-          {dayBookings.length > 0 ? (
-            <View style={styles.bookingsContainer}>
-              {dayBookings.map(booking => (
-                <View key={booking.id} style={styles.bookingItem}>
-                  <View style={styles.bookingTime}>
-                    <Text style={styles.bookingTimeText}>
-                      {booking.timeSlot}
-                    </Text>
-                  </View>
-                  <View style={styles.bookingDetails}>
-                    <Text style={styles.bookingStudent}>
-                      Aluno: {booking.instructorName}
-                    </Text>
-                    <Text style={styles.bookingLocation}>
-                      {booking.location.endereco}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              {availableSlots.length > 0 ? (
-                <>
-                  <Text style={styles.availableSlotsText}>
-                    Horários disponíveis:
+          <View style={styles.emptyState}>
+            {availableSlots.length > 0 ? (
+              <>
+                <Text style={styles.availableSlotsText}>
+                  Horários disponíveis:
+                </Text>
+                {availableSlots.map((slot, idx) => (
+                  <Text key={idx} style={styles.slotText}>
+                    • {slot.horaInicio} - {slot.horaFim}
                   </Text>
-                  {availableSlots.map((slot, idx) => (
-                    <Text key={idx} style={styles.slotText}>
-                      • {slot.horaInicio} - {slot.horaFim}
-                    </Text>
-                  ))}
-                </>
-              ) : (
-                <Text style={styles.noLessons}>Nenhuma aula agendada</Text>
-              )}
-            </View>
-          )}
+                ))}
+              </>
+            ) : (
+              <Text style={styles.noLessons}>Nenhuma disponibilidade configurada</Text>
+            )}
+          </View>
         </Card>
       );
     });
   };
+
+  const isSaving =
+    createAvailabilityMutation.isPending ||
+    updateAvailabilityMutation.isPending ||
+    deleteAvailabilityMutation.isPending;
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+          <Text style={styles.loadingText}>Carregando disponibilidade...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError || !schedule) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>Nao foi possível carregar sua agenda.</Text>
+          <Button title="Tentar novamente" variant="outline" onPress={() => refetch()} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (showEditor) {
     return (
@@ -142,10 +254,16 @@ export const InstrutorScheduleScreen: React.FC = () => {
           <Text style={styles.editorTitle}>Configurar Disponibilidade</Text>
         </View>
         <WeeklyScheduleEditor
-          initialSchedule={schedule || undefined}
+          initialSchedule={schedule}
           onSave={handleSaveSchedule}
           onCancel={() => setShowEditor(false)}
         />
+        {isSaving ? (
+          <View style={styles.savingBanner}>
+            <ActivityIndicator size="small" color={theme.colors.primary[500]} />
+            <Text style={styles.savingText}>Salvando disponibilidade...</Text>
+          </View>
+        ) : null}
       </SafeAreaView>
     );
   }
@@ -163,12 +281,12 @@ export const InstrutorScheduleScreen: React.FC = () => {
         <Card style={styles.availabilityCard}>
           <Text style={styles.sectionTitle}>Disponibilidade Semanal</Text>
           <Text style={styles.availabilityText}>
-            {schedule
+            {hasConfiguredAvailability
               ? 'Configure os horários em que você está disponível para dar aulas'
               : 'Você ainda não configurou sua disponibilidade. Defina seus horários para começar a receber agendamentos.'}
           </Text>
           <Button
-            title={schedule ? 'Editar Horários' : 'Definir Horários'}
+            title={hasConfiguredAvailability ? 'Editar Horários' : 'Definir Horários'}
             variant="primary"
             onPress={() => setShowEditor(true)}
             style={styles.setAvailabilityButton}
@@ -259,42 +377,6 @@ const styles = StyleSheet.create({
     color: theme.colors.success[500],
     fontWeight: theme.typography.fontWeight.medium,
   },
-  bookingsContainer: {
-    marginTop: theme.spacing.sm,
-  },
-  bookingItem: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.primary[50],
-    borderRadius: theme.borders.radius.sm,
-    padding: theme.spacing.sm,
-    marginBottom: theme.spacing.sm,
-  },
-  bookingTime: {
-    backgroundColor: theme.colors.primary[500],
-    borderRadius: theme.borders.radius.sm,
-    padding: theme.spacing.sm,
-    marginRight: theme.spacing.sm,
-    justifyContent: 'center',
-  },
-  bookingTimeText: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.text.inverse,
-    fontWeight: theme.typography.fontWeight.bold,
-  },
-  bookingDetails: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  bookingStudent: {
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  bookingLocation: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.text.secondary,
-  },
   emptyState: {
     marginTop: theme.spacing.sm,
   },
@@ -322,5 +404,34 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.primary,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+  loadingText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+  },
+  errorText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.semantic.error,
+    textAlign: 'center',
+  },
+  savingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border.light,
+  },
+  savingText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
   },
 });

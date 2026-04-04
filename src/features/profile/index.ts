@@ -6,3 +6,4 @@ export * from './screens/EditProfileScreen';
 export * from './screens/SettingsScreen';
 export * from './screens/InstrutorProfileScreen';
 export * from './screens/EditInstructorProfileScreen';
+export * from './screens/InstructorSupportScreen';

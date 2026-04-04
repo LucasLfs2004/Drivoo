@@ -16,6 +16,7 @@ export type RootStackParamList = {
 export type AuthStackParamList = {
   Login: undefined;
   Register: { userType?: 'aluno' | 'instrutor' };
+  Onboarding: undefined;
   ForgotPassword: undefined;
 };
 
@@ -94,6 +95,7 @@ export type InstrutorProfileStackParamList = {
   EditProfile: undefined;
   Credentials: undefined;
   Settings: undefined;
+  Support: undefined;
 };
 
 export type ChatStackParamList = {

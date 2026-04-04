@@ -111,6 +111,9 @@ export interface Usuario {
 export interface AuthState {
   usuario: Usuario | null;
   token: string | null;
+  refreshToken: string | null;
+  sessionEmail: string | null;
+  needsOnboarding: boolean;
   carregando: boolean;
   isAuthenticated: boolean;
   error: string | null;
@@ -134,6 +137,12 @@ export interface AuthAction {
 export interface LoginCredentials {
   email: string;
   password: string;
+}
+
+export interface CreateAccountCredentials {
+  email: string;
+  senha: string;
+  confirmarSenha: string;
 }
 
 export interface RegisterDataBase {

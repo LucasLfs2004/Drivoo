@@ -1,6 +1,10 @@
 export const instructorQueryKeys = {
   all: ['instructors'] as const,
   search: (params: unknown) => [...instructorQueryKeys.all, 'search', params] as const,
+  me: () => [...instructorQueryKeys.all, 'me'] as const,
+  schedule: () => [...instructorQueryKeys.all, 'schedule', 'me'] as const,
+  vehicles: () => [...instructorQueryKeys.all, 'vehicles', 'me'] as const,
+  earningsOverview: () => [...instructorQueryKeys.all, 'earnings', 'overview', 'me'] as const,
   detail: (instructorId: string) =>
     [...instructorQueryKeys.all, 'detail', instructorId] as const,
   availableSlots: (

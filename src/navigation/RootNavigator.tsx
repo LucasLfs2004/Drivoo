@@ -12,7 +12,7 @@ import type { RootStackParamList } from '../types/navigation';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
-  const { isAuthenticated, carregando, usuario } = useAuth();
+  const { isAuthenticated, carregando, usuario, needsOnboarding } = useAuth();
 
   // Show loading screen while checking authentication
   if (carregando) {
@@ -25,7 +25,7 @@ export const RootNavigator: React.FC = () => {
   }
 
   // If not authenticated, show auth stack
-  if (!isAuthenticated || !usuario) {
+  if (!isAuthenticated || needsOnboarding || !usuario) {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Auth" component={AuthStackNavigator} />

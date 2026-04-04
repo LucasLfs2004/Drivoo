@@ -13,7 +13,12 @@ import {
   InstrutorEarningsScreen,
   InstrutorScheduleScreen,
 } from '../features/instructor-panel';
-import { InstrutorProfileScreen } from '../features/profile';
+import {
+  EditInstructorProfileScreen,
+  InstructorSupportScreen,
+  InstrutorProfileScreen,
+  SettingsScreen,
+} from '../features/profile';
 import { ChatListScreen } from '../screens/shared/ChatListScreen';
 import { theme } from '../theme';
 import type {
@@ -62,6 +67,9 @@ const ChatStackNavigator = () => (
 const ProfileStackNavigator = () => (
   <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
     <ProfileStack.Screen name="ProfileScreen" component={InstrutorProfileScreen} />
+    <ProfileStack.Screen name="EditProfile" component={EditInstructorProfileScreen} />
+    <ProfileStack.Screen name="Settings" component={SettingsScreen} />
+    <ProfileStack.Screen name="Support" component={InstructorSupportScreen} />
   </ProfileStack.Navigator>
 );
 

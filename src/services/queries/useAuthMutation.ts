@@ -1,4 +1,4 @@
 export {
   useLoginMutation,
   useRegisterMutation,
-} from '../../features/auth/hooks/useAuthMutation';
+} from '../../features/auth/hooks/use-auth-mutation';

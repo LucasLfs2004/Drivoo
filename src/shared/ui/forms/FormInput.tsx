@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
-  TextInput,
-  Text,
+  Animated,
+  Easing,
   StyleSheet,
+  Text,
+  TextInput,
   TextInputProps,
+  View,
   ViewStyle,
 } from 'react-native';
 import { theme } from '../../../theme';
+
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 export interface FormInputProps extends TextInputProps {
   label?: string;
@@ -16,7 +20,7 @@ export interface FormInputProps extends TextInputProps {
   containerStyle?: ViewStyle;
 }
 
-export const FormInput: React.FC<FormInputProps> = ({
+export const FormInput = forwardRef<TextInput, FormInputProps>(({
   label,
   error,
   required = false,
@@ -25,8 +29,18 @@ export const FormInput: React.FC<FormInputProps> = ({
   onFocus,
   onBlur,
   ...props
-}) => {
+}, ref) => {
   const [isFocused, setIsFocused] = useState(false);
+  const focusAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(focusAnim, {
+      toValue: isFocused ? 1 : 0,
+      duration: 180,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: false,
+    }).start();
+  }, [focusAnim, isFocused]);
 
   const handleFocus = (e: any) => {
     setIsFocused(true);
@@ -40,10 +54,35 @@ export const FormInput: React.FC<FormInputProps> = ({
 
   const inputStyle = [
     styles.input,
-    isFocused && styles.inputFocused,
     error && styles.inputError,
     style,
   ];
+
+  const animatedInputStyle = useMemo(
+    () => ({
+      borderColor: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [error ? theme.colors.semantic.error : '#D6DEEA', theme.colors.primary[300]],
+      }),
+      shadowColor: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['#90A4C6', theme.colors.primary[300]],
+      }),
+      shadowOpacity: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, error ? 0.08 : 0.14],
+      }),
+      shadowRadius: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, error ? 18 : 20],
+      }),
+      elevation: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, error ? 2 : 3],
+      }),
+    }),
+    [error, focusAnim]
+  );
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -53,8 +92,9 @@ export const FormInput: React.FC<FormInputProps> = ({
           {required && <Text style={styles.required}> *</Text>}
         </Text>
       )}
-      <TextInput
-        style={inputStyle}
+      <AnimatedTextInput
+        ref={ref}
+        style={[inputStyle, animatedInputStyle]}
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholderTextColor={theme.colors.text.tertiary}
@@ -63,35 +103,38 @@ export const FormInput: React.FC<FormInputProps> = ({
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
-};
+});
+
+FormInput.displayName = 'FormInput';
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   label: {
     fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#2F3440',
+    marginBottom: theme.spacing.sm,
   },
   required: {
     color: theme.colors.semantic.error,
   },
   input: {
     borderWidth: theme.borders.width.base,
-    borderColor: theme.colors.border.medium,
-    borderRadius: theme.borders.radius.md,
+    borderColor: '#D6DEEA',
+    borderRadius: theme.borders.radius.xl,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md - theme.spacing.xs,
     fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeight.normal,
+    color: '#465264',
     backgroundColor: theme.colors.background.primary,
-    minHeight: theme.scaleUtils.moderateScale(48),
-  },
-  inputFocused: {
-    borderColor: theme.colors.primary[500],
-    ...theme.shadows.sm,
+    shadowColor: '#90A4C6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   inputError: {
     borderColor: theme.colors.semantic.error,
@@ -99,6 +142,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.semantic.error,
-    marginTop: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
   },
 });

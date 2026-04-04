@@ -5,12 +5,39 @@ import type { UpdateCurrentUserProfilePayload } from '../types/domain';
 interface ApiCurrentUser {
   id: string;
   email: string;
-  nome: string;
-  sobrenome: string;
-  tipo: string;
+  nome?: string | null;
+  sobrenome?: string | null;
+  tipo?: string | null;
   telefone?: string | null;
   foto_url?: string | null;
 }
+
+interface ApiCurrentUserResponse {
+  needs_onboarding?: boolean;
+  profile_completed?: boolean;
+  usuario?: ApiCurrentUser;
+  instrutor?: {
+    id: string;
+    geocoding_sucesso?: boolean;
+  } | null;
+}
+
+export interface CurrentUserState {
+  user: Usuario | null;
+  needsOnboarding: boolean;
+  profileCompleted: boolean;
+}
+
+export const isApiCurrentUserComplete = (
+  apiUser?: ApiCurrentUser | null
+): boolean =>
+  Boolean(
+    apiUser?.id &&
+      apiUser.email &&
+      apiUser.nome &&
+      apiUser.sobrenome &&
+      apiUser.tipo
+  );
 
 const mapApiRoleToAppRole = (tipo?: string): UserRole => {
   if (tipo === 'instrutor' || tipo === 'admin' || tipo === 'aluno') {
@@ -34,8 +61,8 @@ const createBaseProfile = (
 ): Usuario['perfil'] => {
   if (papel === 'instrutor') {
     return {
-      primeiroNome: apiUser.nome,
-      ultimoNome: apiUser.sobrenome,
+      primeiroNome: apiUser.nome ?? '',
+      ultimoNome: apiUser.sobrenome ?? '',
       detranId: '',
       licenca: {
         numero: '',
@@ -75,16 +102,16 @@ const createBaseProfile = (
 
   if (papel === 'admin') {
     return {
-      primeiroNome: apiUser.nome,
-      ultimoNome: apiUser.sobrenome,
+      primeiroNome: apiUser.nome ?? '',
+      ultimoNome: apiUser.sobrenome ?? '',
       departamento: '',
       permissoes: [],
     };
   }
 
   return {
-    primeiroNome: apiUser.nome,
-    ultimoNome: apiUser.sobrenome,
+    primeiroNome: apiUser.nome ?? '',
+    ultimoNome: apiUser.sobrenome ?? '',
     dataNascimento: new Date(),
     endereco: {
       rua: '',
@@ -110,7 +137,9 @@ export const mapApiUserToUsuario = (
   apiUser: ApiCurrentUser,
   previousUser?: Usuario | null
 ): Usuario => {
-  const papel = mapApiRoleToAppRole(apiUser.tipo);
+  const papel = mapApiRoleToAppRole(apiUser.tipo ?? undefined);
+  const nome = apiUser.nome ?? '';
+  const sobrenome = apiUser.sobrenome ?? '';
 
   return {
     id: apiUser.id,
@@ -121,26 +150,67 @@ export const mapApiUserToUsuario = (
       previousUser?.papel === papel
         ? {
             ...previousUser.perfil,
-            primeiroNome: apiUser.nome,
-            ultimoNome: apiUser.sobrenome,
+            primeiroNome: nome,
+            ultimoNome: sobrenome,
           }
-        : createBaseProfile(papel, apiUser),
+        : createBaseProfile(papel, {
+            ...apiUser,
+            nome,
+            sobrenome,
+          }),
     criadoEm: previousUser?.criadoEm ?? new Date(),
     atualizadoEm: new Date(),
   };
 };
 
+const extractApiCurrentUser = (
+  payload: ApiCurrentUser | ApiCurrentUserResponse
+): ApiCurrentUser => {
+  if ('usuario' in payload && payload.usuario) {
+    return payload.usuario;
+  }
+
+  return payload as ApiCurrentUser;
+};
+
 export const userProfileApi = {
-  async getCurrentUser(): Promise<Usuario> {
-    const response = await apiClient.get<ApiCurrentUser>('/auth/me');
-    return mapApiUserToUsuario(response.data);
+  async getCurrentUserState(previousUser?: Usuario | null): Promise<CurrentUserState> {
+    const response = await apiClient.get<ApiCurrentUserResponse>('/auth/me');
+    const payload = response.data;
+    const apiUser = payload.usuario ?? null;
+    const user = isApiCurrentUserComplete(apiUser)
+      ? mapApiUserToUsuario(apiUser as ApiCurrentUser, previousUser)
+      : null;
+    const inferredNeedsOnboarding =
+      Boolean(payload.needs_onboarding) ||
+      !Boolean(payload.profile_completed) ||
+      !user;
+
+    return {
+      user,
+      needsOnboarding: inferredNeedsOnboarding,
+      profileCompleted: Boolean(payload.profile_completed) && Boolean(user),
+    };
+  },
+
+  async getCurrentUser(previousUser?: Usuario | null): Promise<Usuario> {
+    const currentUserState = await this.getCurrentUserState(previousUser);
+
+    if (!currentUserState.user) {
+      throw new Error('Usuário autenticado ainda não concluiu o onboarding');
+    }
+
+    return currentUserState.user;
   },
 
   async updateCurrentUser(
     userId: string,
     data: UpdateCurrentUserProfilePayload
   ): Promise<Usuario> {
-    const response = await apiClient.put<ApiCurrentUser>(`/usuarios/${userId}`, data);
-    return mapApiUserToUsuario(response.data);
+    const response = await apiClient.put<ApiCurrentUser | ApiCurrentUserResponse>(
+      `/usuarios/${userId}`,
+      data
+    );
+    return mapApiUserToUsuario(extractApiCurrentUser(response.data));
   },
 };

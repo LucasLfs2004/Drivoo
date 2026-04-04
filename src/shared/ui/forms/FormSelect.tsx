@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
+  Animated,
+  Easing,
+  FlatList,
+  Modal,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  Modal,
-  FlatList,
-  StyleSheet,
+  View,
   ViewStyle,
 } from 'react-native';
 import { theme } from '../../../theme';
@@ -39,13 +41,49 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   disabled = false,
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const focusAnim = useRef(new Animated.Value(0)).current;
 
   const selectedOption = options.find(option => option.value === value);
+
+  useEffect(() => {
+    Animated.timing(focusAnim, {
+      toValue: isModalVisible ? 1 : 0,
+      duration: 180,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: false,
+    }).start();
+  }, [focusAnim, isModalVisible]);
 
   const handleSelect = (selectedValue: string) => {
     onSelect(selectedValue);
     setIsModalVisible(false);
   };
+
+  const animatedSelectStyle = useMemo(
+    () => ({
+      borderColor: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [error ? theme.colors.semantic.error : '#D6DEEA', theme.colors.primary[300]],
+      }),
+      shadowColor: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['#90A4C6', theme.colors.primary[300]],
+      }),
+      shadowOpacity: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, error ? 0.08 : 0.14],
+      }),
+      shadowRadius: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, error ? 18 : 20],
+      }),
+      elevation: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, error ? 2 : 3],
+      }),
+    }),
+    [error, focusAnim]
+  );
 
   const renderOption = ({ item }: { item: SelectOption }) => (
     <TouchableOpacity
@@ -65,26 +103,29 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         </Text>
       )}
       
-      <TouchableOpacity
-        style={[
-          styles.selectButton,
-          error && styles.selectButtonError,
-          disabled && styles.selectButtonDisabled,
-        ]}
-        onPress={() => !disabled && setIsModalVisible(true)}
-        disabled={disabled}
-      >
-        <Text
+      <Animated.View style={[styles.selectFrame, animatedSelectStyle]}>
+        <TouchableOpacity
           style={[
-            styles.selectText,
-            !selectedOption && styles.placeholderText,
-            disabled && styles.disabledText,
+            styles.selectButton,
+            error && styles.selectButtonError,
+            disabled && styles.selectButtonDisabled,
           ]}
+          onPress={() => !disabled && setIsModalVisible(true)}
+          disabled={disabled}
+          activeOpacity={0.9}
         >
-          {selectedOption ? selectedOption.label : placeholder}
-        </Text>
-        <Text style={[styles.arrow, disabled && styles.disabledText]}>▼</Text>
-      </TouchableOpacity>
+          <Text
+            style={[
+              styles.selectText,
+              !selectedOption && styles.placeholderText,
+              disabled && styles.disabledText,
+            ]}
+          >
+            {selectedOption ? selectedOption.label : placeholder}
+          </Text>
+          <Text style={[styles.arrow, disabled && styles.disabledText]}>▼</Text>
+        </TouchableOpacity>
+      </Animated.View>
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
@@ -125,13 +166,13 @@ export const FormSelect: React.FC<FormSelectProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   label: {
     fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#2F3440',
+    marginBottom: theme.spacing.sm,
   },
   required: {
     color: theme.colors.semantic.error,
@@ -141,12 +182,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: theme.borders.width.base,
-    borderColor: theme.colors.border.medium,
-    borderRadius: theme.borders.radius.md,
+    borderColor: '#D6DEEA',
+    borderRadius: theme.borders.radius.xl,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md - theme.spacing.xs,
     backgroundColor: theme.colors.background.primary,
-    minHeight: theme.scaleUtils.moderateScale(48),
+  },
+  selectFrame: {
+    shadowColor: '#90A4C6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+    borderRadius: theme.borders.radius.xl,
   },
   selectButtonError: {
     borderColor: theme.colors.semantic.error,
@@ -157,7 +205,8 @@ const styles = StyleSheet.create({
   },
   selectText: {
     fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeight.normal,
+    color: '#465264',
     flex: 1,
   },
   placeholderText: {
@@ -168,13 +217,13 @@ const styles = StyleSheet.create({
   },
   arrow: {
     fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
+    color: theme.colors.text.tertiary,
     marginLeft: theme.spacing.sm,
   },
   errorText: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.semantic.error,
-    marginTop: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
   },
   modalOverlay: {
     flex: 1,

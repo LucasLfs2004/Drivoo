@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { SecureStorageService, getToken } from '../../storage';
-import { AuthApiService } from '../../../features/auth/api/authApiService';
+import { AuthApiService } from '../../../features/auth/api/auth-api-service';
 import { API_BASE_URL, API_TIMEOUT } from '../config';
 import { handleApiError } from '../error';
 import { apiLogger } from '../logger';
@@ -18,6 +18,11 @@ const apiClient: AxiosInstance = axios.create({
         'Content-Type': 'application/json',
     },
 });
+
+type RequestConfigWithAuthFlags = InternalAxiosRequestConfig & {
+    _retry?: boolean;
+    _skipAuthRefresh?: boolean;
+};
 
 /**
  * Flag to prevent infinite refresh loops
@@ -50,6 +55,11 @@ const processQueue = (error: any, token: string | null = null) => {
 apiClient.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {
         try {
+            if (config.headers.Authorization) {
+                apiLogger.logRequest(config);
+                return config;
+            }
+
             const accessToken =
                 (await SecureStorageService.getAccessToken()) ??
                 (await getToken());
@@ -85,12 +95,15 @@ apiClient.interceptors.response.use(
             apiLogger.logError(error);
         }
 
-        const originalRequest = error.config as InternalAxiosRequestConfig & {
-            _retry?: boolean;
-        };
+        const originalRequest = error.config as RequestConfigWithAuthFlags;
 
         // Handle 401 Unauthorized - attempt token refresh
-        if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+        if (
+            error.response?.status === 401 &&
+            originalRequest &&
+            !originalRequest._retry &&
+            !originalRequest._skipAuthRefresh
+        ) {
             if (isRefreshing) {
                 // Queue the request while token is being refreshed
                 return new Promise((resolve, reject) => {

@@ -1,11 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../../shared/ui/base/Card';
 import { Button } from '../../../shared/ui/base/Button';
 import { useAuth } from '../../../core/auth';
 import { theme } from '../../../theme';
-import type { PerfilInstrutor } from '../../../types/auth';
+import {
+  useInstructorVehiclesQuery,
+  useMyInstructorProfileQuery,
+} from '../../instructors';
 
 interface NavigationLike {
   navigate: (screen: string) => void;
@@ -17,6 +27,12 @@ interface Props {
 
 export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { usuario, logout } = useAuth();
+  const {
+    data: profile,
+    isLoading: isLoadingProfile,
+    isError: hasProfileError,
+  } = useMyInstructorProfileQuery();
+  const { data: vehicles = [] } = useInstructorVehiclesQuery();
 
   const handleLogout = () => {
     Alert.alert('Sair', 'Tem certeza que deseja sair da sua conta?', [
@@ -25,31 +41,49 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
     ]);
   };
 
-  const perfilInstrutor: PerfilInstrutor | undefined =
-    usuario?.papel === 'instrutor'
-      ? (usuario.perfil as PerfilInstrutor)
-      : undefined;
+  const primaryVehicle = vehicles.find(vehicle => vehicle.ativo) ?? vehicles[0];
+  const initials = profile
+    ? `${profile.primeiroNome[0] ?? ''}${profile.ultimoNome[0] ?? ''}`.toUpperCase()
+    : `${usuario?.perfil?.primeiroNome?.[0] ?? ''}${usuario?.perfil?.ultimoNome?.[0] ?? ''}`;
+
+  if (isLoadingProfile) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+          <Text style={styles.loadingText}>Carregando perfil do instrutor...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (hasProfileError || !profile) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>Nao foi possivel carregar o perfil do instrutor.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content}>
         <View style={styles.header}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {usuario?.perfil?.primeiroNome?.[0]}
-              {usuario?.perfil?.ultimoNome?.[0]}
-            </Text>
+            <Text style={styles.avatarText}>{initials}</Text>
           </View>
           <Text style={styles.name}>
-            Instrutor {usuario?.perfil?.primeiroNome} {usuario?.perfil?.ultimoNome}
+            Instrutor {profile.primeiroNome} {profile.ultimoNome}
           </Text>
           <Text style={styles.email}>{usuario?.email}</Text>
           <View style={styles.ratingContainer}>
             <Text style={styles.rating}>
-              ⭐ {perfilInstrutor?.avaliacoes?.media?.toFixed(1) || '0.0'}
+              ⭐ {profile.avaliacoes.media.toFixed(1)}
             </Text>
             <Text style={styles.ratingText}>
-              ({perfilInstrutor?.avaliacoes?.quantidade || 0} avaliações)
+              ({profile.avaliacoes.quantidade} avaliações)
             </Text>
           </View>
         </View>
@@ -57,25 +91,47 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
         <Card style={styles.infoCard}>
           <Text style={styles.sectionTitle}>Informações Profissionais</Text>
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>DETRAN ID</Text>
-            <Text style={styles.infoValue}>{perfilInstrutor?.detranId || 'Não informado'}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Licença</Text>
+            <Text style={styles.infoLabel}>Categorias</Text>
             <Text style={styles.infoValue}>
-              {perfilInstrutor?.licenca?.numero || 'Não informado'}
+              {profile.categorias.length > 0 ? profile.categorias.join(', ') : 'Nao informado'}
             </Text>
           </View>
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Categorias</Text>
+            <Text style={styles.infoLabel}>Experiência</Text>
             <Text style={styles.infoValue}>
-              {perfilInstrutor?.licenca?.categorias?.join(', ') || 'A, B'}
+              {profile.experienciaAnos} ano{profile.experienciaAnos === 1 ? '' : 's'}
             </Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Valor/Hora</Text>
             <Text style={styles.infoValue}>
-              R$ {perfilInstrutor?.precos?.valorHora?.toFixed(2) || '0,00'}
+              R$ {profile.precos.valorHora.toFixed(2)}
+            </Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Gênero</Text>
+            <Text style={styles.infoValue}>
+              {profile.genero === 'feminino'
+                ? 'Feminino'
+                : profile.genero === 'masculino'
+                  ? 'Masculino'
+                  : profile.genero === 'outro'
+                    ? 'Outro'
+                    : 'Nao informado'}
+            </Text>
+          </View>
+          <View style={[styles.infoItem, styles.infoItemStacked]}>
+            <Text style={styles.infoLabel}>Bio</Text>
+            <Text style={[styles.infoValue, styles.infoValueStacked]}>
+              {profile.bio?.trim() ? profile.bio : 'Nenhuma bio cadastrada.'}
+            </Text>
+          </View>
+          <View style={[styles.infoItem, styles.infoItemStacked]}>
+            <Text style={styles.infoLabel}>Especialidades</Text>
+            <Text style={[styles.infoValue, styles.infoValueStacked]}>
+              {profile.especialidades.length > 0
+                ? profile.especialidades.join(', ')
+                : 'Nenhuma especialidade cadastrada.'}
             </Text>
           </View>
         </Card>
@@ -83,25 +139,28 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
         <Card style={styles.vehicleCard}>
           <Text style={styles.sectionTitle}>Veículo</Text>
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Marca/Modelo</Text>
+            <Text style={styles.infoLabel}>Modelo</Text>
             <Text style={styles.infoValue}>
-              {perfilInstrutor?.veiculo?.marca || 'Não informado'}{' '}
-              {perfilInstrutor?.veiculo?.modelo || ''}
+              {primaryVehicle?.modelo || profile.veiculo.modelo || 'Nao informado'}
             </Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Ano</Text>
             <Text style={styles.infoValue}>
-              {perfilInstrutor?.veiculo?.ano || '--'}
+              {primaryVehicle?.ano || profile.veiculo.ano || '--'}
             </Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Transmissão</Text>
             <Text style={styles.infoValue}>
-              {perfilInstrutor?.veiculo?.transmissao === 'automatico'
+              {(primaryVehicle?.transmissao || profile.veiculo.transmissao) === 'automatico'
                 ? 'Automático'
                 : 'Manual'}
             </Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Placa</Text>
+            <Text style={styles.infoValue}>{primaryVehicle?.placa || 'Nao informada'}</Text>
           </View>
         </Card>
 
@@ -110,12 +169,32 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
           <Button
             title="Editar Perfil"
             variant="outline"
-            onPress={() => navigation.navigate('EditInstructorProfile')}
+            onPress={() => navigation.navigate('EditProfile')}
             style={styles.actionButton}
           />
-          <Button title="Credenciais" variant="outline" style={styles.actionButton} />
-          <Button title="Configurações" variant="outline" style={styles.actionButton} />
-          <Button title="Ajuda e Suporte" variant="outline" style={styles.actionButton} />
+          <Button
+            title="Credenciais"
+            variant="outline"
+            onPress={() =>
+              Alert.alert(
+                'Credenciais',
+                'A tela de credenciais ainda não existe no app.'
+              )
+            }
+            style={styles.actionButton}
+          />
+          <Button
+            title="Configurações"
+            variant="outline"
+            onPress={() => navigation.navigate('Settings')}
+            style={styles.actionButton}
+          />
+          <Button
+            title="Ajuda e Suporte"
+            variant="outline"
+            onPress={() => navigation.navigate('Support')}
+            style={styles.actionButton}
+          />
           <Button
             title="Sair"
             variant="destructive"
@@ -213,5 +292,30 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     marginBottom: theme.spacing.sm,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing.xl,
+  },
+  loadingText: {
+    marginTop: theme.spacing.md,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+  },
+  errorText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.semantic.error,
+    textAlign: 'center',
+  },
+  infoItemStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: theme.spacing.xs,
+  },
+  infoValueStacked: {
+    width: '100%',
+    textAlign: 'left',
   },
 });

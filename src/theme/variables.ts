@@ -154,7 +154,7 @@ export const typography = {
   },
   lineHeight: {
     xs: moderateScale(16),
-    sm: moderateScale(20),
+    sm: moderateScale(18),
     md: moderateScale(24),
     lg: moderateScale(28),
     xl: moderateScale(32),

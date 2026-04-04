@@ -3,7 +3,21 @@ import type { InstructorDetailsApiResponse } from '../types/api';
 
 const mapGenero = (
   genero?: InstructorDetailsApiResponse['genero']
-): 'masculino' | 'feminino' => (genero === 'F' ? 'feminino' : 'masculino');
+): 'masculino' | 'feminino' | 'outro' | null => {
+  if (genero === 'F') {
+    return 'feminino';
+  }
+
+  if (genero === 'M') {
+    return 'masculino';
+  }
+
+  if (genero === 'Outro') {
+    return 'outro';
+  }
+
+  return null;
+};
 
 const mapTransmissao = (
   transmissao?: InstructorDetailsApiResponse['veiculo'] extends infer V

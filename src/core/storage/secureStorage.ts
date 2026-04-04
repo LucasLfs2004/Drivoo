@@ -12,7 +12,8 @@ const STORAGE_KEYS = {
 export interface StoredAuthData {
   token: string;
   refreshToken: string;
-  user: Usuario;
+  user: Usuario | null;
+  sessionEmail: string | null;
   expiresAt: number;
 }
 
@@ -29,7 +30,10 @@ export class SecureStorageService {
       const promises = [
         AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token),
         AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken),
-        AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.user)),
+        AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify({
+          user: data.user,
+          sessionEmail: data.sessionEmail,
+        })),
         AsyncStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRY, data.expiresAt.toString()),
       ];
 
@@ -56,13 +60,22 @@ export class SecureStorageService {
         return null;
       }
 
-      const user = JSON.parse(userData);
+      const parsedUserData = JSON.parse(userData);
+      const user =
+        parsedUserData && typeof parsedUserData === 'object' && 'user' in parsedUserData
+          ? parsedUserData.user
+          : parsedUserData;
+      const sessionEmail =
+        parsedUserData && typeof parsedUserData === 'object' && 'sessionEmail' in parsedUserData
+          ? parsedUserData.sessionEmail
+          : user?.email ?? null;
       const expiresAt = parseInt(expiryStr, 10);
 
       return {
         token,
         refreshToken,
         user,
+        sessionEmail,
         expiresAt,
       };
     } catch (error) {

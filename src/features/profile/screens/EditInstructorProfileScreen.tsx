@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,26 +6,35 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  ActivityIndicator,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { Card } from '../../../shared/ui/base/Card';
 import { Button } from '../../../shared/ui/base/Button';
-import { FormImagePicker, FormInput } from '../../../shared/ui/forms';
+import { FormInput, FormSelect } from '../../../shared/ui/forms';
 import { theme } from '../../../theme';
+import {
+  useCreateInstructorVehicleMutation,
+  useDeleteInstructorVehicleMutation,
+  useInstructorProfileUpdateMutation,
+  useInstructorVehiclesQuery,
+  useMyInstructorProfileQuery,
+  useUpdateInstructorVehicleMutation,
+} from '../../instructors';
 
 interface InstructorProfileFormData {
-  primeiroNome: string;
-  ultimoNome: string;
-  detranId: string;
-  licencaNumero: string;
-  licencaVencimento: string;
-  veiculoMarca: string;
+  genero: '' | 'M' | 'F' | 'Outro';
+  experienciaAnos: string;
+  valorHora: string;
+  bio: string;
+  tags: string;
   veiculoModelo: string;
   veiculoAno: string;
   veiculoPlaca: string;
-  valorHora: string;
-  raioAtendimento: string;
+  tipoCambio: '' | 'MANUAL' | 'AUTOMATICO';
+  aceitaVeiculoAluno: boolean;
 }
 
 interface Props {
@@ -35,54 +44,195 @@ interface Props {
 }
 
 export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => {
-  const [licencaDocument, setLicencaDocument] = useState<string | null>(null);
-  const [veiculoDocument, setVeiculoDocument] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const {
+    data: profile,
+    isLoading: isLoadingProfile,
+    isError: hasProfileError,
+  } = useMyInstructorProfileQuery();
+  const {
+    data: vehicles = [],
+    isLoading: isLoadingVehicles,
+  } = useInstructorVehiclesQuery();
+  const updateProfileMutation = useInstructorProfileUpdateMutation();
+  const createVehicleMutation = useCreateInstructorVehicleMutation();
+  const updateVehicleMutation = useUpdateInstructorVehicleMutation();
+  const deleteVehicleMutation = useDeleteInstructorVehicleMutation();
+
+  const primaryVehicle = vehicles.find(vehicle => vehicle.ativo) ?? vehicles[0];
 
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<InstructorProfileFormData>({
     defaultValues: {
-      primeiroNome: '',
-      ultimoNome: '',
-      detranId: '',
-      licencaNumero: '',
-      licencaVencimento: '',
-      veiculoMarca: '',
+      genero: '',
+      experienciaAnos: '',
+      valorHora: '',
+      bio: '',
+      tags: '',
       veiculoModelo: '',
       veiculoAno: '',
       veiculoPlaca: '',
-      valorHora: '',
-      raioAtendimento: '10',
+      tipoCambio: '',
+      aceitaVeiculoAluno: false,
     },
   });
 
-  const onSubmit = async () => {
-    if (!licencaDocument) {
-      Alert.alert('Erro', 'Por favor, faça upload da sua licença do DETRAN');
+  useEffect(() => {
+    if (!profile) {
       return;
     }
 
-    if (!veiculoDocument) {
-      Alert.alert('Erro', 'Por favor, faça upload do documento do veículo');
-      return;
-    }
+    reset({
+      genero:
+        profile.genero === 'feminino'
+          ? 'F'
+          : profile.genero === 'masculino'
+            ? 'M'
+            : profile.genero === 'outro'
+              ? 'Outro'
+              : '',
+      experienciaAnos: String(profile.experienciaAnos ?? 0),
+      valorHora: String(profile.precos.valorHora ?? ''),
+      bio: profile.bio ?? '',
+      tags: profile.especialidades.join(', '),
+      veiculoModelo: primaryVehicle?.modelo ?? profile.veiculo.modelo ?? '',
+      veiculoAno: String(primaryVehicle?.ano ?? profile.veiculo.ano ?? ''),
+      veiculoPlaca: primaryVehicle?.placa ?? '',
+      tipoCambio:
+        primaryVehicle?.transmissao === 'automatico' || profile.veiculo.transmissao === 'automatico'
+          ? 'AUTOMATICO'
+          : primaryVehicle?.transmissao === 'manual' || profile.veiculo.transmissao === 'manual'
+            ? 'MANUAL'
+            : '',
+      aceitaVeiculoAluno:
+        primaryVehicle?.aceitaVeiculoAluno ?? profile.veiculo.aceitaVeiculoAluno,
+    });
+  }, [primaryVehicle, profile, reset]);
 
-    setSaving(true);
+  const saveProfile = async (data: InstructorProfileFormData) => {
+    const experienciaAnos = Number.parseInt(data.experienciaAnos || '0', 10);
+    const valorHora = Number.parseFloat(data.valorHora.replace(',', '.'));
+    const tags = data.tags
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+    const hasVehicleData = Boolean(
+      data.veiculoModelo.trim() ||
+      data.veiculoAno.trim() ||
+      data.veiculoPlaca.trim() ||
+      data.tipoCambio
+    );
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await updateProfileMutation.mutateAsync({
+        valor_hora: Number.isFinite(valorHora) ? valorHora : null,
+        experiencia_anos: Number.isFinite(experienciaAnos) ? experienciaAnos : 0,
+        bio: data.bio.trim() || null,
+        tags,
+        genero: data.genero || null,
+      });
+
+      if (hasVehicleData && data.tipoCambio) {
+        const vehiclePayload = {
+          modelo: data.veiculoModelo.trim(),
+          ano: data.veiculoAno.trim() ? Number.parseInt(data.veiculoAno, 10) : null,
+          placa: data.veiculoPlaca.trim() || null,
+          tipo_cambio: data.tipoCambio,
+          aceita_veiculo_aluno: data.aceitaVeiculoAluno,
+        } as const;
+
+        if (primaryVehicle) {
+          await updateVehicleMutation.mutateAsync({
+            vehicleId: primaryVehicle.id,
+            payload: vehiclePayload,
+          });
+        } else {
+          await createVehicleMutation.mutateAsync(vehiclePayload);
+        }
+      }
+
       Alert.alert('Sucesso', 'Seu perfil foi atualizado com sucesso!', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch {
       Alert.alert('Erro', 'Não foi possível atualizar seu perfil. Tente novamente.');
-    } finally {
-      setSaving(false);
     }
   };
+
+  const handleDeleteVehicle = () => {
+    if (!primaryVehicle) {
+      return;
+    }
+
+    Alert.alert('Remover veículo', 'Deseja remover o veículo atual?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Remover',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteVehicleMutation.mutateAsync(primaryVehicle.id);
+            reset({
+              ...(profile
+                ? {
+                    genero:
+                      profile.genero === 'feminino'
+                        ? 'F'
+                        : profile.genero === 'masculino'
+                          ? 'M'
+                          : profile.genero === 'outro'
+                            ? 'Outro'
+                            : '',
+                    experienciaAnos: String(profile.experienciaAnos ?? 0),
+                    valorHora: String(profile.precos.valorHora ?? ''),
+                    bio: profile.bio ?? '',
+                    tags: profile.especialidades.join(', '),
+                  }
+                : {}),
+              veiculoModelo: '',
+              veiculoAno: '',
+              veiculoPlaca: '',
+              tipoCambio: '',
+              aceitaVeiculoAluno: false,
+            });
+            Alert.alert('Sucesso', 'Veículo removido com sucesso.');
+          } catch {
+            Alert.alert('Erro', 'Não foi possível remover o veículo.');
+          }
+        },
+      },
+    ]);
+  };
+
+  const isSaving =
+    updateProfileMutation.isPending ||
+    createVehicleMutation.isPending ||
+    updateVehicleMutation.isPending ||
+    deleteVehicleMutation.isPending;
+
+  if (isLoadingProfile || isLoadingVehicles) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+          <Text style={styles.loadingText}>Carregando dados do perfil...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (hasProfileError || !profile) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>Nao foi possivel carregar os dados do instrutor.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -96,109 +246,91 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
         </View>
 
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+          <Text style={styles.sectionTitle}>Perfil Profissional</Text>
           <Controller
             control={control}
-            name="primeiroNome"
-            rules={{ required: 'Nome é obrigatório' }}
+            name="genero"
             render={({ field: { onChange, value } }) => (
-              <FormInput
-                label="Primeiro Nome"
+              <FormSelect
+                label="Genero"
                 value={value}
-                onChangeText={onChange}
-                error={errors.primeiroNome?.message}
-                placeholder="Digite seu primeiro nome"
+                onSelect={(selectedValue) =>
+                  onChange(selectedValue as InstructorProfileFormData['genero'])
+                }
+                options={[
+                  { label: 'Nao informar', value: '' },
+                  { label: 'Masculino', value: 'M' },
+                  { label: 'Feminino', value: 'F' },
+                  { label: 'Outro', value: 'Outro' },
+                ]}
               />
             )}
           />
           <Controller
             control={control}
-            name="ultimoNome"
-            rules={{ required: 'Sobrenome é obrigatório' }}
+            name="experienciaAnos"
             render={({ field: { onChange, value } }) => (
               <FormInput
-                label="Sobrenome"
+                label="Experiência (anos)"
                 value={value}
                 onChangeText={onChange}
-                error={errors.ultimoNome?.message}
-                placeholder="Digite seu sobrenome"
+                error={errors.experienciaAnos?.message}
+                placeholder="Ex: 5"
+                keyboardType="numeric"
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="valorHora"
+            rules={{ required: 'Valor por hora é obrigatório' }}
+            render={({ field: { onChange, value } }) => (
+              <FormInput
+                label="Valor por hora"
+                value={value}
+                onChangeText={onChange}
+                error={errors.valorHora?.message}
+                placeholder="Ex: 120"
+                keyboardType="numeric"
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="tags"
+            render={({ field: { onChange, value } }) => (
+              <FormInput
+                label="Especialidades"
+                value={value}
+                onChangeText={onChange}
+                error={errors.tags?.message}
+                placeholder="Ex: Aulas noturnas, câmbio automático"
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="bio"
+            render={({ field: { onChange, value } }) => (
+              <FormInput
+                label="Bio"
+                value={value}
+                onChangeText={onChange}
+                error={errors.bio?.message}
+                placeholder="Fale um pouco sobre sua experiência"
+                multiline
+                numberOfLines={4}
+                style={styles.multilineInput}
               />
             )}
           />
         </Card>
 
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Credenciais DETRAN</Text>
-          <Controller
-            control={control}
-            name="detranId"
-            rules={{ required: 'ID do DETRAN é obrigatório' }}
-            render={({ field: { onChange, value } }) => (
-              <FormInput
-                label="ID DETRAN"
-                value={value}
-                onChangeText={onChange}
-                error={errors.detranId?.message}
-                placeholder="Digite seu ID do DETRAN"
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="licencaNumero"
-            rules={{ required: 'Número da licença é obrigatório' }}
-            render={({ field: { onChange, value } }) => (
-              <FormInput
-                label="Número da Licença"
-                value={value}
-                onChangeText={onChange}
-                error={errors.licencaNumero?.message}
-                placeholder="Digite o número da sua licença"
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="licencaVencimento"
-            rules={{ required: 'Data de vencimento é obrigatória' }}
-            render={({ field: { onChange, value } }) => (
-              <FormInput
-                label="Vencimento da Licença"
-                value={value}
-                onChangeText={onChange}
-                error={errors.licencaVencimento?.message}
-                placeholder="DD/MM/AAAA"
-              />
-            )}
-          />
-          <FormImagePicker
-            label="Documento da Licença DETRAN"
-            onImageSelect={setLicencaDocument}
-            value={licencaDocument || undefined}
-            placeholder="Faça upload da sua licença"
-          />
-        </Card>
-
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Informações do Veículo</Text>
-          <Controller
-            control={control}
-            name="veiculoMarca"
-            rules={{ required: 'Marca do veículo é obrigatória' }}
-            render={({ field: { onChange, value } }) => (
-              <FormInput
-                label="Marca"
-                value={value}
-                onChangeText={onChange}
-                error={errors.veiculoMarca?.message}
-                placeholder="Ex: Volkswagen"
-              />
-            )}
-          />
+          <Text style={styles.sectionTitle}>Veículo</Text>
           <Controller
             control={control}
             name="veiculoModelo"
-            rules={{ required: 'Modelo do veículo é obrigatório' }}
             render={({ field: { onChange, value } }) => (
               <FormInput
                 label="Modelo"
@@ -212,7 +344,6 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
           <Controller
             control={control}
             name="veiculoAno"
-            rules={{ required: 'Ano do veículo é obrigatório' }}
             render={({ field: { onChange, value } }) => (
               <FormInput
                 label="Ano"
@@ -227,7 +358,6 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
           <Controller
             control={control}
             name="veiculoPlaca"
-            rules={{ required: 'Placa do veículo é obrigatória' }}
             render={({ field: { onChange, value } }) => (
               <FormInput
                 label="Placa"
@@ -241,46 +371,60 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
           />
           <Controller
             control={control}
-            name="valorHora"
-            rules={{ required: 'Valor por hora é obrigatório' }}
+            name="tipoCambio"
             render={({ field: { onChange, value } }) => (
-              <FormInput
-                label="Valor por Hora"
+              <FormSelect
+                label="Transmissão"
                 value={value}
-                onChangeText={onChange}
-                error={errors.valorHora?.message}
-                placeholder="Ex: 85,00"
-                keyboardType="numeric"
+                onSelect={(selectedValue) =>
+                  onChange(selectedValue as InstructorProfileFormData['tipoCambio'])
+                }
+                options={[
+                  { label: 'Selecione', value: '' },
+                  { label: 'Manual', value: 'MANUAL' },
+                  { label: 'Automático', value: 'AUTOMATICO' },
+                ]}
               />
             )}
           />
           <Controller
             control={control}
-            name="raioAtendimento"
-            rules={{ required: 'Raio de atendimento é obrigatório' }}
+            name="aceitaVeiculoAluno"
             render={({ field: { onChange, value } }) => (
-              <FormInput
-                label="Raio de Atendimento (km)"
-                value={value}
-                onChangeText={onChange}
-                error={errors.raioAtendimento?.message}
-                placeholder="Ex: 10"
-                keyboardType="numeric"
-              />
+              <View style={styles.switchRow}>
+                <View style={styles.switchTextBlock}>
+                  <Text style={styles.switchLabel}>Aceita veículo do aluno</Text>
+                  <Text style={styles.switchDescription}>
+                    Permita usar o veículo do aluno quando fizer sentido.
+                  </Text>
+                </View>
+                <Switch
+                  value={value}
+                  onValueChange={onChange}
+                  trackColor={{
+                    false: theme.colors.neutral[300],
+                    true: theme.colors.primary[300],
+                  }}
+                  thumbColor={value ? theme.colors.primary[500] : theme.colors.neutral[100]}
+                />
+              </View>
             )}
           />
-          <FormImagePicker
-            label="Documento do Veículo"
-            onImageSelect={setVeiculoDocument}
-            value={veiculoDocument || undefined}
-            placeholder="Faça upload do documento do veículo"
-          />
+          {primaryVehicle ? (
+            <Button
+              title="Remover Veículo"
+              variant="destructive"
+              onPress={handleDeleteVehicle}
+              disabled={isSaving}
+              style={styles.removeVehicleButton}
+            />
+          ) : null}
         </Card>
 
         <Button
-          title={saving ? 'Salvando...' : 'Salvar Alterações'}
-          onPress={handleSubmit(onSubmit)}
-          disabled={saving}
+          title={isSaving ? 'Salvando...' : 'Salvar Alterações'}
+          onPress={handleSubmit(saveProfile)}
+          disabled={isSaving}
           style={styles.saveButton}
         />
       </ScrollView>
@@ -319,6 +463,22 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing.xl,
+  },
+  loadingText: {
+    marginTop: theme.spacing.md,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+  },
+  errorText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.semantic.error,
+    textAlign: 'center',
+  },
   section: {
     marginBottom: theme.spacing.lg,
   },
@@ -330,5 +490,32 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginBottom: theme.spacing.xl,
+  },
+  multilineInput: {
+    minHeight: 112,
+    textAlignVertical: 'top',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  switchTextBlock: {
+    flex: 1,
+  },
+  switchLabel: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  switchDescription: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+  },
+  removeVehicleButton: {
+    marginTop: theme.spacing.sm,
   },
 });

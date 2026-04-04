@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '../../../shared/ui/base/Button';
 import { FormInput } from '../../../shared/ui/forms';
-import { AuthApiService } from '../api/authApiService';
+import { AuthApiService } from '../api/auth-api-service';
 import { theme } from '../../../theme';
 import type { AuthStackScreenProps } from '../../../types/navigation';
 import type { ForgotPasswordRequest } from '../../../types/auth';

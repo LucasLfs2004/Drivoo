@@ -3,6 +3,8 @@
  * Defines URL base, timeout, and environment-specific settings
  */
 
+import Config from 'react-native-config';
+
 // Environment configuration
 const ENV = {
     dev: {
@@ -28,12 +30,12 @@ const ENV = {
  */
 const getEnvVars = () => {
     // Check for environment variable override
-    const apiBaseUrl = process.env.API_BASE_URL;
+    const apiBaseUrl = Config.API_BASE_URL;
     if (apiBaseUrl) {
         return {
             API_BASE_URL: apiBaseUrl,
-            API_TIMEOUT: parseInt(process.env.API_TIMEOUT || '30000', 10),
-            LOG_REQUESTS: process.env.LOG_REQUESTS === 'true',
+            API_TIMEOUT: parseInt(Config.API_TIMEOUT || '30000', 10),
+            LOG_REQUESTS: Config.LOG_REQUESTS === 'true',
         };
     }
 
