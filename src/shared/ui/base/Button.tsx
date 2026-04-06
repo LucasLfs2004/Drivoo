@@ -1,11 +1,11 @@
 import React from 'react';
 import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
   ActivityIndicator,
-  ViewStyle,
+  StyleSheet,
+  Text,
   TextStyle,
+  TouchableOpacity,
+  ViewStyle,
 } from 'react-native';
 import { theme } from '../../../theme';
 
@@ -73,7 +73,7 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: theme.borders.radius.md,
+    borderRadius: theme.borders.radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   outline: {
     backgroundColor: 'transparent',
     borderWidth: theme.borders.width.base,
-    borderColor: theme.colors.primary[500],
+    borderColor: theme.colors.primary[300],
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -101,22 +101,22 @@ const styles = StyleSheet.create({
   sm: {
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
-    minHeight: theme.scaleUtils.moderateScale(36),
+    // minHeight: theme.scaleUtils.moderateScale(36),
   },
   md: {
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    minHeight: theme.scaleUtils.moderateScale(48),
+    paddingVertical: theme.spacing.md - theme.spacing.xs,
+    // minHeight: theme.scaleUtils.moderateScale(48),
   },
   lg: {
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.lg,
-    minHeight: theme.scaleUtils.moderateScale(56),
+    // minHeight: theme.scaleUtils.moderateScale(56),
   },
   // States
   disabled: {
-    backgroundColor: theme.colors.neutral[300],
-    ...theme.shadows.sm,
+    backgroundColor: theme.colors.neutral[100],
+    ...theme.shadows.md,
   },
   // Text styles
   text: {
@@ -130,10 +130,10 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
   },
   outlineText: {
-    color: theme.colors.primary[500],
+    color: theme.colors.primary[300],
   },
   ghostText: {
-    color: theme.colors.primary[500],
+    color: theme.colors.primary[300],
   },
   destructiveText: {
     color: theme.colors.text.inverse,

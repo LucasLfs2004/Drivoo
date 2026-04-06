@@ -1,13 +1,14 @@
+import { moderateScale } from '@/utils';
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useForm, Controller } from 'react-hook-form';
+import { useAuth } from '../../../core/auth';
 import { Button } from '../../../shared/ui/base/Button';
 import { FormInput } from '../../../shared/ui/forms';
-import { useAuth } from '../../../core/auth';
 import { theme } from '../../../theme';
-import type { AuthStackScreenProps } from '../../../types/navigation';
 import type { LoginCredentials } from '../../../types/auth';
+import type { AuthStackScreenProps } from '../../../types/navigation';
 
 type Props = AuthStackScreenProps<'Login'>;
 
@@ -78,11 +79,15 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
         <View style={styles.content}>
-          <Text style={styles.title}>Entrar no Drivoo</Text>
+
+<View style={styles.headerContent}>
+          <Image  source={require('../../../assets/icon-transparent.png')} style={styles.logo} />
+      <Text style={styles.logoText}>Drivoo</Text>
+</View>
           <Text style={styles.subtitle}>Conecte-se com instrutores qualificados</Text>
 
+          <View  style={styles.formContainer}>
           {contextError && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{contextError}</Text>
@@ -133,6 +138,8 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
             />
           </View>
 
+</View>
+
           <View style={styles.footer}>
             <Button
               title="Esqueceu a senha?"
@@ -148,7 +155,6 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
             />
           </View>
         </View>
-      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -161,7 +167,25 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    backgroundColor: theme.colors.background.primary,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    columnGap: theme.spacing.md - theme.spacing.xs,
+  },
+  
+  logo: {
+    height: moderateScale(72),
+    width: moderateScale(72),
+    alignSelf: 'center',
+  },
+  logoText: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.accent[500],
   },
   title: {
     fontSize: theme.typography.fontSize.xl,
@@ -169,6 +193,14 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     textAlign: 'center',
     marginBottom: theme.spacing.sm,
+  },
+  formContainer: {
+  justifyContent: 'center',
+    borderRadius: theme.borders.radius.lg,
+    ...theme.shadows.md,
+    padding: theme.spacing.md,
+    paddingVertical: theme.spacing.lg - theme.spacing.xs,
+    backgroundColor: theme.colors.background.primary,
   },
   subtitle: {
     fontSize: theme.typography.fontSize.md,

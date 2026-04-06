@@ -218,9 +218,9 @@ export const borders = {
   radius: {
     none: 0,
     sm: moderateScale(4),
-    md: moderateScale(8),
-    lg: moderateScale(12),
-    xl: moderateScale(16),
+    md: moderateScale(12),
+    lg: moderateScale(18),
+    xl: moderateScale(24),
     full: 9999,
   },
   width: {
