@@ -71,6 +71,7 @@ export type AlunoBookingsStackParamList = {
 
 export type InstrutorDashboardStackParamList = {
   DashboardScreen: undefined;
+  BookingsScreen: undefined;
   BookingDetails: { bookingId: string };
 };
 

@@ -209,13 +209,11 @@ const AvailabilityScreenSkeleton = () => (
       <View style={[styles.skeletonBlock, styles.skeletonSubtitleShort]} />
     </View>
 
-    <Card style={styles.heroCard}>
+    <Card style={styles.warningCard}>
       <View style={[styles.skeletonCircle]} />
-      <View style={[styles.skeletonBlock, styles.skeletonSectionTitle]} />
-      <View style={[styles.skeletonBlock, styles.skeletonBody]} />
-      <View style={[styles.skeletonBlock, styles.skeletonBodyShort]} />
-      <View style={styles.heroActions}>
-        <View style={[styles.skeletonButton, styles.heroAction]} />
+      <View style={styles.warningCopy}>
+        <View style={[styles.skeletonBlock, styles.skeletonLineMedium]} />
+        <View style={[styles.skeletonBlock, styles.skeletonBody]} />
       </View>
     </Card>
 
@@ -233,16 +231,19 @@ const AvailabilityScreenSkeleton = () => (
       </Card>
     ))}
 
-    <Card style={styles.backendNoteCard}>
+    <Card style={styles.skeletonCalendarCard}>
       <View style={[styles.skeletonBlock, styles.skeletonSectionTitle]} />
       <View style={[styles.skeletonBlock, styles.skeletonBody]} />
-      <View style={[styles.skeletonBlock, styles.skeletonBodyShort]} />
       <View style={styles.skeletonCalendarGrid}>
         {Array.from({ length: 14 }).map((_, index) => (
           <View key={`calendar-skeleton-${index}`} style={styles.skeletonCalendarCell} />
         ))}
       </View>
     </Card>
+
+    <View style={styles.heroActions}>
+      <View style={[styles.skeletonButton, styles.heroAction]} />
+    </View>
   </ScrollView>
 );
 
@@ -362,6 +363,9 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.lg,
     backgroundColor: '#F5F9FE',
   },
+  skeletonCalendarCard: {
+    rowGap: theme.spacing.md,
+  },
   backendHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -457,6 +461,10 @@ const styles = StyleSheet.create({
   skeletonDaySummary: {
     width: 180,
     height: 12,
+  },
+  skeletonLineMedium: {
+    width: '42%',
+    height: 14,
   },
   skeletonCalendarGrid: {
     flexDirection: 'row',

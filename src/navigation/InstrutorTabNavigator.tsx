@@ -9,6 +9,7 @@ import {
 } from 'lucide-react-native';
 import React from 'react';
 import {
+  InstrutorBookingsScreen,
   InstrutorDashboardScreen,
   InstrutorEarningsScreen,
   InstrutorScheduleScreen,
@@ -49,6 +50,7 @@ const ProfileStack = createNativeStackNavigator<InstrutorProfileStackParamList>(
 const DashboardStackNavigator = () => (
   <DashboardStack.Navigator screenOptions={{ headerShown: false }}>
     <DashboardStack.Screen name="DashboardScreen" component={InstrutorDashboardScreen} />
+    <DashboardStack.Screen name="BookingsScreen" component={InstrutorBookingsScreen} />
   </DashboardStack.Navigator>
 );
 
