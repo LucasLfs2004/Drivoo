@@ -1,21 +1,24 @@
+import theme from '@/theme';
 import { scale } from '@/utils';
 import { StyleProp, ViewStyle } from 'react-native';
 
 export const tabBarItemStyle: StyleProp<ViewStyle> = {
+    display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     height: scale(56),
-    display: 'flex',
+    // width: scale(20),
+    paddingHorizontal: theme.spacing.xs,
 };
 
 export const tabBarStyle: ViewStyle = {
     position: 'absolute',
-    width: scale(380),
-    bottom: scale(24),
-    marginLeft: scale(30),
+    width: scale(400),
+    bottom: scale(32),
+    marginLeft: scale(20),
     borderRadius: scale(64),
     height: scale(58),
-    display: 'flex',
+    // display: 'flex',
     justifyContent: 'center',
     alignContent: 'center',
 

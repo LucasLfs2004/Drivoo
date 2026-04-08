@@ -1,24 +1,24 @@
-import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
-  LayoutDashboard,
   Calendar,
   DollarSign,
+  LayoutDashboard,
   MessageCircle,
   User,
 } from 'lucide-react-native';
+import React from 'react';
 import {
   InstrutorDashboardScreen,
   InstrutorEarningsScreen,
   InstrutorScheduleScreen,
 } from '../features/instructor-panel';
-import { InstructorAvailabilityDraftProvider } from '../features/instructors/store/InstructorAvailabilityDraftContext';
 import {
   EditInstructorAvailabilityDayScreen,
   InstructorAvailabilityEditorScreen,
   InstructorAvailabilityExceptionsScreen,
 } from '../features/instructors/screens';
+import { InstructorAvailabilityDraftProvider } from '../features/instructors/store/InstructorAvailabilityDraftContext';
 import {
   EditInstructorProfileScreen,
   InstructorSupportScreen,
@@ -28,15 +28,15 @@ import {
 import { ChatListScreen } from '../screens/shared/ChatListScreen';
 import { theme } from '../theme';
 import type {
-  InstrutorTabParamList,
+  ChatStackParamList,
   InstrutorDashboardStackParamList,
-  InstrutorScheduleStackParamList,
   InstrutorEarningsStackParamList,
   InstrutorProfileStackParamList,
-  ChatStackParamList,
+  InstrutorScheduleStackParamList,
+  InstrutorTabParamList,
 } from '../types/navigation';
-import { tabBarItemStyle, tabBarStyle } from './utils';
 import { scale } from '../utils';
+import { tabBarItemStyle, tabBarStyle } from './utils';
 
 const Tab = createBottomTabNavigator<InstrutorTabParamList>();
 const DashboardStack = createNativeStackNavigator<InstrutorDashboardStackParamList>();
@@ -104,8 +104,8 @@ export const InstrutorTabNavigator: React.FC = () => {
         tabBarItemStyle: tabBarItemStyle,
         tabBarStyle: tabBarStyle,
         tabBarIconStyle: {
-          width: 32,
-          height: 32,
+          width: scale(30),
+          height: scale(30),
         },
       }}
     >
