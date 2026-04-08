@@ -138,6 +138,18 @@ Recommended:
 - prefer one source of truth per flow
 - remove or isolate legacy paths instead of adding a third path
 
+## UI Layout Guidance
+
+When implementing or refactoring screens and larger UI sections:
+
+- prefer composing layouts with explicit wrapper blocks and `flex` containers
+- prefer `gap`, `rowGap`, and `columnGap` on parent containers for spacing between siblings
+- prefer grouping related content into semantic sections/cards instead of spacing many loose siblings individually
+- use `marginBottom`, `marginTop`, and similar one-off margins only as a secondary escape hatch, not as the primary spacing strategy
+- when in doubt, create a parent layout block and let that block own the spacing rules
+
+The goal is to keep styles easier to reason about, easier to reorder, and less brittle during future UI changes.
+
 ## Product Domain Guidance
 
 Current core flow:

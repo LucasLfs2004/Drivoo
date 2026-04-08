@@ -73,7 +73,7 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: theme.borders.radius.full,
+    borderRadius: theme.borders.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     lineHeight: theme.typography.lineHeight.sm,
   },
   mdText: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.typography.fontSize.sm,
     lineHeight: theme.typography.lineHeight.md,
   },
   lgText: {

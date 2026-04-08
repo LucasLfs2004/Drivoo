@@ -13,6 +13,12 @@ import {
   InstrutorEarningsScreen,
   InstrutorScheduleScreen,
 } from '../features/instructor-panel';
+import { InstructorAvailabilityDraftProvider } from '../features/instructors/store/InstructorAvailabilityDraftContext';
+import {
+  EditInstructorAvailabilityDayScreen,
+  InstructorAvailabilityEditorScreen,
+  InstructorAvailabilityExceptionsScreen,
+} from '../features/instructors/screens';
 import {
   EditInstructorProfileScreen,
   InstructorSupportScreen,
@@ -47,9 +53,23 @@ const DashboardStackNavigator = () => (
 );
 
 const ScheduleStackNavigator = () => (
-  <ScheduleStack.Navigator screenOptions={{ headerShown: false }}>
-    <ScheduleStack.Screen name="ScheduleScreen" component={InstrutorScheduleScreen} />
-  </ScheduleStack.Navigator>
+  <InstructorAvailabilityDraftProvider>
+    <ScheduleStack.Navigator screenOptions={{ headerShown: false }}>
+      <ScheduleStack.Screen name="ScheduleScreen" component={InstrutorScheduleScreen} />
+      <ScheduleStack.Screen
+        name="AvailabilityEditor"
+        component={InstructorAvailabilityEditorScreen}
+      />
+      <ScheduleStack.Screen
+        name="EditAvailabilityDay"
+        component={EditInstructorAvailabilityDayScreen}
+      />
+      <ScheduleStack.Screen
+        name="AvailabilityExceptions"
+        component={InstructorAvailabilityExceptionsScreen}
+      />
+    </ScheduleStack.Navigator>
+  </InstructorAvailabilityDraftProvider>
 );
 
 const EarningsStackNavigator = () => (

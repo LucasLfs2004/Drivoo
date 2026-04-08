@@ -120,6 +120,118 @@ export interface InstructorAvailabilityUpdateApiRequest {
   ativo?: boolean | null;
 }
 
+export type InstructorAvailabilityKindApi =
+  | 'SEMANAL'
+  | 'EXCECAO_DISPONIVEL'
+  | 'EXCECAO_BLOQUEIO'
+  | 'EXCLUIR_EXCECAO';
+
+export interface InstructorAvailabilityIntervalApi {
+  hora_inicio: string;
+  hora_fim: string;
+}
+
+export interface InstructorAvailabilityWeeklyDayApiResponse {
+  dia_semana: number;
+  intervalos: InstructorAvailabilityIntervalApi[];
+}
+
+export interface InstructorAvailabilityExceptionApiResponse {
+  tipo_disponibilidade: Exclude<InstructorAvailabilityKindApi, 'SEMANAL'>;
+  data_especifica: string;
+  intervalos: InstructorAvailabilityIntervalApi[];
+}
+
+export interface InstructorPreservedBookingApiResponse {
+  id: string;
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
+  motivo: 'FORA_DA_DISPONIBILIDADE_ATUAL';
+}
+
+export interface InstructorAvailabilityAggregateApiResponse {
+  timezone: string;
+  semanal: InstructorAvailabilityWeeklyDayApiResponse[];
+  excecoes: InstructorAvailabilityExceptionApiResponse[];
+  bookings_preservados: InstructorPreservedBookingApiResponse[];
+}
+
+export interface InstructorAvailabilityBulkItemApiRequest {
+  tipo_disponibilidade: InstructorAvailabilityKindApi;
+  dias_semana?: number[];
+  datas_especificas?: string[];
+  intervalos?: InstructorAvailabilityIntervalApi[];
+}
+
+export interface InstructorAvailabilityBulkApiRequest {
+  modo: 'SUBSTITUIR';
+  itens: InstructorAvailabilityBulkItemApiRequest[];
+}
+
+export interface InstructorAvailabilityBulkApiResponse {
+  modo: 'SUBSTITUIR';
+  dias_semana_afetados: number[];
+  datas_afetadas: string[];
+  registros_removidos: number;
+  registros_criados: number;
+}
+
+export interface InstructorBookingsPreviewItemApiResponse {
+  id: string;
+  status: 'CONFIRMADO' | 'PENDENTE' | 'AGENDADO';
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
+}
+
+export interface InstructorBookingsPreviewApiResponse {
+  timezone: string;
+  itens: InstructorBookingsPreviewItemApiResponse[];
+}
+
+export type InstructorAvailabilityCalendarDayStatusApi =
+  | 'DISPONIVEL'
+  | 'SEM_DISPONIBILIDADE'
+  | 'BLOQUEADO'
+  | 'OCUPADO_PARCIAL';
+
+export interface InstructorAvailabilityCalendarBookingApiResponse {
+  id: string;
+  status: 'CONFIRMADO' | 'PENDENTE' | 'AGENDADO';
+  hora_inicio: string;
+  hora_fim: string;
+}
+
+export interface InstructorAvailabilityCalendarDayApiResponse {
+  data: string;
+  status_dia: InstructorAvailabilityCalendarDayStatusApi;
+  intervalos_ofertados: InstructorAvailabilityIntervalApi[];
+  bookings: InstructorAvailabilityCalendarBookingApiResponse[];
+  bookings_preservados: InstructorPreservedBookingApiResponse[];
+}
+
+export interface InstructorAvailabilityCalendarApiResponse {
+  timezone: string;
+  data_inicio: string;
+  data_fim: string;
+  dias: InstructorAvailabilityCalendarDayApiResponse[];
+}
+
+export interface InstructorAvailabilityCompleteCalendarApiResponse {
+  timezone: string;
+  data_inicio: string;
+  data_fim: string;
+  total_bookings: number;
+  bookings_preview: InstructorBookingsPreviewItemApiResponse[];
+  dias: Array<
+    InstructorAvailabilityCalendarDayApiResponse & {
+      dia_semana: number;
+      dia_nome: string;
+    }
+  >;
+}
+
 export interface InstructorEarningsHistoryItemApiResponse {
   id?: string | null;
   aluno_nome?: string | null;

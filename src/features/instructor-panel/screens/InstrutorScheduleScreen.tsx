@@ -1,306 +1,250 @@
-import React, { useMemo, useState } from 'react';
+import dayjs from 'dayjs';
+import { ChevronDown, PencilLine, TriangleAlert } from 'lucide-react-native';
+import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
+  Pressable,
   ScrollView,
-  Alert,
-  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import dayjs from 'dayjs';
-import 'dayjs/locale/pt-br';
-import { Card } from '../../../shared/ui/base/Card';
+
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BottomSheet } from '../../../shared/ui/base';
 import { Button } from '../../../shared/ui/base/Button';
-import { WeeklyScheduleEditor } from '../../../shared/ui/forms/WeeklyScheduleEditor';
+import { Card } from '../../../shared/ui/base/Card';
 import { theme } from '../../../theme';
-import { AgendaSemanal, SlotTempo } from '../../../types/auth';
+import type { InstrutorScheduleStackParamList } from '../../../types/navigation';
+import { useInstructorAvailabilityCompleteCalendarQuery } from '../../instructors';
+import { AvailabilityCalendarPreview } from '../../instructors/components/AvailabilityCalendarPreview';
+import { AvailabilityDayCard } from '../../instructors/components/AvailabilityDayCard';
+import { AvailabilityExceptionsCard } from '../../instructors/components/AvailabilityExceptionsCard';
+import { useInstructorAvailabilityDraft } from '../../instructors/store/InstructorAvailabilityDraftContext';
 import {
-  useCreateInstructorAvailabilityMutation,
-  useDeleteInstructorAvailabilityMutation,
-  useInstructorScheduleQuery,
-  useUpdateInstructorAvailabilityMutation,
-} from '../../instructors';
+  getPreservedBookings,
+  WEEK_DAYS,
+} from '../../instructors/utils/availability';
 
-dayjs.locale('pt-br');
+type Props = NativeStackScreenProps<InstrutorScheduleStackParamList, 'ScheduleScreen'>;
 
-const DAY_KEYS = [
-  'segunda',
-  'terca',
-  'quarta',
-  'quinta',
-  'sexta',
-  'sabado',
-  'domingo',
-] as const;
-
-const dayKeyToIndex: Record<(typeof DAY_KEYS)[number], number> = {
-  segunda: 0,
-  terca: 1,
-  quarta: 2,
-  quinta: 3,
-  sexta: 4,
-  sabado: 5,
-  domingo: 6,
-};
-
-const EMPTY_AVAILABILITIES: {
-  id: string;
-  dayIndex: number;
-  dayName: string;
-  startTime: string;
-  endTime: string;
-  breakStart?: string;
-  breakEnd?: string;
-  active: boolean;
-}[] = [];
-
-const buildSlotKey = (dayIndex: number, startTime: string, endTime: string) =>
-  `${dayIndex}-${startTime}-${endTime}`;
-
-export const InstrutorScheduleScreen: React.FC = () => {
-  const [showEditor, setShowEditor] = useState(false);
+export const InstrutorScheduleScreen: React.FC<Props> = ({ navigation }) => {
+  const currentMonth = React.useMemo(() => dayjs().startOf('month'), []);
+  const nextMonthLimit = React.useMemo(() => currentMonth.add(1, 'month'), [currentMonth]);
   const {
-    data: scheduleData,
+    draft,
     isLoading,
     isError,
     refetch,
-  } = useInstructorScheduleQuery();
-  const createAvailabilityMutation = useCreateInstructorAvailabilityMutation();
-  const updateAvailabilityMutation = useUpdateInstructorAvailabilityMutation();
-  const deleteAvailabilityMutation = useDeleteInstructorAvailabilityMutation();
-
-  const schedule = scheduleData?.agenda ?? null;
-  const availabilities = scheduleData?.availabilities ?? EMPTY_AVAILABILITIES;
-
-  const hasConfiguredAvailability = useMemo(
-    () => availabilities.some(availability => availability.active),
-    [availabilities]
+  } = useInstructorAvailabilityDraft();
+  const [visibleMonth, setVisibleMonth] = React.useState(currentMonth);
+  const [isExceptionsSheetVisible, setIsExceptionsSheetVisible] = React.useState(false);
+  const {
+    data: completeCalendar,
+    isLoading: isLoadingCalendar,
+    refetch: refetchCalendar,
+  } = useInstructorAvailabilityCompleteCalendarQuery(!isError);
+  const bookings = React.useMemo(
+    () =>
+      completeCalendar?.bookings_preview?.map(item => ({
+        id: item.id,
+        date: item.data,
+        start: item.hora_inicio,
+        end: item.hora_fim,
+        status: item.status === 'PENDENTE' ? ('pending' as const) : ('confirmed' as const),
+      })) ?? [],
+    [completeCalendar]
   );
-
-  const handleSaveSchedule = async (newSchedule: AgendaSemanal) => {
-    const selectedSlots = new Map<
-      string,
-      { dayIndex: number; startTime: string; endTime: string }
-    >();
-
-    for (const dayKey of DAY_KEYS) {
-      const daySchedule = newSchedule[dayKey];
-      if (!daySchedule.disponivel) {
-        continue;
-      }
-
-      const dayIndex = dayKeyToIndex[dayKey];
-      for (const slot of daySchedule.horarios) {
-        if (!slot.disponivel) {
-          continue;
-        }
-
-        selectedSlots.set(buildSlotKey(dayIndex, slot.horaInicio, slot.horaFim), {
-          dayIndex,
-          startTime: `${slot.horaInicio}:00`,
-          endTime: `${slot.horaFim}:00`,
-        });
-      }
-    }
-
-    const existingSlots = new Map(
-      availabilities.map(availability => [
-        buildSlotKey(availability.dayIndex, availability.startTime, availability.endTime),
-        availability,
-      ])
-    );
-
-    const createPromises: Promise<unknown>[] = [];
-    const updatePromises: Promise<unknown>[] = [];
-    const deletePromises: Promise<unknown>[] = [];
-
-    for (const [slotKey, slot] of selectedSlots.entries()) {
-      const existingAvailability = existingSlots.get(slotKey);
-
-      if (!existingAvailability) {
-        createPromises.push(
-          createAvailabilityMutation.mutateAsync({
-            dia_semana: slot.dayIndex,
-            hora_inicio: slot.startTime,
-            hora_fim: slot.endTime,
-            intervalo_inicio: null,
-            intervalo_fim: null,
-          })
-        );
-        continue;
-      }
-
-      if (!existingAvailability.active) {
-        updatePromises.push(
-          updateAvailabilityMutation.mutateAsync({
-            availabilityId: existingAvailability.id,
-            payload: { ativo: true },
-          })
-        );
-      }
-    }
-
-    for (const [slotKey, availability] of existingSlots.entries()) {
-      if (selectedSlots.has(slotKey)) {
-        continue;
-      }
-
-      deletePromises.push(deleteAvailabilityMutation.mutateAsync(availability.id));
-    }
-
-    try {
-      await Promise.all([...createPromises, ...updatePromises, ...deletePromises]);
-      setShowEditor(false);
-      Alert.alert(
-        'Sucesso',
-        'Sua disponibilidade foi atualizada com sucesso!',
-        [{ text: 'OK' }]
-      );
-    } catch {
-      Alert.alert(
-        'Erro',
-        'Nao foi possível atualizar sua disponibilidade. Tente novamente.'
-      );
-    }
-  };
-
-  const getDaySchedule = (dayKey: keyof AgendaSemanal): SlotTempo[] => {
-    if (!schedule) return [];
-    return schedule[dayKey].horarios.filter(slot => slot.disponivel);
-  };
-
-  const renderWeekView = () => {
-    const weekDays = [
-      { name: 'Segunda', key: 'segunda' as keyof AgendaSemanal, offset: 0 },
-      { name: 'Terça', key: 'terca' as keyof AgendaSemanal, offset: 1 },
-      { name: 'Quarta', key: 'quarta' as keyof AgendaSemanal, offset: 2 },
-      { name: 'Quinta', key: 'quinta' as keyof AgendaSemanal, offset: 3 },
-      { name: 'Sexta', key: 'sexta' as keyof AgendaSemanal, offset: 4 },
-      { name: 'Sábado', key: 'sabado' as keyof AgendaSemanal, offset: 5 },
-      { name: 'Domingo', key: 'domingo' as keyof AgendaSemanal, offset: 6 },
-    ];
-
-    return weekDays.map(day => {
-      const date = dayjs().add(day.offset, 'day');
-      const availableSlots = getDaySchedule(day.key);
-
-      return (
-        <Card key={day.name} style={styles.dayCard}>
-          <View style={styles.dayHeader}>
-            <View>
-              <Text style={styles.dayName}>{day.name}</Text>
-              <Text style={styles.dayDate}>{date.format('DD/MM')}</Text>
-            </View>
-            {schedule && schedule[day.key].disponivel && (
-              <View style={styles.availableBadge}>
-                <Text style={styles.availableBadgeText}>Disponível</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.emptyState}>
-            {availableSlots.length > 0 ? (
-              <>
-                <Text style={styles.availableSlotsText}>
-                  Horários disponíveis:
-                </Text>
-                {availableSlots.map((slot, idx) => (
-                  <Text key={idx} style={styles.slotText}>
-                    • {slot.horaInicio} - {slot.horaFim}
-                  </Text>
-                ))}
-              </>
-            ) : (
-              <Text style={styles.noLessons}>Nenhuma disponibilidade configurada</Text>
-            )}
-          </View>
-        </Card>
-      );
-    });
-  };
-
-  const isSaving =
-    createAvailabilityMutation.isPending ||
-    updateAvailabilityMutation.isPending ||
-    deleteAvailabilityMutation.isPending;
+  const preservedBookings = React.useMemo(
+    () => getPreservedBookings(draft, bookings),
+    [draft, bookings]
+  );
 
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-          <Text style={styles.loadingText}>Carregando disponibilidade...</Text>
-        </View>
+        <AvailabilityScreenSkeleton />
       </SafeAreaView>
     );
   }
 
-  if (isError || !schedule) {
+  if (isError) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.errorText}>Nao foi possível carregar sua agenda.</Text>
-          <Button title="Tentar novamente" variant="outline" onPress={() => refetch()} />
+          <Text style={styles.errorText}>Não foi possível carregar sua agenda.</Text>
+          <Button
+            title="Tentar novamente"
+            variant="outline"
+            onPress={async () => {
+              await Promise.all([refetch(), refetchCalendar()]);
+            }}
+          />
         </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (showEditor) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.editorHeader}>
-          <Text style={styles.editorTitle}>Configurar Disponibilidade</Text>
-        </View>
-        <WeeklyScheduleEditor
-          initialSchedule={schedule}
-          onSave={handleSaveSchedule}
-          onCancel={() => setShowEditor(false)}
-        />
-        {isSaving ? (
-          <View style={styles.savingBanner}>
-            <ActivityIndicator size="small" color={theme.colors.primary[500]} />
-            <Text style={styles.savingText}>Salvando disponibilidade...</Text>
-          </View>
-        ) : null}
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={styles.header}>
-          <Text style={styles.title}>Minha Agenda</Text>
+          <Text style={styles.eyebrow}>Protótipo</Text>
+          <Text style={styles.title}>Disponibilidade</Text>
           <Text style={styles.subtitle}>
-            Gerencie sua disponibilidade e aulas agendadas
+            Edite vários dias, revise exceções e confira o impacto no mês antes do post bulk.
           </Text>
         </View>
 
-        <Card style={styles.availabilityCard}>
-          <Text style={styles.sectionTitle}>Disponibilidade Semanal</Text>
-          <Text style={styles.availabilityText}>
-            {hasConfiguredAvailability
-              ? 'Configure os horários em que você está disponível para dar aulas'
-              : 'Você ainda não configurou sua disponibilidade. Defina seus horários para começar a receber agendamentos.'}
-          </Text>
-          <Button
-            title={hasConfiguredAvailability ? 'Editar Horários' : 'Definir Horários'}
-            variant="primary"
-            onPress={() => setShowEditor(true)}
-            style={styles.setAvailabilityButton}
+        {/* <Card style={styles.heroCard}> */}
+          {/* <View style={styles.heroIconWrap}>
+            <Clock3 color={theme.colors.primary[500]} size={20} />
+          </View>
+          <Text style={styles.sectionTitle}>Resumo da disponibilidade</Text>
+          <Text style={styles.heroText}>
+            Consulte sua agenda configurada, exceções e o preview do mês. A edição completa acontece em uma tela dedicada.
+          </Text> */}
+
+        {/* </Card> */}
+
+        {preservedBookings.length ? (
+          <Card style={styles.warningCard}>
+            <TriangleAlert color={theme.colors.warning[700]} size={18} />
+            <View style={styles.warningCopy}>
+              <Text style={styles.warningTitle}>Aulas preservadas</Text>
+              <Text style={styles.warningText}>
+                {preservedBookings.length} aula(s) seguem válidas mesmo fora da nova janela. O backend deve fechar apenas novos agendamentos nesses horários.
+              </Text>
+            </View>
+          </Card>
+        ) : null}
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Semana base</Text>
+          <Pressable
+            style={styles.inlineMeta}
+            onPress={() => setIsExceptionsSheetVisible(true)}
+          >
+            <PencilLine color={theme.colors.text.tertiary} size={14} />
+            <Text style={styles.inlineMetaText}>{draft.exceptions.length} exceções</Text>
+            <ChevronDown color={theme.colors.text.tertiary} size={14} />
+          </Pressable>
+        </View>
+
+        {WEEK_DAYS.map(item => (
+          <AvailabilityDayCard
+            key={item.day}
+            day={item.day}
+            intervals={draft.weekly[item.day]}
           />
-        </Card>
+        ))}
 
-        <View style={styles.weekView}>
-          <Text style={styles.sectionTitle}>Esta Semana</Text>
-          {renderWeekView()}
-        </View>
+        <AvailabilityCalendarPreview
+          draft={draft}
+          bookings={bookings}
+          preservedBookings={preservedBookings}
+          calendarDays={completeCalendar?.dias}
+          visibleMonth={visibleMonth}
+          onChangeMonth={setVisibleMonth}
+          canGoToPreviousMonth={visibleMonth.isAfter(currentMonth, 'month')}
+          canGoToNextMonth={visibleMonth.isBefore(nextMonthLimit, 'month')}
+        />
+
+        {isLoadingCalendar ? (
+          <Text style={styles.previewLoadingText}>Atualizando calendário do mês...</Text>
+        ) : null}
+
+        {/* <Card style={styles.backendNoteCard}>
+          <View style={styles.backendHeader}>
+            <CalendarDays color={theme.colors.secondary[500]} size={18} />
+            <Text style={styles.backendTitle}>Regra operacional do protótipo</Text>
+          </View>
+          <Text style={styles.backendText}>
+            Aula já marcada é preservada. A mudança de disponibilidade deve afetar só a oferta de novos agendamentos.
+          </Text>
+        </Card> */}
+
+                  <View style={styles.heroActions}>
+            <Button
+                
+              title="Editar disponibilidade"
+              style={styles.heroAction}
+              onPress={() => navigation.navigate('AvailabilityEditor')}
+            />
+          </View>
       </ScrollView>
+
+      <BottomSheet
+        visible={isExceptionsSheetVisible}
+        onClose={() => setIsExceptionsSheetVisible(false)}
+        title="Exceções cadastradas"
+        scrollable
+        snapPoints={['55%', '80%']}
+      >
+        <AvailabilityExceptionsCard
+          exceptions={draft.exceptions}
+          actionLabel="Editar"
+          onPressAction={() => {
+            setIsExceptionsSheetVisible(false);
+            navigation.navigate('AvailabilityEditor');
+          }}
+          emptyActionLabel="Criar exceção"
+          onPressEmptyAction={() => {
+            setIsExceptionsSheetVisible(false);
+            navigation.navigate('AvailabilityEditor');
+          }}
+          style={styles.sheetExceptionsCard}
+        />
+      </BottomSheet>
     </SafeAreaView>
   );
 };
+
+const AvailabilityScreenSkeleton = () => (
+  <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+    <View style={styles.header}>
+      <View style={[styles.skeletonBlock, styles.skeletonEyebrow]} />
+      <View style={[styles.skeletonBlock, styles.skeletonTitle]} />
+      <View style={[styles.skeletonBlock, styles.skeletonSubtitle]} />
+      <View style={[styles.skeletonBlock, styles.skeletonSubtitleShort]} />
+    </View>
+
+    <Card style={styles.heroCard}>
+      <View style={[styles.skeletonCircle]} />
+      <View style={[styles.skeletonBlock, styles.skeletonSectionTitle]} />
+      <View style={[styles.skeletonBlock, styles.skeletonBody]} />
+      <View style={[styles.skeletonBlock, styles.skeletonBodyShort]} />
+      <View style={styles.heroActions}>
+        <View style={[styles.skeletonButton, styles.heroAction]} />
+      </View>
+    </Card>
+
+    <View style={styles.sectionHeader}>
+      <View style={[styles.skeletonBlock, styles.skeletonSectionTitle]} />
+      <View style={styles.skeletonChip} />
+    </View>
+
+    {Array.from({ length: 4 }).map((_, index) => (
+      <Card key={`day-skeleton-${index}`} style={styles.skeletonDayCard}>
+        <View>
+          <View style={[styles.skeletonBlock, styles.skeletonDayTitle]} />
+          <View style={[styles.skeletonBlock, styles.skeletonDaySummary]} />
+        </View>
+      </Card>
+    ))}
+
+    <Card style={styles.backendNoteCard}>
+      <View style={[styles.skeletonBlock, styles.skeletonSectionTitle]} />
+      <View style={[styles.skeletonBlock, styles.skeletonBody]} />
+      <View style={[styles.skeletonBlock, styles.skeletonBodyShort]} />
+      <View style={styles.skeletonCalendarGrid}>
+        {Array.from({ length: 14 }).map((_, index) => (
+          <View key={`calendar-skeleton-${index}`} style={styles.skeletonCalendarCell} />
+        ))}
+      </View>
+    </Card>
+  </ScrollView>
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -309,129 +253,220 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
     padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing['3xl'],
+    flexDirection: 'column',
+    rowGap: theme.spacing.md,
   },
   header: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
+  },
+  eyebrow: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.primary[500],
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: theme.spacing.xs,
+    fontWeight: theme.typography.fontWeight.semibold,
   },
   title: {
-    fontSize: theme.typography.fontSize.xl,
+    fontSize: theme.typography.fontSize['2xl'],
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
+    lineHeight: theme.typography.lineHeight.sm,
   },
-  availabilityCard: {
+  heroCard: {
     marginBottom: theme.spacing.lg,
+    borderWidth: theme.borders.width.base,
+    borderColor: theme.colors.primary[100],
+    backgroundColor: '#F7FBFF',
+  },
+  heroIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: theme.borders.radius.full,
+    backgroundColor: theme.colors.background.primary,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.md,
   },
   sectionTitle: {
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
   },
-  availabilityText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    marginBottom: theme.spacing.lg,
-    lineHeight: 22,
-  },
-  setAvailabilityButton: {
-    minWidth: 200,
-  },
-  weekView: {
-    flex: 1,
-  },
-  dayCard: {
-    marginBottom: theme.spacing.md,
-  },
-  dayHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  dayName: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
-  },
-  dayDate: {
+  heroText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
-  },
-  availableBadge: {
-    backgroundColor: theme.colors.success[50],
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borders.radius.sm,
-  },
-  availableBadgeText: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.success[500],
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  emptyState: {
+    marginBottom: theme.spacing.lg,
     marginTop: theme.spacing.sm,
   },
-  availableSlotsText: {
+  heroActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  heroAction: {
+    flex: 1,
+  },
+  warningCard: {
+    marginBottom: theme.spacing.lg,
+    backgroundColor: '#FFF9F0',
+    borderWidth: theme.borders.width.base,
+    borderColor: theme.colors.warning[200],
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.sm,
+  },
+  warningCopy: {
+    flex: 1,
+  },
+  warningTitle: {
     fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
+    color: theme.colors.warning[700],
+    fontWeight: theme.typography.fontWeight.semibold,
     marginBottom: theme.spacing.xs,
   },
-  slotText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.primary[500],
-    marginLeft: theme.spacing.sm,
-  },
-  noLessons: {
+  warningText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
-    fontStyle: 'italic',
   },
-  editorHeader: {
-    padding: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.light,
-  },
-  editorTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-  },
-  loadingContainer: {
-    flex: 1,
+  sectionHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: theme.spacing.xl,
-    gap: theme.spacing.md,
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.xs,
   },
-  loadingText: {
+  inlineMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
+  },
+  inlineMetaText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+  },
+  sheetExceptionsCard: {
+    marginTop: 0,
+    marginBottom: theme.spacing.md,
+  },
+  backendNoteCard: {
+    marginTop: theme.spacing.lg,
+    backgroundColor: '#F5F9FE',
+  },
+  backendHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  backendTitle: {
     fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
+  backendText: {
+    fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
   },
   errorText: {
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.semantic.error,
     textAlign: 'center',
+    marginBottom: theme.spacing.md,
   },
-  savingBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.light,
-  },
-  savingText: {
-    fontSize: theme.typography.fontSize.sm,
+  previewLoadingText: {
+    fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
+    marginTop: theme.spacing.sm,
+  },
+  skeletonBlock: {
+    backgroundColor: theme.colors.coolGray[200],
+    borderRadius: theme.borders.radius.sm,
+  },
+  skeletonEyebrow: {
+    width: 72,
+    height: 10,
+    marginBottom: theme.spacing.sm,
+  },
+  skeletonTitle: {
+    width: '54%',
+    height: 24,
+    marginBottom: theme.spacing.sm,
+  },
+  skeletonSubtitle: {
+    width: '88%',
+    height: 12,
+    marginBottom: theme.spacing.xs,
+  },
+  skeletonSubtitleShort: {
+    width: '62%',
+    height: 12,
+  },
+  skeletonSectionTitle: {
+    width: 148,
+    height: 18,
+    marginBottom: theme.spacing.md,
+  },
+  skeletonBody: {
+    width: '92%',
+    height: 12,
+    marginBottom: theme.spacing.xs,
+  },
+  skeletonBodyShort: {
+    width: '68%',
+    height: 12,
+    marginBottom: theme.spacing.lg,
+  },
+  skeletonCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: theme.borders.radius.full,
+    backgroundColor: theme.colors.coolGray[200],
+    marginBottom: theme.spacing.md,
+  },
+  skeletonButton: {
+    height: 42,
+    borderRadius: theme.borders.radius.full,
+    backgroundColor: theme.colors.coolGray[200],
+  },
+  skeletonChip: {
+    width: 92,
+    height: 28,
+    borderRadius: theme.borders.radius.full,
+    backgroundColor: theme.colors.coolGray[200],
+  },
+  skeletonDayCard: {
+    marginBottom: theme.spacing.md,
+    borderWidth: theme.borders.width.base,
+    borderColor: theme.colors.border.light,
+  },
+  skeletonDayTitle: {
+    width: 124,
+    height: 16,
+    marginBottom: theme.spacing.sm,
+  },
+  skeletonDaySummary: {
+    width: 180,
+    height: 12,
+  },
+  skeletonCalendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
+  },
+  skeletonCalendarCell: {
+    width: '13.2%',
+    height: 60,
+    borderRadius: theme.borders.radius.md,
+    backgroundColor: theme.colors.coolGray[200],
   },
 });

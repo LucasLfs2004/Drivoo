@@ -20,8 +20,8 @@ export const tabBarStyle: ViewStyle = {
     alignContent: 'center',
 
     //   shadowColor: theme.colors.,
-    shadowOffset: { width: 4, height: 4 },
+    shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 8,
+    shadowRadius: 4,
     elevation: 2,
 };

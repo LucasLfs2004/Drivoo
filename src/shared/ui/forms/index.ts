@@ -1,5 +1,6 @@
 export * from './FilterChips';
 export * from './FiltersModal';
+export * from './DatePickerCalendar';
 export * from './FormDatePicker';
 export * from './FormImagePicker';
 export * from './FormInput';

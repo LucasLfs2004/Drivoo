@@ -77,6 +77,9 @@ export type InstrutorDashboardStackParamList = {
 export type InstrutorScheduleStackParamList = {
   ScheduleScreen: undefined;
   AvailabilitySettings: undefined;
+  AvailabilityEditor: undefined;
+  EditAvailabilityDay: { day: number };
+  AvailabilityExceptions: undefined;
 };
 
 export type InstrutorEarningsStackParamList = {
