@@ -12,6 +12,7 @@ interface InstructorSearchMapProps {
   data: InstrutorDisponivel[];
   selectedInstructorId: string | null;
   onMarkerPress: (instructor: InstrutorDisponivel) => void;
+  showsUserLocation?: boolean;
 }
 
 export const InstructorSearchMap: React.FC<InstructorSearchMapProps> = ({
@@ -21,6 +22,7 @@ export const InstructorSearchMap: React.FC<InstructorSearchMapProps> = ({
   data,
   selectedInstructorId,
   onMarkerPress,
+  showsUserLocation = false,
 }) => {
   return (
     <View style={styles.mapContainer}>
@@ -29,8 +31,8 @@ export const InstructorSearchMap: React.FC<InstructorSearchMapProps> = ({
         style={styles.map}
         region={region}
         onRegionChangeComplete={onRegionChangeComplete}
-        showsUserLocation
-        showsMyLocationButton
+        showsUserLocation={showsUserLocation}
+        showsMyLocationButton={showsUserLocation}
         loadingEnabled
         loadingIndicatorColor={theme.colors.primary[500]}
       >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -24,19 +24,34 @@ import { locationService } from '../../../services';
 import { Filter, Search } from 'lucide-react-native';
 import { scale } from '@/utils';
 import { useInstructorSearchQuery } from '../hooks/useInstructorSearchQuery';
+import type { LocationPermissionStatus } from '../../../services';
 
 type Props = NativeStackScreenProps<AlunoSearchStackParamList, 'SearchScreen'>;
+
+const DEFAULT_SEARCH_COORDINATES: Coordenadas = {
+  latitude: -23.5505,
+  longitude: -46.6333,
+};
+
+const DEFAULT_REGION: Region = {
+  latitude: DEFAULT_SEARCH_COORDINATES.latitude,
+  longitude: DEFAULT_SEARCH_COORDINATES.longitude,
+  latitudeDelta: 0.0922,
+  longitudeDelta: 0.0421,
+};
 
 export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => {
   // Map and location state
   const mapRef = useRef<MapView>(null);
-  const [region, setRegion] = useState<Region>({
-    latitude: -23.5505, // São Paulo default
-    longitude: -46.6333,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
+  const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const [localizacaoAtual, setLocalizacaoAtual] = useState<Coordenadas | null>(null);
+  const [locationPermission, setLocationPermission] = useState<LocationPermissionStatus>({
+    granted: false,
+    canAskAgain: true,
+    status: 'undetermined',
+  });
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [initializingLocation, setInitializingLocation] = useState(true);
 
   // Search and filters state
   const [filtros, setFiltros] = useState<FiltrosBusca>({});
@@ -61,52 +76,184 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
     filtros,
     latitude,
     longitude,
-    enabled: true,
+    enabled: !initializingLocation,
   });
 
-  // Get current location and load instructors on mount
-  useEffect(() => {
-    const initializeScreen = async () => {
-      await obterLocalizacaoAtual();
-    };
+  const logScreen = useCallback((message: string, payload?: unknown) => {
+    if (!__DEV__) {
+      return;
+    }
 
-    initializeScreen();
+    console.log(`[AlunoInstructorSearchScreen] ${message}`, payload ?? '');
   }, []);
 
-  const obterLocalizacaoAtual = async () => {
+  const warnScreen = useCallback((message: string, payload?: unknown) => {
+    if (!__DEV__) {
+      return;
+    }
+
+    console.warn(`[AlunoInstructorSearchScreen] ${message}`, payload ?? '');
+  }, []);
+
+  useEffect(() => {
+    logScreen('location-state:updated', {
+      localizacaoAtual,
+      locationPermission,
+      locationError,
+      initializingLocation,
+    });
+  }, [initializingLocation, localizacaoAtual, locationError, locationPermission, logScreen]);
+
+  useEffect(() => {
+    logScreen('search-query-state', {
+      enabled: Boolean(localizacaoAtual),
+      latitude,
+      longitude,
+      isLoading: carregando,
+      isRefetching,
+      hasError: Boolean(error),
+      totalResultados: resultados?.instrutores.length ?? 0,
+    });
+  }, [
+    carregando,
+    error,
+    isRefetching,
+    latitude,
+    localizacaoAtual,
+    longitude,
+    resultados,
+    logScreen,
+  ]);
+
+  const applyRegion = useCallback((coordenadas: Coordenadas) => {
+    const nextRegion = {
+      latitude: coordenadas.latitude,
+      longitude: coordenadas.longitude,
+      latitudeDelta: DEFAULT_REGION.latitudeDelta,
+      longitudeDelta: DEFAULT_REGION.longitudeDelta,
+    };
+
+    setRegion(nextRegion);
+    return nextRegion;
+  }, []);
+
+  const obterLocalizacaoAtual = useCallback(async () => {
+    logScreen('obterLocalizacaoAtual:start');
+    setInitializingLocation(true);
+    setLocationError(null);
+
     try {
-      const resultado = await locationService.getCurrentLocation();
+      const permissionStatus = await locationService.ensureLocationPermission();
+      logScreen('obterLocalizacaoAtual:permission', permissionStatus);
+
+      setLocationPermission(permissionStatus);
+
+      if (!permissionStatus.granted) {
+        setLocalizacaoAtual(null);
+        applyRegion(DEFAULT_SEARCH_COORDINATES);
+        setLocationError(
+          permissionStatus.canAskAgain
+            ? 'Sem permissão de localização. Exibindo resultados da região padrão.'
+            : 'Permissão de localização bloqueada. Exibindo resultados da região padrão.',
+        );
+        warnScreen('obterLocalizacaoAtual:using-fallback-after-permission', {
+          permissionStatus,
+          fallback: DEFAULT_SEARCH_COORDINATES,
+        });
+        return;
+      }
+
+      const resultado = await locationService.getCurrentLocation({
+        requestPermission: false,
+      });
+      logScreen('obterLocalizacaoAtual:resultado', resultado);
+
       if (resultado.success && resultado.coordenadas) {
         setLocalizacaoAtual(resultado.coordenadas);
+        setLocationPermission(
+          resultado.permissionStatus ?? {
+            granted: true,
+            canAskAgain: true,
+            status: 'granted',
+          },
+        );
 
-        const newRegion = {
-          latitude: resultado.coordenadas.latitude,
-          longitude: resultado.coordenadas.longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        };
-
-        setRegion(newRegion);
+        const newRegion = applyRegion(resultado.coordenadas);
 
         // Animate to user location
         if (mapRef.current) {
           mapRef.current.animateToRegion(newRegion, 1000);
         }
+
+        logScreen('obterLocalizacaoAtual:success', {
+          coordenadas: resultado.coordenadas,
+          region: newRegion,
+        });
+
+        return;
       }
+
+      setLocalizacaoAtual(null);
+      applyRegion(DEFAULT_SEARCH_COORDINATES);
+      setLocationPermission(
+        resultado.permissionStatus ?? {
+          granted: false,
+          canAskAgain: true,
+          status: 'undetermined',
+        },
+      );
+      setLocationError(
+        resultado.error ?? 'Nao foi possivel obter sua localizacao. Exibindo resultados da regiao padrao.',
+      );
+      warnScreen('obterLocalizacaoAtual:failed-using-fallback', {
+        ...resultado,
+        fallback: DEFAULT_SEARCH_COORDINATES,
+      });
     } catch {
-      console.log('Erro ao obter localização');
+      setLocalizacaoAtual(null);
+      applyRegion(DEFAULT_SEARCH_COORDINATES);
+      setLocationError('Não foi possível obter sua localização atual.');
+      warnScreen('obterLocalizacaoAtual:exception-using-fallback', {
+        fallback: DEFAULT_SEARCH_COORDINATES,
+      });
+    } finally {
+      setInitializingLocation(false);
+      logScreen('obterLocalizacaoAtual:finished');
     }
-  };
+  }, [applyRegion, logScreen, warnScreen]);
+
+  // Get current location and load instructors on mount
+  useEffect(() => {
+    logScreen('mount');
+
+    const initializeScreen = async () => {
+      await obterLocalizacaoAtual();
+    };
+
+    initializeScreen();
+  }, [obterLocalizacaoAtual, logScreen]);
 
   const onRefresh = async () => {
+    logScreen('onRefresh:start', { hasLocation: Boolean(localizacaoAtual) });
+
+    if (!localizacaoAtual) {
+      await obterLocalizacaoAtual();
+    }
+
     await refetch();
+    logScreen('onRefresh:refetch-finished');
   };
 
   const handleApplyFilters = (newFilters: FiltrosBusca) => {
+    logScreen('handleApplyFilters', newFilters);
     setFiltros(newFilters);
   };
 
   const handleInstructorPress = (instrutor: InstrutorDisponivel) => {
+    logScreen('handleInstructorPress', {
+      instructorId: instrutor.id,
+      nome: `${instrutor.primeiroNome} ${instrutor.ultimoNome}`,
+    });
     navigation.navigate('InstructorDetails', {
       instructorId: instrutor.id,
       instructorSummary: instrutor,
@@ -114,6 +261,10 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
   };
 
   const handleMarkerPress = (instrutor: InstrutorDisponivel) => {
+    logScreen('handleMarkerPress', {
+      instructorId: instrutor.id,
+      coordenadas: instrutor.localizacao.coordenadas,
+    });
     setSelectedInstructorId(instrutor.id);
 
     // Animate to instructor location
@@ -128,7 +279,9 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
   };
 
   const handleSearchSubmit = () => {
-    setAppliedSearchQuery(searchQuery.trim().toLowerCase());
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    logScreen('handleSearchSubmit', { searchQuery, normalizedQuery });
+    setAppliedSearchQuery(normalizedQuery);
   };
 
   const filteredInstructors = (resultados?.instrutores || []).filter(item => {
@@ -157,6 +310,35 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
     if (filtros.avaliacaoMinima) count++;
     return count;
   };
+
+  const handleOpenSettings = async () => {
+    logScreen('handleOpenSettings');
+    await locationService.openAppSettings();
+  };
+
+  const renderLocationBanner = () => (
+    <View style={styles.locationBanner}>
+      <Text style={styles.locationBannerTitle}>
+        {localizacaoAtual ? 'Localizacao atual ativa' : 'Usando localizacao fallback'}
+      </Text>
+      <Text style={styles.locationBannerText}>
+        {locationError ??
+          'Usamos sua localizacao para buscar instrutores na sua regiao e ordenar por proximidade.'}
+      </Text>
+
+      {!localizacaoAtual && (
+        <TouchableOpacity style={styles.primaryActionButton} onPress={obterLocalizacaoAtual}>
+          <Text style={styles.primaryActionButtonText}>Tentar localizar novamente</Text>
+        </TouchableOpacity>
+      )}
+
+      {!localizacaoAtual && !locationPermission.canAskAgain && (
+        <TouchableOpacity style={styles.secondaryActionButton} onPress={handleOpenSettings}>
+          <Text style={styles.secondaryActionButtonText}>Abrir ajustes do app</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -206,6 +388,8 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
         </TouchableOpacity>
       </View>
 
+      {(locationError || !localizacaoAtual) && !initializingLocation && renderLocationBanner()}
+
       {/* Results Section */}
       <View style={styles.resultsSection}>
         {resultados && (
@@ -216,7 +400,12 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
           </View>
         )}
 
-        {carregando ? (
+        {initializingLocation ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+            <Text style={styles.loadingText}>Obtendo sua localização...</Text>
+          </View>
+        ) : carregando ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary[500]} />
             <Text style={styles.loadingText}>Buscando instrutores...</Text>
@@ -236,6 +425,7 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
             data={filteredInstructors}
             selectedInstructorId={selectedInstructorId}
             onMarkerPress={handleMarkerPress}
+            showsUserLocation={Boolean(localizacaoAtual)}
           />
         ) : (
           <InstructorSearchList
@@ -384,6 +574,26 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.xl,
     paddingHorizontal: theme.spacing.lg,
   },
+  locationBanner: {
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borders.radius.lg,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+  },
+  locationBannerTitle: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  locationBannerText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
+  },
   emptyStateTitle: {
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semibold,
@@ -396,5 +606,27 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  primaryActionButton: {
+    marginTop: theme.spacing.lg,
+    backgroundColor: theme.colors.primary[500],
+    borderRadius: theme.borders.radius.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+  },
+  primaryActionButtonText: {
+    color: theme.colors.text.inverse,
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
+  secondaryActionButton: {
+    marginTop: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+  },
+  secondaryActionButtonText: {
+    color: theme.colors.primary[500],
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.medium,
   },
 });
