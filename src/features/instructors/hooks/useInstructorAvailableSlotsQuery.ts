@@ -1,8 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-
-import { instructorAvailabilityApi } from '../api/instructorAvailabilityApi';
-import { mapInstructorAvailableSlot } from '../mappers/mapInstructorAvailableSlots';
-import { instructorQueryKeys } from './queryKeys';
+import { useAppQuery } from '../../../shared/hooks';
+import { instructorQueryOptions } from './queryOptions';
 
 export const useInstructorAvailableSlotsQuery = (
   instructorId: string,
@@ -10,20 +7,11 @@ export const useInstructorAvailableSlotsQuery = (
   durationMinutes = 60,
   enabled = true
 ) =>
-  useQuery({
-    queryKey: instructorQueryKeys.availableSlots(
+  useAppQuery(
+    instructorQueryOptions.availableSlots(
       instructorId,
-      date ?? 'no-date',
-      durationMinutes
-    ),
-    queryFn: async () => {
-      const response = await instructorAvailabilityApi.getAvailableSlots(
-        instructorId,
-        date ?? '',
-        durationMinutes
-      );
-
-      return response.horarios.map(mapInstructorAvailableSlot);
-    },
-    enabled: enabled && Boolean(instructorId) && Boolean(date),
-  });
+      date,
+      durationMinutes,
+      enabled
+    )
+  );

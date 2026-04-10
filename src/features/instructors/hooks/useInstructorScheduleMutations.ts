@@ -1,55 +1,11 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAppMutation } from '../../../shared/hooks';
+import { instructorMutationOptions } from './mutationOptions';
 
-import { instructorScheduleApi } from '../api/instructorScheduleApi';
-import type {
-  InstructorAvailabilityCreateApiRequest,
-  InstructorAvailabilityUpdateApiRequest,
-} from '../types/api';
-import { instructorQueryKeys } from './queryKeys';
+export const useCreateInstructorAvailabilityMutation = () =>
+  useAppMutation(instructorMutationOptions.createSchedule());
 
-export const useCreateInstructorAvailabilityMutation = () => {
-  const queryClient = useQueryClient();
+export const useUpdateInstructorAvailabilityMutation = () =>
+  useAppMutation(instructorMutationOptions.updateSchedule());
 
-  return useMutation({
-    mutationFn: (payload: InstructorAvailabilityCreateApiRequest) =>
-      instructorScheduleApi.createMyAvailability(payload),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: instructorQueryKeys.schedule(),
-      });
-    },
-  });
-};
-
-export const useUpdateInstructorAvailabilityMutation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      availabilityId,
-      payload,
-    }: {
-      availabilityId: string;
-      payload: InstructorAvailabilityUpdateApiRequest;
-    }) => instructorScheduleApi.updateMyAvailability(availabilityId, payload),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: instructorQueryKeys.schedule(),
-      });
-    },
-  });
-};
-
-export const useDeleteInstructorAvailabilityMutation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (availabilityId: string) =>
-      instructorScheduleApi.deleteMyAvailability(availabilityId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: instructorQueryKeys.schedule(),
-      });
-    },
-  });
-};
+export const useDeleteInstructorAvailabilityMutation = () =>
+  useAppMutation(instructorMutationOptions.deleteSchedule());

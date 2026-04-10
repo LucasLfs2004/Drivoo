@@ -149,7 +149,7 @@ export class LocationService {
       });
       return mappedStatus;
     } catch {
-      const errorStatus = {
+      const errorStatus: LocationPermissionStatus = {
         granted: false,
         canAskAgain: true,
         status: 'denied',
@@ -252,7 +252,7 @@ export class LocationService {
         );
       });
 
-      const successResult = {
+      const successResult: LocationServiceResult = {
         success: true,
         coordenadas,
         permissionStatus: {

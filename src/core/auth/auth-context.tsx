@@ -186,7 +186,7 @@ const createMockUser = (papel: Usuario['papel']): Usuario => {
         status: 'nenhuma',
       },
       preferencias: {
-        localizacao: { latitude: -23.5505, longitude: -46.6333 },
+        localizacao: { latitude: 0, longitude: 0 },
         raio: 10,
       },
     },
