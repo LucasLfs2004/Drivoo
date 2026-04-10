@@ -387,6 +387,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: theme.spacing.md,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    gap: theme.spacing.md,
+  },
   previewLoadingText: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,

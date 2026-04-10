@@ -31,12 +31,14 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
   // Map and location state
   const mapRef = useRef<MapView>(null);
   const [region, setRegion] = useState<Region>({
-    latitude: -23.5505, // São Paulo default
-    longitude: -46.6333,
+    latitude: -14.235,
+    longitude: -51.9253,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
   const [localizacaoAtual, setLocalizacaoAtual] = useState<Coordenadas | null>(null);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(true);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   // Search and filters state
   const [filtros, setFiltros] = useState<FiltrosBusca>({});
@@ -48,9 +50,6 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
   const [selectedInstructorId, setSelectedInstructorId] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
 
-  const latitude = localizacaoAtual?.latitude ?? region.latitude;
-  const longitude = localizacaoAtual?.longitude ?? region.longitude;
-
   const {
     data: resultados,
     isLoading: carregando,
@@ -59,9 +58,9 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
     error,
   } = useInstructorSearchQuery({
     filtros,
-    latitude,
-    longitude,
-    enabled: true,
+    latitude: localizacaoAtual?.latitude ?? 0,
+    longitude: localizacaoAtual?.longitude ?? 0,
+    enabled: Boolean(localizacaoAtual),
   });
 
   // Get current location and load instructors on mount
@@ -74,6 +73,9 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
   }, []);
 
   const obterLocalizacaoAtual = async () => {
+    setIsFetchingLocation(true);
+    setLocationError(null);
+
     try {
       const resultado = await locationService.getCurrentLocation();
       if (resultado.success && resultado.coordenadas) {
@@ -92,13 +94,24 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
         if (mapRef.current) {
           mapRef.current.animateToRegion(newRegion, 1000);
         }
+
+        return;
       }
+
+      setLocationError(resultado.error ?? 'Não foi possível obter sua localização.');
     } catch {
-      console.log('Erro ao obter localização');
+      setLocationError('Não foi possível obter sua localização.');
+    } finally {
+      setIsFetchingLocation(false);
     }
   };
 
   const onRefresh = async () => {
+    if (!localizacaoAtual) {
+      await obterLocalizacaoAtual();
+      return;
+    }
+
     await refetch();
   };
 
@@ -216,7 +229,20 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
           </View>
         )}
 
-        {carregando ? (
+        {isFetchingLocation && !localizacaoAtual ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+            <Text style={styles.loadingText}>Obtendo sua localização...</Text>
+          </View>
+        ) : locationError && !localizacaoAtual ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateTitle}>Localização indisponível</Text>
+            <Text style={styles.emptyStateText}>{locationError}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={obterLocalizacaoAtual}>
+              <Text style={styles.retryButtonText}>Tentar novamente</Text>
+            </TouchableOpacity>
+          </View>
+        ) : carregando ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary[500]} />
             <Text style={styles.loadingText}>Buscando instrutores...</Text>
@@ -396,5 +422,17 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  retryButton: {
+    marginTop: theme.spacing.md,
+    backgroundColor: theme.colors.primary[500],
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borders.radius.md,
+  },
+  retryButtonText: {
+    color: theme.colors.text.inverse,
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
   },
 });

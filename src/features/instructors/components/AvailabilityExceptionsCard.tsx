@@ -1,7 +1,13 @@
 import dayjs from 'dayjs';
 import { CalendarPlus2, Trash2 } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ViewStyle,
+} from 'react-native';
 
 import { Button } from '../../../shared/ui/base/Button';
 import { Card } from '../../../shared/ui/base/Card';
@@ -37,7 +43,7 @@ export const AvailabilityExceptionsCard: React.FC<Props> = ({
   style,
 }) => {
   return (
-    <Card style={[styles.card, style]}>
+    <Card style={StyleSheet.flatten([styles.card, style])}>
       <View style={styles.header}>
         <Text style={styles.title}>{title}</Text>
         <View style={styles.headerMeta}>
