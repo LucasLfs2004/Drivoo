@@ -47,13 +47,6 @@ export interface InstructorDetailsApiResponse {
   coordenadas?: Coordenadas | null;
 }
 
-export interface InstructorAvailableSlotsApiResponse {
-  data: string;
-  dia_semana: string;
-  instrutor_trabalha: boolean;
-  horarios: Array<string | { horario?: string; hora?: string; disponivel?: boolean }>;
-}
-
 export interface InstructorVehicleApiResponse {
   id: string;
   modelo: string;
@@ -196,18 +189,27 @@ export type InstructorAvailabilityCalendarDayStatusApi =
   | 'BLOQUEADO'
   | 'OCUPADO_PARCIAL';
 
-export interface InstructorAvailabilityCalendarBookingApiResponse {
-  id: string;
-  status: 'CONFIRMADO' | 'PENDENTE' | 'AGENDADO';
-  hora_inicio: string;
-  hora_fim: string;
+export type InstructorAvailabilityCalendarSlotStatusApi =
+  | 'DISPONIVEL'
+  | 'INDISPONIVEL'
+  | 'OCUPADO'
+  | 'BLOQUEADO';
+
+export interface InstructorAvailabilityCalendarSlotApiResponse {
+  inicio: string;
+  fim: string;
+  status: InstructorAvailabilityCalendarSlotStatusApi;
+  booking_id?: string | null;
+  booking_status?: string | null;
+  motivo?: string | null;
 }
 
 export interface InstructorAvailabilityCalendarDayApiResponse {
   data: string;
+  dia_semana: number;
+  dia_nome: string;
   status_dia: InstructorAvailabilityCalendarDayStatusApi;
-  intervalos_ofertados: InstructorAvailabilityIntervalApi[];
-  bookings: InstructorAvailabilityCalendarBookingApiResponse[];
+  horarios: InstructorAvailabilityCalendarSlotApiResponse[];
   bookings_preservados: InstructorPreservedBookingApiResponse[];
 }
 
@@ -215,6 +217,7 @@ export interface InstructorAvailabilityCalendarApiResponse {
   timezone: string;
   data_inicio: string;
   data_fim: string;
+  duracao_minutos: number;
   dias: InstructorAvailabilityCalendarDayApiResponse[];
 }
 
@@ -224,12 +227,7 @@ export interface InstructorAvailabilityCompleteCalendarApiResponse {
   data_fim: string;
   total_bookings: number;
   bookings_preview: InstructorBookingsPreviewItemApiResponse[];
-  dias: Array<
-    InstructorAvailabilityCalendarDayApiResponse & {
-      dia_semana: number;
-      dia_nome: string;
-    }
-  >;
+  dias: InstructorAvailabilityCalendarDayApiResponse[];
 }
 
 export interface InstructorEarningsHistoryItemApiResponse {

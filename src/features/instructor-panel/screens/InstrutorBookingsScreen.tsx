@@ -22,7 +22,9 @@ export const InstrutorBookingsScreen: React.FC<Props> = ({ navigation }) => {
     () =>
       buildCalendarMonthCells(visibleMonth).map(cell => {
         const day = data?.dias.find(item => item.data === cell.date);
-        const hasBookings = Boolean(day?.bookings.length);
+        const hasBookings = Boolean(
+          day?.horarios.some(slot => slot.status !== 'DISPONIVEL')
+        );
         const hasPreserved = Boolean(day?.bookings_preservados.length);
 
         return {

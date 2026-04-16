@@ -75,12 +75,6 @@ export interface InstructorDetails {
   totalAulas: number;
 }
 
-export interface InstructorAvailableSlot {
-  id: string;
-  time: string;
-  available: boolean;
-}
-
 export interface InstructorVehicle {
   id: string;
   modelo: string;

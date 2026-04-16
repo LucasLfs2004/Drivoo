@@ -1,14 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import React, { useEffect, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppHeader } from '../../../shared/ui/base/AppHeader';
 import { Button } from '../../../shared/ui/base/Button';
 import { Card } from '../../../shared/ui/base/Card';
 import { theme } from '../../../theme';
@@ -45,7 +39,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    
+
     if (hours > 0) {
       return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
     }
@@ -60,14 +54,14 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
         </View>
       );
     }
-    
+
     const initials = bookingData.instructorName
       .split(' ')
       .map((n: string) => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
-    
+
     return (
       <View style={styles.avatarContainer}>
         <Text style={styles.avatarText}>{initials}</Text>
@@ -108,7 +102,9 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
         <View style={styles.errorContainer}>
           <Text style={styles.errorTitle}>Dados Inválidos</Text>
           {validationErrors.map((error, index) => (
-            <Text key={index} style={styles.errorText}>• {error}</Text>
+            <Text key={index} style={styles.errorText}>
+              • {error}
+            </Text>
           ))}
           <Button
             title="Voltar"
@@ -124,16 +120,11 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>← Voltar</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Confirmar Agendamento</Text>
-        </View>
+        <AppHeader
+          title="Confirmar Agendamento"
+          subtitle="Revise os detalhes antes de seguir para o pagamento"
+          onBackPress={() => navigation.goBack()}
+        />
 
         {/* Instructor Summary */}
         <Card style={styles.instructorCard}>
@@ -154,7 +145,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
         {/* Lesson Details */}
         <Card style={styles.lessonCard}>
           <Text style={styles.sectionTitle}>Detalhes da Aula</Text>
-          
+
           <View style={styles.detailRow}>
             <Text style={styles.detailIcon}>📅</Text>
             <View style={styles.detailContent}>
@@ -185,7 +176,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
         {/* Payment Summary */}
         <Card style={styles.paymentCard}>
           <Text style={styles.sectionTitle}>Resumo do Pagamento</Text>
-          
+
           <View style={styles.paymentRow}>
             <Text style={styles.paymentLabel}>Valor da aula</Text>
             <Text style={styles.paymentValue}>
@@ -218,9 +209,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
               {termsAccepted && <Text style={styles.checkmark}>✓</Text>}
             </View>
             <Text style={styles.termsText}>
-              Eu aceito os{' '}
-              <Text style={styles.termsLink}>termos e condições</Text>
-              {' '}e a{' '}
+              Eu aceito os <Text style={styles.termsLink}>termos e condições</Text> e a{' '}
               <Text style={styles.termsLink}>política de privacidade</Text>
             </Text>
           </TouchableOpacity>
@@ -234,7 +223,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
             onPress={handleEditBooking}
             style={styles.editButton}
           />
-          
+
           <Button
             title="Continuar para Pagamento"
             variant="primary"
@@ -256,24 +245,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: theme.spacing.lg,
-  },
-  header: {
-    marginBottom: theme.spacing.lg,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    marginBottom: theme.spacing.md,
-  },
-  backButtonText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.primary[500],
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  headerTitle: {
-    fontSize: theme.typography.fontSize['2xl'],
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-    textAlign: 'center',
   },
   instructorCard: {
     marginBottom: theme.spacing.lg,

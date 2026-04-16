@@ -7,7 +7,7 @@ export * from './api/instructorScheduleApi';
 export * from './api/instructorVehiclesApi';
 export * from './hooks/useInstructorSearchQuery';
 export * from './hooks/useInstructorDetailsQuery';
-export * from './hooks/useInstructorAvailableSlotsQuery';
+export * from './hooks/useInstructorPublicAvailabilityCalendarQuery';
 export * from './hooks/useMyInstructorProfileQuery';
 export * from './hooks/useInstructorEarningsOverviewQuery';
 export * from './hooks/useInstructorAvailabilityQuery';

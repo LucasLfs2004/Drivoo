@@ -3,26 +3,17 @@ import type {
   InstructorAvailabilityAggregateApiResponse,
   InstructorAvailabilityBulkApiRequest,
   InstructorAvailabilityBulkApiResponse,
-  InstructorAvailableSlotsApiResponse,
   InstructorAvailabilityCalendarApiResponse,
   InstructorAvailabilityCompleteCalendarApiResponse,
   InstructorBookingsPreviewApiResponse,
 } from '../types/api';
 
 export const instructorAvailabilityApi = {
-  async getAvailableSlots(
-    instructorId: string,
-    date: string,
-    durationMinutes = 60
-  ): Promise<InstructorAvailableSlotsApiResponse> {
-    const response = await apiClient.get<InstructorAvailableSlotsApiResponse>(
-      `/instrutores/${instructorId}/horarios-disponiveis`,
-      {
-        params: {
-          data: date,
-          duracao_minutos: durationMinutes,
-        },
-      }
+  async getInstructorAvailabilityCalendar(
+    instructorId: string
+  ): Promise<InstructorAvailabilityCalendarApiResponse> {
+    const response = await apiClient.get<InstructorAvailabilityCalendarApiResponse>(
+      `/instrutores/${instructorId}/calendario-disponibilidade`
     );
 
     return response.data;

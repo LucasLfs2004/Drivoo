@@ -12,7 +12,6 @@
 "Autenticação"
 ],
 "summary": "Obter Usuario Logado",
-"description": "Retorna perfil do usuário autenticado.\nSe ainda não fez onboarding, retorna needs_onboarding: true.",
 "operationId": "obter_usuario_logado_auth_me_get",
 "responses": {
 "200": {
@@ -351,14 +350,16 @@
 "Instrutores"
 ],
 "summary": "Listar Minhas Disponibilidades",
-"description": "Lista disponibilidades semanais do instrutor autenticado",
+"description": "Lista a agenda agregada do instrutor autenticado.",
 "operationId": "listar_minhas_disponibilidades_instrutores_me_disponibilidades_get",
 "responses": {
 "200": {
 "description": "Successful Response",
 "content": {
 "application/json": {
-"schema": {}
+"schema": {
+"$ref": "#/components/schemas/DisponibilidadeAgregadaResponse"
+}
 }
 }
 }
@@ -401,6 +402,107 @@
 "application/json": {
 "schema": {
 "$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+},
+"security": [
+{
+"HTTPBearer": []
+}
+]
+}
+},
+"/instrutores/me/disponibilidades/lote": {
+"post": {
+"tags": [
+"Instrutores"
+],
+"summary": "Criar Minhas Disponibilidades Em Lote",
+"description": "Cria ou substitui a agenda do instrutor autenticado em lote.",
+"operationId": "criar_minhas_disponibilidades_em_lote_instrutores_me_disponibilidades_lote_post",
+"requestBody": {
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/DisponibilidadeBulkRequest"
+}
+}
+},
+"required": true
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/DisponibilidadeBulkResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+},
+"security": [
+{
+"HTTPBearer": []
+}
+]
+}
+},
+"/instrutores/me/calendario-disponibilidade": {
+"get": {
+"tags": [
+"Instrutores"
+],
+"summary": "Obter Meu Calendario Disponibilidade",
+"description": "Retorna o calendário resolvido de disponibilidade do instrutor autenticado\npara a janela padrão configurada no backend.",
+"operationId": "obter_meu_calendario_disponibilidade_instrutores_me_calendario_disponibilidade_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CalendarioDisponibilidadeResponse"
+}
+}
+}
+}
+},
+"security": [
+{
+"HTTPBearer": []
+}
+]
+}
+},
+"/instrutores/me/calendario-completo": {
+"get": {
+"tags": [
+"Instrutores"
+],
+"summary": "Obter Meu Calendario Completo",
+"description": "Retorna a visão completa do calendário do instrutor, combinando\ndisponibilidade resolvida e bookings resumidos na mesma janela.",
+"operationId": "obter_meu_calendario_completo_instrutores_me_calendario_completo_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CalendarioCompletoInstrutorResponse"
 }
 }
 }
@@ -769,6 +871,33 @@
 }
 }
 },
+"/instrutores/me/bookings-preview": {
+"get": {
+"tags": [
+"Instrutores"
+],
+"summary": "Listar Meus Bookings Preview",
+"description": "Retorna bookings resumidos do instrutor autenticado para a janela padrão\nde preview configurada no backend.",
+"operationId": "listar_meus_bookings_preview_instrutores_me_bookings_preview_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/BookingPreviewResponse"
+}
+}
+}
+}
+},
+"security": [
+{
+"HTTPBearer": []
+}
+]
+}
+},
 "/instrutores/{instrutor_id}": {
 "get": {
 "tags": [
@@ -864,6 +993,49 @@
 }
 }
 },
+"/instrutores/{instrutor_id}/calendario-disponibilidade": {
+"get": {
+"tags": [
+"Instrutores"
+],
+"summary": "Obter Calendario Disponibilidade",
+"description": "Retorna o calendário resolvido de disponibilidade do instrutor para a janela\npadrão configurada no backend.",
+"operationId": "obter_calendario_disponibilidade_instrutores__instrutor_id__calendario_disponibilidade_get",
+"parameters": [
+{
+"name": "instrutor_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Instrutor Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CalendarioDisponibilidadeResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
 "/instrutores/{instrutor_id}/horarios-disponiveis": {
 "get": {
 "tags": [
@@ -933,7 +1105,7 @@
 "Instrutores"
 ],
 "summary": "Listar Disponibilidades",
-"description": "Lista disponibilidades semanais do instrutor",
+"description": "Lista disponibilidades em formato legado por registro.",
 "operationId": "listar_disponibilidades_instrutores__instrutor_id__disponibilidades_get",
 "security": [
 {
@@ -1011,6 +1183,64 @@
 "content": {
 "application/json": {
 "schema": {}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/instrutores/{instrutor_id}/disponibilidades/lote": {
+"post": {
+"tags": [
+"Instrutores"
+],
+"summary": "Criar Disponibilidades Em Lote",
+"description": "Cria ou substitui disponibilidades do instrutor em lote por escopo.",
+"operationId": "criar_disponibilidades_em_lote_instrutores__instrutor_id__disponibilidades_lote_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "instrutor_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Instrutor Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/DisponibilidadeBulkRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/DisponibilidadeBulkResponse"
+}
 }
 }
 },
@@ -2764,6 +2994,314 @@
 ],
 "title": "AvaliacaoCreate"
 },
+"BookingCalendarioResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"hora_inicio": {
+"type": "string",
+"format": "time",
+"title": "Hora Inicio"
+},
+"hora_fim": {
+"type": "string",
+"format": "time",
+"title": "Hora Fim"
+}
+},
+"type": "object",
+"required": [
+"id",
+"status",
+"hora_inicio",
+"hora_fim"
+],
+"title": "BookingCalendarioResponse"
+},
+"BookingPreservadoResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"data": {
+"type": "string",
+"format": "date",
+"title": "Data"
+},
+"hora_inicio": {
+"type": "string",
+"format": "time",
+"title": "Hora Inicio"
+},
+"hora_fim": {
+"type": "string",
+"format": "time",
+"title": "Hora Fim"
+},
+"motivo": {
+"type": "string",
+"title": "Motivo"
+}
+},
+"type": "object",
+"required": [
+"id",
+"data",
+"hora_inicio",
+"hora_fim",
+"motivo"
+],
+"title": "BookingPreservadoResponse"
+},
+"BookingPreviewItem": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"data": {
+"type": "string",
+"format": "date",
+"title": "Data"
+},
+"hora_inicio": {
+"type": "string",
+"format": "time",
+"title": "Hora Inicio"
+},
+"hora_fim": {
+"type": "string",
+"format": "time",
+"title": "Hora Fim"
+}
+},
+"type": "object",
+"required": [
+"id",
+"status",
+"data",
+"hora_inicio",
+"hora_fim"
+],
+"title": "BookingPreviewItem"
+},
+"BookingPreviewResponse": {
+"properties": {
+"timezone": {
+"type": "string",
+"title": "Timezone"
+},
+"data_inicio": {
+"type": "string",
+"format": "date",
+"title": "Data Inicio"
+},
+"data_fim": {
+"type": "string",
+"format": "date",
+"title": "Data Fim"
+},
+"total_itens": {
+"type": "integer",
+"title": "Total Itens"
+},
+"itens": {
+"items": {
+"$ref": "#/components/schemas/BookingPreviewItem"
+},
+"type": "array",
+"title": "Itens"
+}
+},
+"type": "object",
+"required": [
+"timezone",
+"data_inicio",
+"data_fim",
+"total_itens",
+"itens"
+],
+"title": "BookingPreviewResponse"
+},
+"BookingResumoCalendarioResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"data": {
+"type": "string",
+"format": "date",
+"title": "Data"
+},
+"hora_inicio": {
+"type": "string",
+"format": "time",
+"title": "Hora Inicio"
+},
+"hora_fim": {
+"type": "string",
+"format": "time",
+"title": "Hora Fim"
+}
+},
+"type": "object",
+"required": [
+"id",
+"status",
+"data",
+"hora_inicio",
+"hora_fim"
+],
+"title": "BookingResumoCalendarioResponse"
+},
+"CalendarioCompletoInstrutorResponse": {
+"properties": {
+"timezone": {
+"type": "string",
+"title": "Timezone"
+},
+"data_inicio": {
+"type": "string",
+"format": "date",
+"title": "Data Inicio"
+},
+"data_fim": {
+"type": "string",
+"format": "date",
+"title": "Data Fim"
+},
+"total_bookings": {
+"type": "integer",
+"title": "Total Bookings"
+},
+"bookings_preview": {
+"items": {
+"$ref": "#/components/schemas/BookingResumoCalendarioResponse"
+},
+"type": "array",
+"title": "Bookings Preview"
+},
+"dias": {
+"items": {
+"$ref": "#/components/schemas/CalendarioDisponibilidadeDiaResponse"
+},
+"type": "array",
+"title": "Dias"
+}
+},
+"type": "object",
+"required": [
+"timezone",
+"data_inicio",
+"data_fim",
+"total_bookings",
+"bookings_preview",
+"dias"
+],
+"title": "CalendarioCompletoInstrutorResponse"
+},
+"CalendarioDisponibilidadeDiaResponse": {
+"properties": {
+"data": {
+"type": "string",
+"format": "date",
+"title": "Data"
+},
+"dia_semana": {
+"type": "integer",
+"title": "Dia Semana"
+},
+"dia_nome": {
+"type": "string",
+"title": "Dia Nome"
+},
+"status_dia": {
+"type": "string",
+"title": "Status Dia"
+},
+"intervalos_ofertados": {
+"items": {
+"$ref": "#/components/schemas/DisponibilidadeIntervaloResponse"
+},
+"type": "array",
+"title": "Intervalos Ofertados"
+},
+"bookings": {
+"items": {
+"$ref": "#/components/schemas/BookingCalendarioResponse"
+},
+"type": "array",
+"title": "Bookings"
+},
+"bookings_preservados": {
+"items": {
+"$ref": "#/components/schemas/BookingPreservadoResponse"
+},
+"type": "array",
+"title": "Bookings Preservados"
+}
+},
+"type": "object",
+"required": [
+"data",
+"dia_semana",
+"dia_nome",
+"status_dia",
+"intervalos_ofertados",
+"bookings",
+"bookings_preservados"
+],
+"title": "CalendarioDisponibilidadeDiaResponse"
+},
+"CalendarioDisponibilidadeResponse": {
+"properties": {
+"timezone": {
+"type": "string",
+"title": "Timezone"
+},
+"data_inicio": {
+"type": "string",
+"format": "date",
+"title": "Data Inicio"
+},
+"data_fim": {
+"type": "string",
+"format": "date",
+"title": "Data Fim"
+},
+"dias": {
+"items": {
+"$ref": "#/components/schemas/CalendarioDisponibilidadeDiaResponse"
+},
+"type": "array",
+"title": "Dias"
+}
+},
+"type": "object",
+"required": [
+"timezone",
+"data_inicio",
+"data_fim",
+"dias"
+],
+"title": "CalendarioDisponibilidadeResponse"
+},
 "ConfiguracaoUpdate": {
 "properties": {
 "notificacoes_push": {
@@ -2826,6 +3364,161 @@
 "type": "object",
 "title": "ConfiguracaoUpdate"
 },
+"DisponibilidadeAgregadaResponse": {
+"properties": {
+"timezone": {
+"type": "string",
+"title": "Timezone"
+},
+"semanal": {
+"items": {
+"$ref": "#/components/schemas/DisponibilidadeSemanalDiaResponse"
+},
+"type": "array",
+"title": "Semanal"
+},
+"excecoes": {
+"items": {
+"$ref": "#/components/schemas/DisponibilidadeExcecaoResponse"
+},
+"type": "array",
+"title": "Excecoes"
+},
+"bookings_preservados": {
+"items": {
+"$ref": "#/components/schemas/BookingPreservadoResponse"
+},
+"type": "array",
+"title": "Bookings Preservados",
+"default": []
+}
+},
+"type": "object",
+"required": [
+"timezone",
+"semanal",
+"excecoes"
+],
+"title": "DisponibilidadeAgregadaResponse"
+},
+"DisponibilidadeBulkItem": {
+"properties": {
+"tipo_disponibilidade": {
+"$ref": "#/components/schemas/TipoDisponibilidadeEnum"
+},
+"dias_semana": {
+"anyOf": [
+{
+"items": {
+"type": "integer"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Dias Semana"
+},
+"datas_especificas": {
+"anyOf": [
+{
+"items": {
+"type": "string",
+"format": "date"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Datas Especificas"
+},
+"intervalos": {
+"anyOf": [
+{
+"items": {
+"$ref": "#/components/schemas/DisponibilidadeIntervaloInput"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Intervalos"
+}
+},
+"type": "object",
+"required": [
+"tipo_disponibilidade"
+],
+"title": "DisponibilidadeBulkItem"
+},
+"DisponibilidadeBulkRequest": {
+"properties": {
+"modo": {
+"allOf": [
+{
+"$ref": "#/components/schemas/ModoDisponibilidadeBulkEnum"
+}
+],
+"default": "SUBSTITUIR"
+},
+"itens": {
+"items": {
+"$ref": "#/components/schemas/DisponibilidadeBulkItem"
+},
+"type": "array",
+"title": "Itens"
+}
+},
+"type": "object",
+"required": [
+"itens"
+],
+"title": "DisponibilidadeBulkRequest"
+},
+"DisponibilidadeBulkResponse": {
+"properties": {
+"modo": {
+"$ref": "#/components/schemas/ModoDisponibilidadeBulkEnum"
+},
+"dias_semana_afetados": {
+"items": {
+"type": "integer"
+},
+"type": "array",
+"title": "Dias Semana Afetados"
+},
+"datas_afetadas": {
+"items": {
+"type": "string",
+"format": "date"
+},
+"type": "array",
+"title": "Datas Afetadas"
+},
+"registros_removidos": {
+"type": "integer",
+"title": "Registros Removidos"
+},
+"registros_criados": {
+"type": "integer",
+"title": "Registros Criados"
+}
+},
+"type": "object",
+"required": [
+"modo",
+"dias_semana_afetados",
+"datas_afetadas",
+"registros_removidos",
+"registros_criados"
+],
+"title": "DisponibilidadeBulkResponse"
+},
 "DisponibilidadeCreate": {
 "properties": {
 "tipo_disponibilidade": {
@@ -2884,34 +3577,103 @@
 }
 ],
 "title": "Hora Fim"
-},
-"intervalo_inicio": {
-"anyOf": [
-{
-"type": "string",
-"format": "time"
-},
-{
-"type": "null"
-}
-],
-"title": "Intervalo Inicio"
-},
-"intervalo_fim": {
-"anyOf": [
-{
-"type": "string",
-"format": "time"
-},
-{
-"type": "null"
-}
-],
-"title": "Intervalo Fim"
 }
 },
 "type": "object",
 "title": "DisponibilidadeCreate"
+},
+"DisponibilidadeExcecaoResponse": {
+"properties": {
+"tipo_disponibilidade": {
+"type": "string",
+"title": "Tipo Disponibilidade"
+},
+"data_especifica": {
+"type": "string",
+"format": "date",
+"title": "Data Especifica"
+},
+"intervalos": {
+"items": {
+"$ref": "#/components/schemas/DisponibilidadeIntervaloResponse"
+},
+"type": "array",
+"title": "Intervalos",
+"default": []
+}
+},
+"type": "object",
+"required": [
+"tipo_disponibilidade",
+"data_especifica"
+],
+"title": "DisponibilidadeExcecaoResponse"
+},
+"DisponibilidadeIntervaloInput": {
+"properties": {
+"hora_inicio": {
+"type": "string",
+"format": "time",
+"title": "Hora Inicio"
+},
+"hora_fim": {
+"type": "string",
+"format": "time",
+"title": "Hora Fim"
+}
+},
+"type": "object",
+"required": [
+"hora_inicio",
+"hora_fim"
+],
+"title": "DisponibilidadeIntervaloInput"
+},
+"DisponibilidadeIntervaloResponse": {
+"properties": {
+"hora_inicio": {
+"type": "string",
+"format": "time",
+"title": "Hora Inicio"
+},
+"hora_fim": {
+"type": "string",
+"format": "time",
+"title": "Hora Fim"
+}
+},
+"type": "object",
+"required": [
+"hora_inicio",
+"hora_fim"
+],
+"title": "DisponibilidadeIntervaloResponse"
+},
+"DisponibilidadeSemanalDiaResponse": {
+"properties": {
+"dia_semana": {
+"type": "integer",
+"title": "Dia Semana"
+},
+"dia_nome": {
+"type": "string",
+"title": "Dia Nome"
+},
+"intervalos": {
+"items": {
+"$ref": "#/components/schemas/DisponibilidadeIntervaloResponse"
+},
+"type": "array",
+"title": "Intervalos"
+}
+},
+"type": "object",
+"required": [
+"dia_semana",
+"dia_nome",
+"intervalos"
+],
+"title": "DisponibilidadeSemanalDiaResponse"
 },
 "DisponibilidadeUpdate": {
 "properties": {
@@ -2938,30 +3700,6 @@
 }
 ],
 "title": "Hora Fim"
-},
-"intervalo_inicio": {
-"anyOf": [
-{
-"type": "string",
-"format": "time"
-},
-{
-"type": "null"
-}
-],
-"title": "Intervalo Inicio"
-},
-"intervalo_fim": {
-"anyOf": [
-{
-"type": "string",
-"format": "time"
-},
-{
-"type": "null"
-}
-],
-"title": "Intervalo Fim"
 },
 "ativo": {
 "anyOf": [
@@ -3143,6 +3881,17 @@
 ],
 "title": "Genero"
 },
+"aceita_veiculo_aluno": {
+"anyOf": [
+{
+"type": "boolean"
+},
+{
+"type": "null"
+}
+],
+"title": "Aceita Veiculo Aluno"
+},
 "endereco": {
 "anyOf": [
 {
@@ -3208,6 +3957,11 @@
 "conteudo"
 ],
 "title": "MensagemCreate"
+},
+"ModoDisponibilidadeBulkEnum": {
+"type": "string",
+"const": "SUBSTITUIR",
+"title": "ModoDisponibilidadeBulkEnum"
 },
 "RegistroAlunoRequest": {
 "properties": {
@@ -3381,6 +4135,11 @@
 "exclusiveMinimum": 0,
 "title": "Valor Hora"
 },
+"aceita_veiculo_aluno": {
+"type": "boolean",
+"title": "Aceita Veiculo Aluno",
+"default": false
+},
 "bio": {
 "anyOf": [
 {
@@ -3488,7 +4247,8 @@
 "enum": [
 "SEMANAL",
 "EXCECAO_DISPONIVEL",
-"EXCECAO_BLOQUEIO"
+"EXCECAO_BLOQUEIO",
+"EXCLUIR_EXCECAO"
 ],
 "title": "TipoDisponibilidadeEnum"
 },
@@ -3767,11 +4527,6 @@
 },
 "tipo_cambio": {
 "$ref": "#/components/schemas/TipoCambioEnum"
-},
-"aceita_veiculo_aluno": {
-"type": "boolean",
-"title": "Aceita Veiculo Aluno",
-"default": false
 }
 },
 "type": "object",
@@ -3816,11 +4571,6 @@
 },
 "tipo_cambio": {
 "$ref": "#/components/schemas/TipoCambioEnum"
-},
-"aceita_veiculo_aluno": {
-"type": "boolean",
-"title": "Aceita Veiculo Aluno",
-"default": false
 }
 },
 "type": "object",
@@ -3879,17 +4629,6 @@
 "type": "null"
 }
 ]
-},
-"aceita_veiculo_aluno": {
-"anyOf": [
-{
-"type": "boolean"
-},
-{
-"type": "null"
-}
-],
-"title": "Aceita Veiculo Aluno"
 },
 "ativo": {
 "anyOf": [

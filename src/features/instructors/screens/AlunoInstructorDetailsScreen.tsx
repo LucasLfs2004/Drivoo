@@ -1,31 +1,43 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { scale } from '@/utils';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import dayjs from 'dayjs';
+import { MapPin, UserPlus } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Alert,
   ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { AppHeader } from '../../../shared/ui/base/AppHeader';
 import { Button } from '../../../shared/ui/base/Button';
 import { Card } from '../../../shared/ui/base/Card';
-import { FormDatePicker } from '../../../shared/ui/forms';
 import { theme } from '../../../theme';
 import { AlunoSearchStackParamList } from '../../../types/navigation';
-import { MapPin, UserPlus } from 'lucide-react-native';
-import { scale } from '@/utils';
+import {
+  AvailabilityCalendar,
+  buildCalendarBaseCells,
+  type AvailabilityCalendarCellModel,
+} from '../components/AvailabilityCalendar';
 import { useInstructorDetailsQuery } from '../hooks/useInstructorDetailsQuery';
-import { useInstructorAvailableSlotsQuery } from '../hooks/useInstructorAvailableSlotsQuery';
+import { useInstructorPublicAvailabilityCalendarQuery } from '../hooks/useInstructorPublicAvailabilityCalendarQuery';
+import type {
+  InstructorAvailabilityCalendarDayApiResponse,
+  InstructorAvailabilityCalendarSlotApiResponse,
+} from '../types/api';
 
 type Props = NativeStackScreenProps<AlunoSearchStackParamList, 'InstructorDetails'>;
 
 export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const { instructorId, instructorSummary } = route.params;
   const bookingLocationFallback = 'Local informado após aceite do instrutor';
+  const tomorrow = useMemo(() => dayjs().add(1, 'day').startOf('day'), []);
+  const currentMonth = useMemo(() => dayjs().startOf('month'), []);
 
   const formatDateToApi = useCallback((date: Date) => {
     const year = date.getFullYear();
@@ -35,9 +47,25 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
     return `${year}-${month}-${day}`;
   }, []);
 
+  const parseApiDate = useCallback((date: string) => {
+    const parsedDate = dayjs(date).startOf('day');
+    return parsedDate.toDate();
+  }, []);
+
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  const [visibleMonth, setVisibleMonth] = useState(tomorrow.startOf('month'));
   const selectedDateApi = selectedDate ? formatDateToApi(selectedDate) : null;
+
+  const formatSlotTime = useCallback((value: string) => {
+    const parsed = dayjs(value);
+
+    if (parsed.isValid()) {
+      return parsed.format('HH:mm');
+    }
+
+    return value.slice(0, 5);
+  }, []);
 
   const {
     data: instructor,
@@ -46,15 +74,10 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
   } = useInstructorDetailsQuery(instructorId);
 
   const {
-    data: availableSlots = [],
-    error: availableSlotsError,
-  } = useInstructorAvailableSlotsQuery(instructorId, selectedDateApi);
-
-  useEffect(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setSelectedDate(tomorrow);
-  }, []);
+    data: availabilityCalendar,
+    isLoading: isLoadingAvailabilityCalendar,
+    error: availabilityCalendarError,
+  } = useInstructorPublicAvailabilityCalendarQuery(instructorId);
 
   useEffect(() => {
     if (selectedDate) {
@@ -70,15 +93,111 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
   }, [instructorError]);
 
   useEffect(() => {
-    if (availableSlotsError) {
-      console.error('Error loading available slots:', availableSlotsError);
-      Alert.alert('Erro', 'Erro ao carregar horários disponíveis');
+    if (availabilityCalendarError) {
+      console.error('Error loading availability calendar:', availabilityCalendarError);
+      Alert.alert('Erro', 'Erro ao carregar calendário de disponibilidade');
     }
-  }, [availableSlotsError]);
+  }, [availabilityCalendarError]);
+
+  const isSelectableCalendarDay = useCallback(
+    (calendarDay?: InstructorAvailabilityCalendarDayApiResponse) =>
+      Boolean(
+        calendarDay?.horarios?.some(slot => slot.status === 'DISPONIVEL')
+      ),
+    []
+  );
+
+  useEffect(() => {
+    if (!availabilityCalendar?.dias?.length) {
+      return;
+    }
+
+    const currentSelectionIsValid = availabilityCalendar.dias.some(
+      day => day.data === selectedDateApi && isSelectableCalendarDay(day)
+    );
+
+    if (currentSelectionIsValid) {
+      return;
+    }
+
+    const firstAvailableDay = availabilityCalendar.dias.find(
+      day =>
+        isSelectableCalendarDay(day) &&
+        (dayjs(day.data).isSame(tomorrow, 'day') || dayjs(day.data).isAfter(tomorrow, 'day'))
+    );
+
+    if (!firstAvailableDay) {
+      setSelectedDate(null);
+      return;
+    }
+
+    const nextSelectedDate = parseApiDate(firstAvailableDay.data);
+    setSelectedDate(nextSelectedDate);
+    setVisibleMonth(dayjs(firstAvailableDay.data).startOf('month'));
+  }, [
+    availabilityCalendar?.dias,
+    isSelectableCalendarDay,
+    parseApiDate,
+    selectedDateApi,
+    tomorrow,
+  ]);
 
   const handleTimeSlotSelect = (slotId: string) => {
     setSelectedTimeSlot(slotId);
   };
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(parseApiDate(date));
+  };
+
+  const calendarCells = useMemo<AvailabilityCalendarCellModel[]>(
+    () =>
+      buildCalendarBaseCells(visibleMonth).map(cell => {
+        const cellDate = dayjs(cell.date);
+        const isPastDate = cellDate.isBefore(dayjs().startOf('day'), 'day');
+        const calendarDay = availabilityCalendar?.dias.find(day => day.data === cell.date);
+        const isSelectable = isSelectableCalendarDay(calendarDay);
+        const isPartial = calendarDay?.status_dia === 'OCUPADO_PARCIAL';
+        const isBlocked = calendarDay?.status_dia === 'BLOQUEADO';
+        const isUnavailable = calendarDay?.status_dia === 'SEM_DISPONIBILIDADE';
+
+        return {
+          ...cell,
+          selected: selectedDateApi === cell.date,
+          disabled: isPastDate || !isSelectable,
+          tone: isPartial
+            ? 'partial'
+            : isSelectable
+              ? 'available'
+              : isBlocked
+                ? 'blocked'
+                : isUnavailable
+                  ? 'default'
+                  : 'default',
+          marker: isPartial ? 'partial' : isSelectable ? 'available' : undefined,
+        };
+      }),
+    [availabilityCalendar?.dias, isSelectableCalendarDay, selectedDateApi, visibleMonth]
+  );
+
+  const canGoToPreviousMonth = useMemo(() => {
+    const minMonth = availabilityCalendar?.data_inicio
+      ? dayjs(availabilityCalendar.data_inicio).startOf('month')
+      : currentMonth;
+
+    const boundedMinMonth = minMonth.isAfter(currentMonth) ? minMonth : currentMonth;
+    return visibleMonth.startOf('month').isAfter(boundedMinMonth);
+  }, [availabilityCalendar?.data_inicio, currentMonth, visibleMonth]);
+
+  const canGoToNextMonth = useMemo(() => {
+    if (!availabilityCalendar?.data_fim) {
+      return true;
+    }
+
+    return visibleMonth
+      .startOf('month')
+      .isBefore(dayjs(availabilityCalendar.data_fim).startOf('month'));
+  }, [availabilityCalendar?.data_fim, visibleMonth]);
 
   const handleBookLesson = () => {
     if (!selectedDate || !selectedTimeSlot) {
@@ -86,7 +205,11 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
       return;
     }
 
-    const selectedSlot = availableSlots.find(slot => slot.id === selectedTimeSlot);
+    const selectedDay = availabilityCalendar?.dias.find(day => day.data === selectedDateApi);
+    const selectedSlot = selectedDay?.horarios.find(
+      slot => slot.inicio === selectedTimeSlot && slot.status === 'DISPONIVEL'
+    );
+
     if (!selectedSlot) {
       Alert.alert('Erro', 'Horário selecionado não encontrado');
       return;
@@ -98,8 +221,8 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
       instructorName: `${instructor?.primeiroNome} ${instructor?.ultimoNome}`,
       instructorAvatar: instructor?.avatar,
       date: selectedDate,
-      timeSlot: selectedSlot.time,
-      duration: 60, // Default 1 hour
+      timeSlot: formatSlotTime(selectedSlot.inicio),
+      duration: availabilityCalendar?.duracao_minutos || 60,
       price: instructor?.precos.valorHora || 0,
       currency: 'BRL', // Código ISO para Real Brasileiro
       vehicleInfo: {
@@ -149,30 +272,61 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
   };
 
   const renderTimeSlots = () => {
+    const selectedDay = availabilityCalendar?.dias.find(day => day.data === selectedDateApi);
+    const selectedDaySlots = selectedDay?.horarios ?? [];
+    const availableSlots = selectedDaySlots.filter(slot => slot.status === 'DISPONIVEL');
+
+    if (!selectedDateApi) {
+      return (
+        <Text style={styles.slotsFeedbackText}>
+          Nenhuma disponibilidade encontrada no calendário do instrutor.
+        </Text>
+      );
+    }
+
+    if (isLoadingAvailabilityCalendar) {
+      return (
+        <View style={styles.slotsFeedbackContainer}>
+          <ActivityIndicator size="small" color={theme.colors.primary[500]} />
+          <Text style={styles.slotsFeedbackText}>Buscando horários disponíveis...</Text>
+        </View>
+      );
+    }
+
+    if (!availableSlots.length) {
+      return (
+        <Text style={styles.slotsFeedbackText}>
+          Nenhum horário disponível para a data selecionada.
+        </Text>
+      );
+    }
+
     return (
       <View style={styles.slotsGrid}>
-        {availableSlots.map((slot) => (
+        {availableSlots.map((slot: InstructorAvailabilityCalendarSlotApiResponse, index) => {
+          const slotId = slot.inicio;
+          const slotLabel = `${formatSlotTime(slot.inicio)} - ${formatSlotTime(slot.fim)}`;
+
+          return (
           <TouchableOpacity
-            key={slot.id}
+            key={`${slot.inicio}-${slot.fim}-${index}`}
             style={[
               styles.timeSlot,
-              !slot.available && styles.timeSlotUnavailable,
-              selectedTimeSlot === slot.id && styles.timeSlotSelected,
+              selectedTimeSlot === slotId && styles.timeSlotSelected,
             ]}
-            onPress={() => slot.available && handleTimeSlotSelect(slot.id)}
-            disabled={!slot.available}
+            onPress={() => handleTimeSlotSelect(slotId)}
           >
             <Text
               style={[
                 styles.timeSlotText,
-                !slot.available && styles.timeSlotTextUnavailable,
-                selectedTimeSlot === slot.id && styles.timeSlotTextSelected,
+                selectedTimeSlot === slotId && styles.timeSlotTextSelected,
               ]}
             >
-              {slot.time}
+              {slotLabel}
             </Text>
           </TouchableOpacity>
-        ))}
+          );
+        })}
       </View>
     );
   };
@@ -212,17 +366,12 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
     : `🚗 ${instructor.veiculo.transmissao === 'automatico' ? 'Automático' : 'Manual'}`;
 
   return (
-    <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>← Voltar</Text>
-          </TouchableOpacity>
-        </View>
+        <AppHeader
+        title='Detalhes do instrutor'
+          onBackPress={() => navigation.goBack()}
+        />
 
         {/* Instructor Profile */}
         <Card style={styles.profileCard}>
@@ -283,19 +432,28 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
         <Card style={styles.bookingCard}>
           <Text style={styles.sectionTitle}>Agendar Aula</Text>
 
-          <FormDatePicker
-            label="Selecione a data"
-            value={selectedDate || undefined}
-            onDateChange={setSelectedDate}
-            placeholder="Escolha uma data"
-            minimumDate={new Date()}
-          />
+          {isLoadingAvailabilityCalendar ? (
+            <View style={styles.slotsFeedbackContainer}>
+              <ActivityIndicator size="small" color={theme.colors.primary[500]} />
+              <Text style={styles.slotsFeedbackText}>Carregando calendário...</Text>
+            </View>
+          ) : (
+            <AvailabilityCalendar
+              title="Selecione a data"
+              visibleMonth={visibleMonth}
+              onChangeMonth={setVisibleMonth}
+              canGoToPreviousMonth={canGoToPreviousMonth}
+              canGoToNextMonth={canGoToNextMonth}
+              cells={calendarCells}
+              onSelectDate={handleDateSelect}
+            />
+          )}
 
           {selectedDate && (
             <View>
-              {/* <Text style={styles.timeSlotsTitle}>
+              <Text style={styles.timeSlotsTitle}>
                 Horários disponíveis para {selectedDate.toLocaleDateString('pt-BR')}
-              </Text> */}
+              </Text>
               {renderTimeSlots()}
             </View>
           )}
@@ -317,10 +475,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background.primary,
+    flexDirection: 'column',
+    
   },
   content: {
     flex: 1,
     padding: theme.spacing.md,
+    paddingTop: theme.spacing.xs,
   },
   loadingContainer: {
     flex: 1,
@@ -343,17 +504,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.lg,
     textAlign: 'center',
-  },
-  header: {
-    marginBottom: theme.spacing.lg,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-  },
-  backButtonText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.primary[500],
-    fontWeight: theme.typography.fontWeight.medium,
   },
   profileCard: {
     marginBottom: theme.spacing.lg,
@@ -478,12 +628,27 @@ const styles = StyleSheet.create({
   },
   bookingCard: {
     gap: theme.spacing.md,
+    marginBottom: theme.spacing['3xl'],
+  },
+  calendarHelperText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
   },
   timeSlotsTitle: {
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.medium,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
+  },
+  slotsFeedbackContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  slotsFeedbackText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
   },
   slotsGrid: {
     flexDirection: 'row',

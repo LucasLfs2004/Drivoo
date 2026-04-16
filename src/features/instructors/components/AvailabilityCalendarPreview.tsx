@@ -42,7 +42,7 @@ const getPreviewCellState = (
     return { tone: 'preserved' as const, marker: 'Preservada' };
   }
 
-  if (calendarDay?.bookings.length || dayBookings.length) {
+  if (calendarDay?.horarios.some(slot => slot.status !== 'DISPONIVEL') || dayBookings.length) {
     return { tone: 'booking' as const, marker: 'Aula' };
   }
 

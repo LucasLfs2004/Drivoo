@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { AppHeader } from '../../../shared/ui/base/AppHeader';
 import { Card } from '../../../shared/ui/base/Card';
 import { Button } from '../../../shared/ui/base/Button';
 import { theme } from '../../../theme';
@@ -94,13 +95,11 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Voltar</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Configurações</Text>
-          <Text style={styles.headerSubtitle}>Personalize sua experiência no app</Text>
-        </View>
+        <AppHeader
+          title="Configurações"
+          subtitle="Personalize sua experiência no app"
+          onBackPress={() => navigation.goBack()}
+        />
 
         <Card style={getCardStyle()}>
           <Text style={styles.sectionTitle}>Notificações</Text>
@@ -284,28 +283,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: theme.spacing.lg,
-  },
-  header: {
-    marginBottom: theme.spacing.xl,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    marginBottom: theme.spacing.md,
-  },
-  backButtonText: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.primary[500],
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  headerTitle: {
-    fontSize: theme.typography.fontSize['2xl'],
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  headerSubtitle: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
   },
   card: {
     marginBottom: theme.spacing.lg,

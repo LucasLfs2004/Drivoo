@@ -5,9 +5,12 @@ import {
   Text,
   TextStyle,
   TouchableOpacity,
+  View,
   ViewStyle,
 } from 'react-native';
 import { theme } from '../../../theme';
+
+type ButtonIconComponent = React.ComponentType<{ color: string; size: number }>;
 
 export interface ButtonProps {
   title: string;
@@ -16,6 +19,8 @@ export interface ButtonProps {
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
+  icon?: React.ReactNode | ButtonIconComponent;
+  iconPosition?: 'left' | 'right';
   style?: ViewStyle;
   textStyle?: TextStyle;
 }
@@ -27,6 +32,8 @@ export const Button: React.FC<ButtonProps> = ({
   size = 'md',
   disabled = false,
   loading = false,
+  icon,
+  iconPosition = 'left',
   style,
   textStyle,
 }) => {
@@ -46,6 +53,29 @@ export const Button: React.FC<ButtonProps> = ({
     textStyle,
   ];
 
+  const iconColor = disabled
+    ? theme.colors.text.disabled
+    : variant === 'outline' || variant === 'ghost'
+      ? theme.colors.primary[500]
+      : variant === 'destructive'
+        ? theme.colors.text.inverse
+        : theme.colors.text.inverse;
+
+  const iconSizeMap = {
+    sm: 16,
+    md: 20,
+    lg: 24,
+  } as const;
+
+  const iconSize = iconSizeMap[size];
+  const iconIsComponent = typeof icon === 'function';
+  const IconComponent = iconIsComponent ? (icon as ButtonIconComponent) : undefined;
+  const iconElement = IconComponent ? (
+    <IconComponent color={iconColor} size={iconSize} />
+  ) : (
+    (icon as React.ReactNode)
+  );
+
   return (
     <TouchableOpacity
       style={buttonStyle}
@@ -56,16 +86,20 @@ export const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator
           color={
-            variant === 'outline' || variant === 'ghost' 
-              ? theme.colors.primary[500] 
+            variant === 'outline' || variant === 'ghost'
+              ? theme.colors.primary[500]
               : variant === 'destructive'
-              ? theme.colors.semantic.error
-              : theme.colors.text.inverse
+                ? theme.colors.semantic.error
+                : theme.colors.text.inverse
           }
           size="small"
         />
       ) : (
-        <Text style={textStyleCombined}>{title}</Text>
+        <>
+          {icon && iconPosition === 'left' && <View style={styles.iconLeft}>{iconElement}</View>}
+          <Text style={textStyleCombined}>{title}</Text>
+          {icon && iconPosition === 'right' && <View style={styles.iconRight}>{iconElement}</View>}
+        </>
       )}
     </TouchableOpacity>
   );
@@ -152,5 +186,11 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: theme.colors.text.disabled,
+  },
+  iconLeft: {
+    marginRight: theme.spacing.xs,
+  },
+  iconRight: {
+    marginLeft: theme.spacing.xs,
   },
 });

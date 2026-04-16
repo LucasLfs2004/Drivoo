@@ -10,7 +10,6 @@ import {
   mapInstructorBookingsPreview,
   mapInstructorAvailabilityToBulkPayload,
 } from '../mappers/mapInstructorAvailability';
-import { mapInstructorAvailableSlot } from '../mappers/mapInstructorAvailableSlots';
 import { mapInstructorDetails } from '../mappers/mapInstructorDetails';
 import { mapInstructorEarningsOverview } from '../mappers/mapInstructorEarnings';
 import { mapInstructorSchedule } from '../mappers/mapInstructorSchedule';
@@ -58,30 +57,6 @@ export const instructorQueryOptions = {
       enabled,
     }),
 
-  availableSlots: (
-    instructorId: string,
-    date: string | null,
-    durationMinutes = 60,
-    enabled = true
-  ) =>
-    createAppQueryOptions({
-      queryKey: instructorQueryKeys.availableSlots(
-        instructorId,
-        date ?? 'no-date',
-        durationMinutes
-      ),
-      queryFn: async () => {
-        const response = await instructorAvailabilityApi.getAvailableSlots(
-          instructorId,
-          date ?? '',
-          durationMinutes
-        );
-
-        return response.horarios.map(mapInstructorAvailableSlot);
-      },
-      enabled: enabled && Boolean(instructorId) && Boolean(date),
-    }),
-
   bookingsPreview: (enabled = true) =>
     createAppQueryOptions({
       queryKey: instructorQueryKeys.availabilityBookingsPreview(),
@@ -99,6 +74,14 @@ export const instructorQueryOptions = {
         const response = await instructorDetailsApi.getDetails(instructorId);
         return mapInstructorDetails(response);
       },
+      enabled: enabled && Boolean(instructorId),
+    }),
+
+  publicAvailabilityCalendar: (instructorId: string, enabled = true) =>
+    createAppQueryOptions({
+      queryKey: instructorQueryKeys.publicAvailabilityCalendar(instructorId),
+      queryFn: async () =>
+        instructorAvailabilityApi.getInstructorAvailabilityCalendar(instructorId),
       enabled: enabled && Boolean(instructorId),
     }),
 

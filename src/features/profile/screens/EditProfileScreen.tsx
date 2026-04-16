@@ -1,22 +1,15 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useForm, Controller } from 'react-hook-form';
-import { Card } from '../../../shared/ui/base/Card';
-import { Button } from '../../../shared/ui/base/Button';
-import { FormInput } from '../../../shared/ui/forms';
+import React, { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../core/auth';
+import { Button } from '../../../shared/ui/base/Button';
+import { Card } from '../../../shared/ui/base/Card';
+import { FormInput } from '../../../shared/ui/forms';
 import { theme } from '../../../theme';
-import { AlunoProfileStackParamList } from '../../../types/navigation';
 import type { Usuario } from '../../../types/auth';
+import { AlunoProfileStackParamList } from '../../../types/navigation';
 
 type Props = NativeStackScreenProps<AlunoProfileStackParamList, 'EditProfile'>;
 
@@ -76,14 +69,10 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
-    Alert.alert(
-      'Descartar Alterações',
-      'Você tem alterações não salvas. Deseja descartá-las?',
-      [
-        { text: 'Continuar Editando', style: 'cancel' },
-        { text: 'Descartar', style: 'destructive', onPress: () => navigation.goBack() },
-      ]
-    );
+    Alert.alert('Descartar Alterações', 'Você tem alterações não salvas. Deseja descartá-las?', [
+      { text: 'Continuar Editando', style: 'cancel' },
+      { text: 'Descartar', style: 'destructive', onPress: () => navigation.goBack() },
+    ]);
   };
 
   return (
@@ -98,9 +87,7 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.backButtonText}>← Voltar</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Editar Perfil</Text>
-          <Text style={styles.headerSubtitle}>
-            Atualize suas informações pessoais
-          </Text>
+          <Text style={styles.headerSubtitle}>Atualize suas informações pessoais</Text>
         </View>
 
         <View style={styles.avatarSection}>
@@ -191,6 +178,7 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
             }}
             render={({ field: { onChange, value } }) => (
               <FormInput
+                editable={false}
                 label="Email"
                 value={value}
                 onChangeText={onChange}

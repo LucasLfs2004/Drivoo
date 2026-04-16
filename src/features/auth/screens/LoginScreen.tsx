@@ -79,15 +79,14 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
+      <View style={styles.content}>
+        <View style={styles.headerContent}>
+          <Image source={require('../../../assets/icon-transparent.png')} style={styles.logo} />
+          <Text style={styles.logoText}>Drivoo</Text>{' '}
+        </View>
+        <Text style={styles.subtitle}>Conecte-se com instrutores qualificados</Text>
 
-<View style={styles.headerContent}>
-          <Image  source={require('../../../assets/icon-transparent.png')} style={styles.logo} />
-      <Text style={styles.logoText}>Drivoo</Text>
-</View>
-          <Text style={styles.subtitle}>Conecte-se com instrutores qualificados</Text>
-
-          <View  style={styles.formContainer}>
+        <View style={styles.formContainer}>
           {contextError && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{contextError}</Text>
@@ -137,24 +136,22 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               style={styles.loginButton}
             />
           </View>
-
-</View>
-
-          <View style={styles.footer}>
-            <Button
-              title="Esqueceu a senha?"
-              variant="ghost"
-              onPress={() => navigation.navigate('ForgotPassword')}
-            />
-
-            <Button
-              title="Criar conta"
-              variant="outline"
-              onPress={() => navigation.navigate('Register', {})}
-              style={styles.registerButton}
-            />
-          </View>
+          <Button
+            title="Esqueceu a senha?"
+            variant="ghost"
+            onPress={() => navigation.navigate('ForgotPassword')}
+          />
         </View>
+
+        <View style={styles.footer}>
+          <Button
+            title="Criar conta"
+            variant="outline"
+            onPress={() => navigation.navigate('Register', {})}
+            style={styles.registerButton}
+          />
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -169,6 +166,8 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     backgroundColor: theme.colors.background.primary,
+    flexDirection: 'column',
+    rowGap: theme.spacing.lg,
   },
   headerContent: {
     flexDirection: 'row',
@@ -176,7 +175,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     columnGap: theme.spacing.md - theme.spacing.xs,
   },
-  
+
   logo: {
     height: moderateScale(72),
     width: moderateScale(72),
@@ -195,7 +194,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   formContainer: {
-  justifyContent: 'center',
+    justifyContent: 'center',
     borderRadius: theme.borders.radius.lg,
     ...theme.shadows.md,
     padding: theme.spacing.md,
@@ -220,10 +219,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   form: {
+    flexDirection: 'column',
+    rowGap: theme.spacing.md,
     marginBottom: theme.spacing.xl,
   },
   loginButton: {
-    marginTop: theme.spacing.lg,
+    // marginTop: theme.spacing.lg,
   },
   footer: {
     alignItems: 'center',

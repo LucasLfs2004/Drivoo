@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   TextInput,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -21,7 +23,7 @@ import {
 } from '../../../types';
 import { AlunoSearchStackParamList } from '../../../types/navigation';
 import { locationService } from '../../../services';
-import { Filter, Search } from 'lucide-react-native';
+import { CircleAlert, Filter, Search } from 'lucide-react-native';
 import { scale } from '@/utils';
 import { useInstructorSearchQuery } from '../hooks/useInstructorSearchQuery';
 import type { LocationPermissionStatus } from '../../../services';
@@ -62,6 +64,7 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
   // UI state
   const [selectedInstructorId, setSelectedInstructorId] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
+  const [showLocationInfoModal, setShowLocationInfoModal] = useState(false);
 
   const latitude = localizacaoAtual?.latitude ?? region.latitude;
   const longitude = localizacaoAtual?.longitude ?? region.longitude;
@@ -316,29 +319,13 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
     await locationService.openAppSettings();
   };
 
-  const renderLocationBanner = () => (
-    <View style={styles.locationBanner}>
-      <Text style={styles.locationBannerTitle}>
-        {localizacaoAtual ? 'Localizacao atual ativa' : 'Usando localizacao fallback'}
-      </Text>
-      <Text style={styles.locationBannerText}>
-        {locationError ??
-          'Usamos sua localizacao para buscar instrutores na sua regiao e ordenar por proximidade.'}
-      </Text>
+  const locationInfoTitle = localizacaoAtual
+    ? 'Localizacao atual ativa'
+    : 'Localizacao nao fornecida';
 
-      {!localizacaoAtual && (
-        <TouchableOpacity style={styles.primaryActionButton} onPress={obterLocalizacaoAtual}>
-          <Text style={styles.primaryActionButtonText}>Tentar localizar novamente</Text>
-        </TouchableOpacity>
-      )}
-
-      {!localizacaoAtual && !locationPermission.canAskAgain && (
-        <TouchableOpacity style={styles.secondaryActionButton} onPress={handleOpenSettings}>
-          <Text style={styles.secondaryActionButtonText}>Abrir ajustes do app</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+  const locationInfoText =
+    locationError ??
+    'Usamos sua localizacao para buscar instrutores na sua regiao e ordenar por proximidade.';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -388,7 +375,15 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
         </TouchableOpacity>
       </View>
 
-      {(locationError || !localizacaoAtual) && !initializingLocation && renderLocationBanner()}
+      {!initializingLocation && !localizacaoAtual && (
+        <TouchableOpacity
+          style={styles.locationInfoTrigger}
+          onPress={() => setShowLocationInfoModal(true)}
+        >
+          <CircleAlert color={theme.colors.secondary[500]} size={18} />
+          <Text style={styles.locationInfoTriggerText}>Localizacao nao fornecida</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Results Section */}
       <View style={styles.resultsSection}>
@@ -444,6 +439,55 @@ export const AlunoInstructorSearchScreen: React.FC<Props> = ({ navigation }) => 
         onApplyFilters={handleApplyFilters}
         initialFilters={filtros}
       />
+
+      <Modal
+        visible={showLocationInfoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLocationInfoModal(false)}
+      >
+        <Pressable
+          style={styles.locationModalBackdrop}
+          onPress={() => setShowLocationInfoModal(false)}
+        >
+          <Pressable style={styles.locationModalCard} onPress={() => undefined}>
+            <View style={styles.locationModalIcon}>
+              <CircleAlert color={theme.colors.primary[500]} size={22} />
+            </View>
+            <Text style={styles.locationModalTitle}>{locationInfoTitle}</Text>
+            <Text style={styles.locationModalText}>{locationInfoText}</Text>
+
+            <TouchableOpacity
+              style={styles.primaryActionButton}
+              onPress={async () => {
+                setShowLocationInfoModal(false);
+                await obterLocalizacaoAtual();
+              }}
+            >
+              <Text style={styles.primaryActionButtonText}>Tentar localizar novamente</Text>
+            </TouchableOpacity>
+
+            {!locationPermission.canAskAgain && (
+              <TouchableOpacity
+                style={styles.secondaryActionButton}
+                onPress={async () => {
+                  setShowLocationInfoModal(false);
+                  await handleOpenSettings();
+                }}
+              >
+                <Text style={styles.secondaryActionButtonText}>Abrir ajustes do app</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.locationModalCloseButton}
+              onPress={() => setShowLocationInfoModal(false)}
+            >
+              <Text style={styles.locationModalCloseButtonText}>Fechar</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -574,25 +618,25 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.xl,
     paddingHorizontal: theme.spacing.lg,
   },
-  locationBanner: {
+  locationInfoTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.sm,
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borders.radius.lg,
-    padding: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border.light,
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borders.radius.full,
+    backgroundColor: theme.colors.coolGray[50],
+    borderWidth: theme.borders.width.base,
+    borderColor: theme.colors.coolGray[200],
+    ...theme.shadows.sm,
   },
-  locationBannerTitle: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  locationBannerText: {
+  locationInfoTriggerText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
-    lineHeight: 20,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   emptyStateTitle: {
     fontSize: theme.typography.fontSize.lg,
@@ -628,5 +672,45 @@ const styles = StyleSheet.create({
     color: theme.colors.primary[500],
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.medium,
+  },
+  locationModalBackdrop: {
+    flex: 1,
+    backgroundColor: theme.colors.background.overlay,
+    justifyContent: 'center',
+    padding: theme.spacing.lg,
+  },
+  locationModalCard: {
+    backgroundColor: theme.colors.background.elevated,
+    borderRadius: theme.borders.radius.xl,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
+    ...theme.shadows.lg,
+  },
+  locationModalIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.borders.radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary[50],
+  },
+  locationModalTitle: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.text.primary,
+  },
+  locationModalText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    lineHeight: 22,
+  },
+  locationModalCloseButton: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xs,
+  },
+  locationModalCloseButtonText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.primary[500],
+    fontWeight: theme.typography.fontWeight.semibold,
   },
 });

@@ -6,6 +6,7 @@ export { Typography } from './Typography';
 export { Avatar } from './Avatar';
 export { Badge } from './Badge';
 export { IconButton } from './IconButton';
+export { AppHeader } from './AppHeader';
 export { BottomSheet } from './BottomSheet';
 export { Calendar, buildCalendarMonthCells, DEFAULT_CALENDAR_WEEK_DAYS } from './Calendar';
 export type { CalendarCellModel } from './Calendar';

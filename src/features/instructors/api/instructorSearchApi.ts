@@ -1,6 +1,6 @@
 import { apiClient } from '../../../core/api';
-import type { FiltrosBusca } from '../types/filters';
 import type { SearchInstructorApiResponse } from '../types/api';
+import type { FiltrosBusca } from '../types/filters';
 
 interface InstructorSearchParams {
   filtros: FiltrosBusca;
@@ -24,7 +24,7 @@ export const instructorSearchApi = {
       params: {
         latitude,
         longitude,
-        raio_km: filtros.localizacao?.raio ?? 10,
+        raio_km: filtros.localizacao?.raio ?? 30,
         ordenar_por: 'proximidade',
         tipo_cambio:
           filtros.tipoVeiculo === 'manual'
