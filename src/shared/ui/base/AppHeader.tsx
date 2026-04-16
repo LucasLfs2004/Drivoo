@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   },
   copy: {
     flex: 1,
-    minHeight: 40,
+    // minHeight: 40,
     paddingHorizontal: theme.spacing.md,
     // justifyContent: 'center',
   },
