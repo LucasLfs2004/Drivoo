@@ -184,6 +184,12 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.actionButton}
           />
           <Button
+            title="Recebimentos"
+            variant="outline"
+            onPress={() => navigation.navigate('FinancialSettings')}
+            style={styles.actionButton}
+          />
+          <Button
             title="Configurações"
             variant="outline"
             onPress={() => navigation.navigate('Settings')}

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
 import { Card } from '../../../shared/ui/base/Card';
@@ -16,6 +17,7 @@ import { Button } from '../../../shared/ui/base/Button';
 import { theme } from '../../../theme';
 import { formatCurrency } from '../../../utils/currency';
 import { useInstructorEarningsOverviewQuery } from '../../instructors';
+import type { InstrutorEarningsStackParamList } from '../../../types/navigation';
 
 dayjs.locale('pt-br');
 
@@ -40,7 +42,12 @@ const chartAxisTextStyle = {
   fontSize: 12,
 } as const;
 
-export const InstrutorEarningsScreen: React.FC = () => {
+type Props = NativeStackScreenProps<
+  InstrutorEarningsStackParamList,
+  'EarningsScreen'
+>;
+
+export const InstrutorEarningsScreen: React.FC<Props> = ({ navigation }) => {
   const { data, isLoading, isError, refetch } = useInstructorEarningsOverviewQuery();
 
   const trendPoints = useMemo(() => data?.trend.points ?? [], [data?.trend.points]);
@@ -105,6 +112,20 @@ export const InstrutorEarningsScreen: React.FC = () => {
             Acompanhe seus rendimentos e pagamentos com base nos dados reais da API.
           </Text>
         </View>
+
+        <Card style={styles.receivablesCard}>
+          <View style={styles.receivablesCopy}>
+            <Text style={styles.receivablesTitle}>Recebimentos</Text>
+            <Text style={styles.receivablesText}>
+              Configure seus dados fiscais e a conta Stripe para receber repasses.
+            </Text>
+          </View>
+          <Button
+            title="Configurar"
+            variant="outline"
+            onPress={() => navigation.navigate('FinancialSettings')}
+          />
+        </Card>
 
         <View style={styles.summaryRow}>
           <Card style={styles.summaryCard}>
@@ -303,6 +324,23 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
+  },
+  receivablesCard: {
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  receivablesCopy: {
+    gap: theme.spacing.xs,
+  },
+  receivablesTitle: {
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
+  receivablesText: {
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.sm,
+    lineHeight: 20,
   },
   summaryRow: {
     flexDirection: 'row',

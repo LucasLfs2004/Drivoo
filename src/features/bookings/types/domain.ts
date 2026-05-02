@@ -3,6 +3,7 @@ export interface BookingData {
   instructorId: string;
   instructorName: string;
   instructorAvatar?: string;
+  vehicleId?: string | null;
   date: Date;
   timeSlot: string;
   duration: number;
@@ -59,4 +60,34 @@ export interface BookingValidationError {
 export interface BookingValidationResult {
   isValid: boolean;
   errors: BookingValidationError[];
+}
+
+export type BookingCheckoutStatusValue =
+  | 'PENDENTE_PAGAMENTO'
+  | 'AGENDADO'
+  | 'EXPIRADO'
+  | 'CANCELADO';
+
+export interface BookingCheckoutSession {
+  bookingId: string;
+  bookingStatus: BookingCheckoutStatusValue;
+  transactionId: string;
+  transactionStatus: string;
+  checkoutSessionId: string;
+  checkoutUrl: string;
+  expiresAt: string;
+}
+
+export interface BookingCheckoutStatus {
+  bookingId: string;
+  bookingStatus: BookingCheckoutStatusValue;
+  transactionId: string | null;
+  transactionStatus: string | null;
+  paymentConfirmed: boolean;
+  checkoutExpiresAt: string | null;
+  paidAt: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  stripeCheckoutSessionId: string | null;
+  stripePaymentIntentId: string | null;
 }

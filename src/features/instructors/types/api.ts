@@ -67,6 +67,50 @@ export interface InstructorProfileUpdateApiRequest {
   genero?: 'M' | 'F' | 'Outro' | null;
 }
 
+export type InstructorFiscalTypeApi = 'PF' | 'MEI';
+
+export interface InstructorFinancialApiResponse {
+  stripe_account_id?: string | null;
+  status_conta_stripe?: string | null;
+  tipo_fiscal?: InstructorFiscalTypeApi | null;
+  elegibilidade_financeira?: string | null;
+  pendencias?: string[] | null;
+  cpf?: string | null;
+  telefone?: string | null;
+  data_nascimento?: string | null;
+  aceite_contratual?: boolean | null;
+  aceite_responsabilidade_fiscal?: boolean | null;
+  aceite_contratual_em?: string | null;
+  aceite_responsabilidade_fiscal_em?: string | null;
+  cnpj?: string | null;
+  razao_social?: string | null;
+  nome_fantasia?: string | null;
+  endereco_fiscal?: string | null;
+  stripe_requirements_pendentes?: string[] | null;
+  stripe_onboarding_completed_at?: string | null;
+}
+
+export interface InstructorFinancialUpdateApiRequest {
+  tipo_fiscal: InstructorFiscalTypeApi;
+  cpf: string;
+  telefone: string;
+  data_nascimento: string;
+  aceite_contratual: boolean;
+  aceite_responsabilidade_fiscal: boolean;
+  cnpj?: string | null;
+  razao_social?: string | null;
+  nome_fantasia?: string | null;
+  endereco_fiscal?: string | null;
+}
+
+export interface InstructorStripeOnboardingLinkApiResponse {
+  instrutor_id: string;
+  stripe_account_id: string;
+  onboarding_url: string;
+  expires_at: string;
+  created_account: boolean;
+}
+
 export interface InstructorVehicleCreateApiRequest {
   modelo: string;
   ano?: number | null;

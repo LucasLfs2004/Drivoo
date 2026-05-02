@@ -3,6 +3,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { DrawerScreenProps } from '@react-navigation/drawer';
+import type { BookingData } from '../../features/bookings/types/domain';
 
 // Root Navigator
 export type RootStackParamList = {
@@ -60,7 +61,11 @@ export type AlunoSearchStackParamList = {
   SearchResults: { filters?: any };
   InstructorDetails: { instructorId: string; instructorSummary?: InstrutorDisponivel };
   BookingConfirmation: { bookingData: any };
-  PaymentConfirmation: { bookingData: any };
+  PaymentConfirmation: {
+    bookingData?: BookingData;
+    checkoutBookingId?: string;
+    checkoutReturn?: 'sucesso' | 'cancelado';
+  };
 };
 
 export type AlunoBookingsStackParamList = {
@@ -86,6 +91,7 @@ export type InstrutorScheduleStackParamList = {
 export type InstrutorEarningsStackParamList = {
   EarningsScreen: undefined;
   EarningsDetails: { period: string };
+  FinancialSettings: { stripeReturn?: 'return' | 'refresh' } | undefined;
 };
 
 export type AlunoProfileStackParamList = {
@@ -98,6 +104,7 @@ export type InstrutorProfileStackParamList = {
   ProfileScreen: undefined;
   EditProfile: undefined;
   Credentials: undefined;
+  FinancialSettings: { stripeReturn?: 'return' | 'refresh' } | undefined;
   Settings: undefined;
   Support: undefined;
 };

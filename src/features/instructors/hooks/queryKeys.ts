@@ -12,6 +12,7 @@ export const instructorQueryKeys = {
   schedule: () => [...instructorQueryKeys.all, 'schedule', 'me'] as const,
   vehicles: () => [...instructorQueryKeys.all, 'vehicles', 'me'] as const,
   earningsOverview: () => [...instructorQueryKeys.all, 'earnings', 'overview', 'me'] as const,
+  financial: () => [...instructorQueryKeys.all, 'financial', 'me'] as const,
   detail: (instructorId: string) =>
     [...instructorQueryKeys.all, 'detail', instructorId] as const,
   publicAvailabilityCalendar: (instructorId: string) =>

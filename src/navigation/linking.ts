@@ -31,6 +31,13 @@ export const linking: LinkingOptions<RootStackParamList> = {
               SearchScreen: 'aluno/search',
               SearchResults: 'aluno/search/results',
               InstructorDetails: 'aluno/search/instructor/:instructorId',
+              PaymentConfirmation: {
+                path: 'aluno/checkout/:checkoutBookingId/:checkoutReturn?',
+                parse: {
+                  checkoutReturn: (value: string) =>
+                    value === 'cancelado' ? 'cancelado' : 'sucesso',
+                },
+              },
             },
           },
           Bookings: {
@@ -73,6 +80,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
             screens: {
               EarningsScreen: 'instrutor/earnings',
               EarningsDetails: 'instrutor/earnings/:period',
+              FinancialSettings: 'instrutor/earnings/recebimentos',
             },
           },
           Chat: {
@@ -86,6 +94,13 @@ export const linking: LinkingOptions<RootStackParamList> = {
               ProfileScreen: 'instrutor/profile',
               EditProfile: 'instrutor/profile/edit',
               Credentials: 'instrutor/profile/credentials',
+              FinancialSettings: {
+                path: 'instructor/stripe/:stripeReturn?',
+                parse: {
+                  stripeReturn: (value: string) =>
+                    value === 'refresh' ? 'refresh' : 'return',
+                },
+              },
               Settings: 'instrutor/settings',
             },
           },

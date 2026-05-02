@@ -1,205 +1,285 @@
-import React, { useEffect, useState } from 'react';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
   ActivityIndicator,
+  Alert,
+  AppState,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { PaymentForm } from '../../../shared/ui/forms';
-import { Card } from '../../../shared/ui/base/Card';
+import { AppHeader } from '../../../shared/ui/base/AppHeader';
 import { Button } from '../../../shared/ui/base/Button';
+import { Card } from '../../../shared/ui/base/Card';
 import { theme } from '../../../theme';
 import { AlunoSearchStackParamList } from '../../../types/navigation';
-import { createSplitPayment } from '../../../services/stripeService';
-import { usePaymentSplit } from '../hooks/usePaymentSplit';
-import { PaymentSplitBreakdown } from '../components/PaymentSplitBreakdown';
-import { BOOKING_PLATFORM_FEE_RATE } from '../utils/payment';
+import { calculateBookingPaymentInfo } from '../utils/payment';
+import { mapBookingDataToCheckoutPayload } from '../mappers/mapBookingCheckout';
+import {
+  useBookingCheckoutStatusQuery,
+  useCreateBookingCheckoutSessionMutation,
+} from '../hooks/useBookingCheckout';
+import { pendingCheckoutStorage } from '../store/pendingCheckoutStorage';
+import type {
+  BookingCheckoutSession,
+  BookingCheckoutStatusValue,
+  BookingData,
+} from '../types/domain';
 
 type Props = NativeStackScreenProps<
   AlunoSearchStackParamList,
   'PaymentConfirmation'
 >;
 
+const FINAL_STATUSES: BookingCheckoutStatusValue[] = [
+  'AGENDADO',
+  'EXPIRADO',
+  'CANCELADO',
+];
+
+const formatDate = (date: Date) =>
+  date.toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+
+const formatCurrency = (value: number, currency: string) =>
+  `${currency} ${value.toFixed(2)}`;
+
+const getStatusTitle = (status?: BookingCheckoutStatusValue) => {
+  switch (status) {
+    case 'AGENDADO':
+      return 'Pagamento confirmado';
+    case 'EXPIRADO':
+      return 'Checkout expirado';
+    case 'CANCELADO':
+      return 'Agendamento cancelado';
+    case 'PENDENTE_PAGAMENTO':
+      return 'Aguardando pagamento';
+    default:
+      return 'Reserva temporária';
+  }
+};
+
+const getStatusDescription = (status?: BookingCheckoutStatusValue) => {
+  switch (status) {
+    case 'AGENDADO':
+      return 'O backend confirmou o pagamento pela Stripe. Sua aula está agendada.';
+    case 'EXPIRADO':
+      return 'A reserva temporária expirou. Volte e inicie um novo checkout.';
+    case 'CANCELADO':
+      return 'Este agendamento foi cancelado.';
+    case 'PENDENTE_PAGAMENTO':
+      return 'Depois de concluir o Checkout, mantenha esta tela aberta ou volte para o app para atualizarmos o status real.';
+    default:
+      return 'Estamos preparando o checkout seguro da Stripe.';
+  }
+};
+
+const getReturnDescription = (checkoutReturn?: 'sucesso' | 'cancelado') => {
+  switch (checkoutReturn) {
+    case 'sucesso':
+      return 'Você voltou da Stripe. Estamos confirmando o pagamento com o backend.';
+    case 'cancelado':
+      return 'Você saiu do Checkout antes da confirmação. A reserva pode continuar pendente até expirar.';
+    default:
+      return null;
+  }
+};
+
 export const PaymentConfirmationScreen: React.FC<Props> = ({
   route,
   navigation,
 }) => {
-  const { bookingData } = route.params;
+  const { bookingData, checkoutBookingId, checkoutReturn } = route.params;
+  const typedBookingData = bookingData as BookingData | undefined;
+  const initialBookingId = checkoutBookingId ?? '';
 
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [checkoutSession, setCheckoutSession] =
+    useState<BookingCheckoutSession | null>(null);
+  const [bookingId, setBookingId] = useState(initialBookingId);
+  const [openingCheckout, setOpeningCheckout] = useState(false);
+  const [pendingCheckoutLoaded, setPendingCheckoutLoaded] =
+    useState(Boolean(initialBookingId));
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
-  const { splitInfo, isValid } = usePaymentSplit({
-    amount: bookingData.price,
-    platformFeePercentage: BOOKING_PLATFORM_FEE_RATE,
-    currency: bookingData.currency,
-  });
+  const createCheckoutMutation = useCreateBookingCheckoutSessionMutation();
+  const checkoutStatusQuery = useBookingCheckoutStatusQuery(
+    bookingId,
+    Boolean(bookingId)
+  );
+
+  const paymentInfo = useMemo(
+    () =>
+      typedBookingData ? calculateBookingPaymentInfo(typedBookingData) : null,
+    [typedBookingData]
+  );
+
+  const status =
+    checkoutStatusQuery.data?.bookingStatus ?? checkoutSession?.bookingStatus;
+  const isFinalStatus = status ? FINAL_STATUSES.includes(status) : false;
+  const returnDescription = getReturnDescription(checkoutReturn);
+
+  const createCheckoutSession = useCallback(async () => {
+    if (!typedBookingData) {
+      setSessionError(
+        'Não encontramos os dados do agendamento para iniciar o checkout.'
+      );
+      return;
+    }
+
+    try {
+      setSessionError(null);
+      const payload = mapBookingDataToCheckoutPayload(typedBookingData);
+      const session = await createCheckoutMutation.mutateAsync(payload);
+
+      setCheckoutSession(session);
+      setBookingId(session.bookingId);
+      await pendingCheckoutStorage.saveBookingId(session.bookingId);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível iniciar o checkout.';
+      setSessionError(message);
+    }
+  }, [createCheckoutMutation, typedBookingData]);
 
   useEffect(() => {
-    initializePayment();
-  }, []);
+    if (
+      bookingId ||
+      !typedBookingData ||
+      checkoutSession ||
+      createCheckoutMutation.isPending
+    ) {
+      return;
+    }
 
-  const initializePayment = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    createCheckoutSession();
+  }, [
+    bookingId,
+    checkoutSession,
+    createCheckoutMutation.isPending,
+    createCheckoutSession,
+    typedBookingData,
+  ]);
 
-      const instructorAccountId = `acct_${bookingData.instructorId}`;
+  useEffect(() => {
+    if (bookingId || typedBookingData) {
+      if (typedBookingData) {
+        setPendingCheckoutLoaded(true);
+      }
+      return;
+    }
 
-      const { clientSecret: secret } = await createSplitPayment(
-        bookingData.price,
-        instructorAccountId,
-        BOOKING_PLATFORM_FEE_RATE,
-        bookingData.currency,
-        {
-          bookingId: bookingData.id || 'pending',
-          instructorId: bookingData.instructorId,
-          instructorName: bookingData.instructorName,
-          date: bookingData.date.toISOString(),
-          timeSlot: bookingData.timeSlot,
+    pendingCheckoutStorage
+      .getBookingId()
+      .then(storedBookingId => {
+        if (storedBookingId) {
+          setBookingId(storedBookingId);
         }
-      );
+      })
+      .finally(() => setPendingCheckoutLoaded(true));
+  }, [bookingId, typedBookingData]);
 
-      setClientSecret(secret);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Erro ao inicializar pagamento';
-      setError(errorMessage);
-      Alert.alert(
-        'Erro',
-        'Não foi possível inicializar o pagamento. Tente novamente.',
-        [
-          { text: 'Tentar Novamente', onPress: initializePayment },
-          {
-            text: 'Voltar',
-            onPress: () => navigation.goBack(),
-            style: 'cancel',
-          },
-        ]
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePaymentSuccess = async (paymentIntentId: string) => {
-    try {
-      setPaymentProcessing(true);
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      Alert.alert(
-        'Pagamento Confirmado! 🎉',
-        `Sua aula com ${bookingData.instructorName} foi agendada com sucesso!`,
-        [
-          {
-            text: 'Ver Agendamentos',
-            onPress: () => {
-              navigation.navigate('SearchScreen');
-            },
-          },
-        ]
-      );
-
-      console.log('Payment successful:', paymentIntentId);
-    } catch {
-      Alert.alert(
-        'Erro',
-        'Pagamento processado, mas houve um erro ao confirmar o agendamento. Entre em contato com o suporte.'
-      );
-    } finally {
-      setPaymentProcessing(false);
-    }
-  };
-
-  const handlePaymentError = (err: Error) => {
-    console.error('Payment error:', err);
-
-    let errorMessage = 'Não foi possível processar o pagamento.';
-
-    if (err.message.includes('card_declined')) {
-      errorMessage = 'Cartão recusado. Verifique os dados ou tente outro cartão.';
-    } else if (err.message.includes('insufficient_funds')) {
-      errorMessage = 'Saldo insuficiente. Tente outro cartão.';
-    } else if (err.message.includes('expired_card')) {
-      errorMessage = 'Cartão expirado. Use um cartão válido.';
-    } else if (err.message.includes('incorrect_cvc')) {
-      errorMessage = 'Código de segurança incorreto.';
-    } else if (err.message.includes('processing_error')) {
-      errorMessage = 'Erro ao processar pagamento. Tente novamente.';
+  useEffect(() => {
+    if (!pendingCheckoutLoaded || bookingId || typedBookingData) {
+      return;
     }
 
-    Alert.alert('Erro no Pagamento', errorMessage, [
-      { text: 'Tentar Novamente', onPress: () => setError(null) },
-      {
-        text: 'Voltar',
-        onPress: () => navigation.goBack(),
-        style: 'cancel',
-      },
-    ]);
-  };
-
-  const handleCancelPayment = () => {
-    Alert.alert(
-      'Cancelar Pagamento',
-      'Tem certeza que deseja cancelar o pagamento? Você perderá este agendamento.',
-      [
-        { text: 'Não, Continuar', style: 'cancel' },
-        {
-          text: 'Sim, Cancelar',
-          style: 'destructive',
-          onPress: () => {
-            navigation.navigate('SearchScreen');
-          },
-        },
-      ]
+    setSessionError(
+      'Não encontramos um checkout pendente para consultar. Volte para escolher um horário e iniciar o pagamento.'
     );
-  };
+  }, [bookingId, pendingCheckoutLoaded, typedBookingData]);
 
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
+  useEffect(() => {
+    if (!isFinalStatus) {
+      return;
+    }
+
+    pendingCheckoutStorage.clearBookingId();
+  }, [isFinalStatus]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active' && bookingId) {
+        checkoutStatusQuery.refetch();
+      }
     });
 
-  if (loading) {
+    return () => subscription.remove();
+  }, [bookingId, checkoutStatusQuery]);
+
+  const handleOpenCheckout = async () => {
+    const checkoutUrl = checkoutSession?.checkoutUrl;
+
+    if (!checkoutUrl) {
+      Alert.alert(
+        'Checkout indisponível',
+        'Ainda não temos uma URL de checkout ativa. Tente iniciar novamente.'
+      );
+      return;
+    }
+
+    try {
+      setOpeningCheckout(true);
+      const canOpen = await Linking.canOpenURL(checkoutUrl);
+
+      if (!canOpen) {
+        throw new Error('Não foi possível abrir a URL do Checkout.');
+      }
+
+      await Linking.openURL(checkoutUrl);
+    } catch {
+      Alert.alert(
+        'Erro ao abrir Checkout',
+        'Não conseguimos abrir a página segura da Stripe. Tente novamente.'
+      );
+    } finally {
+      setOpeningCheckout(false);
+    }
+  };
+
+  const handleViewBookings = () => {
+    navigation.getParent()?.navigate('Bookings' as never);
+  };
+
+  const isPreparingCheckout =
+    createCheckoutMutation.isPending ||
+    (!bookingId && !sessionError && !pendingCheckoutLoaded);
+
+  if (isPreparingCheckout) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
+        <View style={styles.centered}>
           <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-          <Text style={styles.loadingText}>Preparando pagamento...</Text>
+          <Text style={styles.centeredText}>Preparando checkout seguro...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (error || !clientSecret || !isValid) {
+  if (sessionError) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
-          <Text style={styles.errorTitle}>Erro ao Processar Pagamento</Text>
-          <Text style={styles.errorMessage}>
-            {error || 'Dados de pagamento inválidos'}
-          </Text>
+        <View style={styles.centered}>
+          <Text style={styles.errorTitle}>Não foi possível iniciar o pagamento</Text>
+          <Text style={styles.errorMessage}>{sessionError}</Text>
           <Button
-            title="Tentar Novamente"
-            onPress={initializePayment}
-            style={styles.retryButton}
+            title="Tentar novamente"
+            onPress={createCheckoutSession}
+            style={styles.centerButton}
           />
           <Button
             title="Voltar"
             variant="outline"
             onPress={() => navigation.goBack()}
-            style={styles.backButton}
+            style={styles.centerButton}
           />
         </View>
       </SafeAreaView>
@@ -210,83 +290,124 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
     <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.content}
-        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Button
-            title="← Voltar"
-            variant="outline"
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          />
-          <Text style={styles.headerTitle}>Pagamento</Text>
-          <Text style={styles.headerSubtitle}>
-            Complete o pagamento para confirmar sua aula
-          </Text>
-        </View>
-
-        <Card style={styles.summaryCard}>
-          <Text style={styles.sectionTitle}>Resumo da Aula</Text>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Instrutor</Text>
-            <Text style={styles.summaryValue}>{bookingData.instructorName}</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Data</Text>
-            <Text style={styles.summaryValue}>{formatDate(bookingData.date)}</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Horário</Text>
-            <Text style={styles.summaryValue}>{bookingData.timeSlot}</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Duração</Text>
-            <Text style={styles.summaryValue}>{bookingData.duration} minutos</Text>
-          </View>
-        </Card>
-
-        <PaymentSplitBreakdown splitInfo={splitInfo} showDetails />
-
-        <Button
-          title="Cancelar Agendamento"
-          variant="outline"
-          onPress={handleCancelPayment}
-          disabled={paymentProcessing}
-          style={styles.cancelButton}
+        <AppHeader
+          title="Pagamento"
+          subtitle="Checkout seguro pela Stripe"
+          onBackPress={() => navigation.goBack()}
         />
 
-        <Card style={styles.paymentCard}>
-          <Text style={styles.sectionTitle}>Dados de Pagamento</Text>
-          <PaymentForm
-            amount={splitInfo.total}
-            currency={splitInfo.currency}
-            clientSecret={clientSecret}
-            onPaymentSuccess={handlePaymentSuccess}
-            onPaymentError={handlePaymentError}
-            disabled={paymentProcessing}
-          />
+        {typedBookingData && paymentInfo && (
+          <Card style={styles.card}>
+            <Text style={styles.sectionTitle}>Resumo da aula</Text>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Instrutor</Text>
+              <Text style={styles.summaryValue}>
+                {typedBookingData.instructorName}
+              </Text>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Data</Text>
+              <Text style={styles.summaryValue}>
+                {formatDate(typedBookingData.date)}
+              </Text>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Horário</Text>
+              <Text style={styles.summaryValue}>{typedBookingData.timeSlot}</Text>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Duração</Text>
+              <Text style={styles.summaryValue}>
+                {typedBookingData.duration} minutos
+              </Text>
+            </View>
+
+            <View style={[styles.summaryRow, styles.totalRow]}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalValue}>
+                {formatCurrency(paymentInfo.total, paymentInfo.currency)}
+              </Text>
+            </View>
+          </Card>
+        )}
+
+        <Card style={styles.card}>
+          <Text style={styles.sectionTitle}>{getStatusTitle(status)}</Text>
+          {returnDescription && (
+            <Text style={styles.returnDescription}>{returnDescription}</Text>
+          )}
+          <Text style={styles.description}>{getStatusDescription(status)}</Text>
+
+          {checkoutStatusQuery.isFetching && (
+            <View style={styles.inlineLoading}>
+              <ActivityIndicator size="small" color={theme.colors.primary[500]} />
+              <Text style={styles.inlineLoadingText}>Atualizando status...</Text>
+            </View>
+          )}
+
+          <View style={styles.statusMeta}>
+            <Text style={styles.metaLabel}>Agendamento</Text>
+            <Text style={styles.metaValue}>{bookingId}</Text>
+          </View>
+
+          {checkoutSession?.expiresAt && status === 'PENDENTE_PAGAMENTO' && (
+            <View style={styles.statusMeta}>
+              <Text style={styles.metaLabel}>Checkout expira em</Text>
+              <Text style={styles.metaValue}>
+                {new Date(checkoutSession.expiresAt).toLocaleString('pt-BR')}
+              </Text>
+            </View>
+          )}
+
+          {checkoutStatusQuery.data?.failureMessage && (
+            <Text style={styles.errorMessage}>
+              {checkoutStatusQuery.data.failureMessage}
+            </Text>
+          )}
         </Card>
 
-        <View style={styles.securityNotice}>
-          <Text style={styles.securityIcon}>🔒</Text>
-          <Text style={styles.securityText}>
-            Seus dados de pagamento são processados de forma segura pelo Stripe.
-            Não armazenamos informações do seu cartão.
+        {status !== 'AGENDADO' &&
+          status !== 'CANCELADO' &&
+          status !== 'EXPIRADO' && (
+            <Button
+              title={
+                openingCheckout ? 'Abrindo Checkout...' : 'Abrir Checkout Stripe'
+              }
+              onPress={handleOpenCheckout}
+              disabled={!checkoutSession?.checkoutUrl || openingCheckout}
+              style={styles.actionButton}
+            />
+          )}
+
+        <Button
+          title="Atualizar status"
+          variant="outline"
+          onPress={() => checkoutStatusQuery.refetch()}
+          disabled={!bookingId || checkoutStatusQuery.isFetching}
+          style={styles.actionButton}
+        />
+
+        {status === 'AGENDADO' && (
+          <Button
+            title="Ver minhas aulas"
+            onPress={handleViewBookings}
+            style={styles.actionButton}
+          />
+        )}
+
+        <View style={styles.notice}>
+          <Text style={styles.noticeText}>
+            O retorno da Stripe não confirma o pagamento sozinho. Esta tela sempre consulta o backend para mostrar o estado real do agendamento.
           </Text>
         </View>
       </ScrollView>
-
-      {paymentProcessing && (
-        <View style={styles.processingOverlay}>
-          <ActivityIndicator size="large" color={theme.colors.text.inverse} />
-          <Text style={styles.processingText}>Confirmando agendamento...</Text>
-        </View>
-      )}
     </SafeAreaView>
   );
 };
@@ -302,118 +423,126 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: theme.spacing.lg,
   },
-  loadingContainer: {
+  centered: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: theme.spacing.md,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-  },
-  errorContainer: {
-    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: theme.spacing.xl,
   },
-  errorIcon: {
-    fontSize: 48,
+  centeredText: {
+    marginTop: theme.spacing.md,
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.md,
+    textAlign: 'center',
+  },
+  centerButton: {
+    minWidth: 220,
+    marginTop: theme.spacing.md,
+  },
+  card: {
+    marginBottom: theme.spacing.lg,
+  },
+  sectionTitle: {
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
     marginBottom: theme.spacing.md,
   },
+  description: {
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.md,
+    lineHeight: 22,
+    marginBottom: theme.spacing.md,
+  },
+  returnDescription: {
+    color: theme.colors.primary[600],
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
+    lineHeight: 20,
+    marginBottom: theme.spacing.sm,
+  },
+  summaryRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.sm,
+  },
+  summaryLabel: {
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.sm,
+  },
+  summaryValue: {
+    color: theme.colors.text.primary,
+    flex: 1,
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
+    textAlign: 'right',
+  },
+  totalRow: {
+    borderTopColor: theme.colors.border.light,
+    borderTopWidth: 1,
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.md,
+  },
+  totalLabel: {
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
+  totalValue: {
+    color: theme.colors.primary[600],
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.bold,
+  },
+  inlineLoading: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  inlineLoadingText: {
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.sm,
+  },
+  statusMeta: {
+    marginTop: theme.spacing.sm,
+  },
+  metaLabel: {
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.xs,
+    marginBottom: theme.spacing.xs,
+  },
+  metaValue: {
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  actionButton: {
+    marginBottom: theme.spacing.md,
+  },
+  notice: {
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borders.radius.md,
+    padding: theme.spacing.md,
+  },
+  noticeText: {
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.sm,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
   errorTitle: {
+    color: theme.colors.text.primary,
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
     textAlign: 'center',
   },
   errorMessage: {
+    color: theme.colors.semantic.error,
     fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
+    lineHeight: 22,
+    marginTop: theme.spacing.sm,
     textAlign: 'center',
-    marginBottom: theme.spacing.xl,
-  },
-  retryButton: {
-    marginBottom: theme.spacing.md,
-    minWidth: 200,
-  },
-  backButton: {
-    minWidth: 200,
-  },
-  header: {
-    marginBottom: theme.spacing.xl,
-  },
-  headerTitle: {
-    fontSize: theme.typography.fontSize['2xl'],
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-    marginTop: theme.spacing.md,
-  },
-  headerSubtitle: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-  },
-  summaryCard: {
-    marginBottom: theme.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  summaryLabel: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-  },
-  summaryValue: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  cancelButton: {
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-  },
-  paymentCard: {
-    marginBottom: theme.spacing.lg,
-  },
-  securityNotice: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.background.secondary,
-    padding: theme.spacing.md,
-    borderRadius: theme.borders.radius.lg,
-    marginBottom: theme.spacing.xl,
-  },
-  securityIcon: {
-    fontSize: 20,
-    marginRight: theme.spacing.sm,
-  },
-  securityText: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
-  },
-  processingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  processingText: {
-    marginTop: theme.spacing.md,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.inverse,
-    fontWeight: theme.typography.fontWeight.medium,
   },
 });

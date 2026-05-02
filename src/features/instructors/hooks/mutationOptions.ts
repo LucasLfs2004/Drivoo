@@ -1,15 +1,21 @@
 import { instructorAvailabilityApi } from '../api/instructorAvailabilityApi';
+import { instructorFinancialApi } from '../api/instructorFinancialApi';
 import { instructorProfileApi } from '../api/instructorProfileApi';
 import { instructorScheduleApi } from '../api/instructorScheduleApi';
 import { instructorVehiclesApi } from '../api/instructorVehiclesApi';
 import type {
   InstructorAvailabilityCreateApiRequest,
   InstructorAvailabilityUpdateApiRequest,
+  InstructorFinancialUpdateApiRequest,
   InstructorProfileUpdateApiRequest,
   InstructorVehicleCreateApiRequest,
   InstructorVehicleUpdateApiRequest,
 } from '../types/api';
 import type { InstructorAvailabilityDraft } from '../types/availability';
+import {
+  mapInstructorFinancialProfile,
+  mapInstructorStripeOnboardingLink,
+} from '../mappers/mapInstructorFinancial';
 import { createAppMutationOptions } from '../../../shared/hooks';
 import { instructorQueryKeys } from './queryKeys';
 import { buildAvailabilityBulkPayload } from './queryOptions';
@@ -40,6 +46,26 @@ export const instructorMutationOptions = {
       mutationFn: (payload: InstructorProfileUpdateApiRequest) =>
         instructorProfileApi.updateMyProfile(payload),
       invalidateQueryKeys: [instructorQueryKeys.me()],
+    }),
+
+  updateFinancial: () =>
+    createAppMutationOptions({
+      mutationFn: async (payload: InstructorFinancialUpdateApiRequest) => {
+        const response =
+          await instructorFinancialApi.updateMyFinancialProfile(payload);
+        return mapInstructorFinancialProfile(response);
+      },
+      invalidateQueryKeys: [instructorQueryKeys.financial()],
+    }),
+
+  createStripeOnboardingLink: () =>
+    createAppMutationOptions({
+      mutationFn: async () => {
+        const response =
+          await instructorFinancialApi.createStripeOnboardingLink();
+        return mapInstructorStripeOnboardingLink(response);
+      },
+      invalidateQueryKeys: [instructorQueryKeys.financial()],
     }),
 
   createSchedule: () =>

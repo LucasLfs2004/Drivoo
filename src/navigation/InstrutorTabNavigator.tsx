@@ -18,6 +18,7 @@ import {
   EditInstructorAvailabilityDayScreen,
   InstructorAvailabilityEditorScreen,
   InstructorAvailabilityExceptionsScreen,
+  InstructorFinancialSettingsScreen,
 } from '../features/instructors/screens';
 import { InstructorAvailabilityDraftProvider } from '../features/instructors/store/InstructorAvailabilityDraftContext';
 import {
@@ -77,6 +78,10 @@ const ScheduleStackNavigator = () => (
 const EarningsStackNavigator = () => (
   <EarningsStack.Navigator screenOptions={{ headerShown: false }}>
     <EarningsStack.Screen name="EarningsScreen" component={InstrutorEarningsScreen} />
+    <EarningsStack.Screen
+      name="FinancialSettings"
+      component={InstructorFinancialSettingsScreen}
+    />
   </EarningsStack.Navigator>
 );
 
@@ -91,6 +96,10 @@ const ProfileStackNavigator = () => (
     <ProfileStack.Screen name="ProfileScreen" component={InstrutorProfileScreen} />
     <ProfileStack.Screen name="EditProfile" component={EditInstructorProfileScreen} />
     <ProfileStack.Screen name="Settings" component={SettingsScreen} />
+    <ProfileStack.Screen
+      name="FinancialSettings"
+      component={InstructorFinancialSettingsScreen}
+    />
     <ProfileStack.Screen name="Support" component={InstructorSupportScreen} />
   </ProfileStack.Navigator>
 );

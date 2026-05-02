@@ -134,3 +134,47 @@ export interface InstructorEarningsOverview {
     unavailable: boolean;
   };
 }
+
+export type InstructorFiscalType = 'PF' | 'MEI';
+
+export interface InstructorFinancialProfile {
+  stripeAccountId: string | null;
+  stripeAccountStatus: string;
+  fiscalType: InstructorFiscalType | null;
+  eligibility: string | null;
+  pendingItems: string[];
+  cpf: string;
+  phone: string;
+  birthDate: string;
+  contractAccepted: boolean;
+  taxResponsibilityAccepted: boolean;
+  contractAcceptedAt: string | null;
+  taxResponsibilityAcceptedAt: string | null;
+  cnpj: string;
+  legalName: string;
+  tradeName: string;
+  fiscalAddress: string;
+  stripePendingRequirements: string[];
+  stripeOnboardingCompletedAt: string | null;
+}
+
+export interface InstructorFinancialFormValues {
+  fiscalType: InstructorFiscalType;
+  cpf: string;
+  phone: string;
+  birthDate: string;
+  contractAccepted: boolean;
+  taxResponsibilityAccepted: boolean;
+  cnpj: string;
+  legalName: string;
+  tradeName: string;
+  fiscalAddress: string;
+}
+
+export interface InstructorStripeOnboardingLink {
+  instructorId: string;
+  stripeAccountId: string;
+  onboardingUrl: string;
+  expiresAt: string;
+  createdAccount: boolean;
+}

@@ -1,6 +1,7 @@
 import { instructorAvailabilityApi } from '../api/instructorAvailabilityApi';
 import { instructorDetailsApi } from '../api/instructorDetailsApi';
 import { instructorEarningsApi } from '../api/instructorEarningsApi';
+import { instructorFinancialApi } from '../api/instructorFinancialApi';
 import { instructorProfileApi } from '../api/instructorProfileApi';
 import { instructorScheduleApi } from '../api/instructorScheduleApi';
 import { instructorSearchApi } from '../api/instructorSearchApi';
@@ -12,6 +13,7 @@ import {
 } from '../mappers/mapInstructorAvailability';
 import { mapInstructorDetails } from '../mappers/mapInstructorDetails';
 import { mapInstructorEarningsOverview } from '../mappers/mapInstructorEarnings';
+import { mapInstructorFinancialProfile } from '../mappers/mapInstructorFinancial';
 import { mapInstructorSchedule } from '../mappers/mapInstructorSchedule';
 import { mapInstructorSearchResult } from '../mappers/mapInstructorSearchResult';
 import { mapInstructorVehicles } from '../mappers/mapInstructorVehicle';
@@ -109,6 +111,16 @@ export const instructorQueryOptions = {
           recentPaymentsResponse: recentPaymentsResult.value,
           trendResponse: trendResult.status === 'fulfilled' ? trendResult.value : undefined,
         });
+      },
+      enabled,
+    }),
+
+  financial: (enabled = true) =>
+    createAppQueryOptions({
+      queryKey: instructorQueryKeys.financial(),
+      queryFn: async () => {
+        const response = await instructorFinancialApi.getMyFinancialProfile();
+        return mapInstructorFinancialProfile(response);
       },
       enabled,
     }),
