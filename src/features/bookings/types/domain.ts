@@ -65,8 +65,12 @@ export interface BookingValidationResult {
 export type BookingCheckoutStatusValue =
   | 'PENDENTE_PAGAMENTO'
   | 'AGENDADO'
+  | 'CONFIRMADO'
+  | 'EM_ANDAMENTO'
+  | 'CONCLUIDO'
   | 'EXPIRADO'
-  | 'CANCELADO';
+  | 'CANCELADO'
+  | 'NAO_COMPARECEU';
 
 export interface BookingCheckoutSession {
   bookingId: string;
@@ -99,4 +103,20 @@ export interface PaymentSummary {
   platformFee: number | null;
   total: number | null;
   currency: string;
+}
+
+export type ScheduledBookingStatus = 'scheduled' | 'completed' | 'cancelled' | 'in_progress';
+
+export interface ScheduledBooking {
+  id: string;
+  instructorId: string | null;
+  instructorName: string;
+  instructorAvatar: string | null;
+  date: Date;
+  duration: number;
+  price: number;
+  currency: string;
+  status: ScheduledBookingStatus;
+  vehicleType: 'manual' | 'automatic' | undefined;
+  location: string | undefined;
 }

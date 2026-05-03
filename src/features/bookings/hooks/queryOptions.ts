@@ -1,9 +1,21 @@
 import { createAppQueryOptions } from '../../../shared/hooks';
+import { bookingsApi } from '../api/bookingsApi';
 import { bookingCheckoutApi } from '../api/bookingCheckoutApi';
 import { mapBookingCheckoutStatus } from '../mappers/mapBookingCheckout';
+import { mapScheduledBookings } from '../mappers/mapScheduledBookings';
+import type { ListMyBookingsApiParams } from '../types/api';
 import { bookingQueryKeys } from './queryKeys';
 
 export const bookingQueryOptions = {
+  mine: (params: ListMyBookingsApiParams = {}) =>
+    createAppQueryOptions({
+      queryKey: bookingQueryKeys.mine(params),
+      queryFn: async () => {
+        const response = await bookingsApi.listMine(params);
+        return mapScheduledBookings(response);
+      },
+    }),
+
   checkoutStatus: (bookingId: string, enabled = true) =>
     createAppQueryOptions({
       queryKey: bookingQueryKeys.checkoutStatus(bookingId),

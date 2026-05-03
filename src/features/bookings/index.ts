@@ -3,6 +3,7 @@ export * from './types/api';
 export * from './components/BookingCard';
 export * from './components/PaymentSplitBreakdown';
 export * from './hooks/useBookingCheckout';
+export * from './hooks/useMyBookingsQuery';
 export * from './hooks/usePaymentSplit';
 export * from './screens/AlunoBookingsScreen';
 export * from './screens/BookingConfirmationScreen';

@@ -12,6 +12,7 @@
 "Autenticação"
 ],
 "summary": "Obter Usuario Logado",
+"description": "Retorna perfil do usuário autenticado.\nSe ainda não fez onboarding, retorna needs_onboarding: true.",
 "operationId": "obter_usuario_logado_auth_me_get",
 "responses": {
 "200": {
@@ -344,6 +345,102 @@
 ]
 }
 },
+"/instrutores/me/financeiro": {
+"get": {
+"tags": [
+"Instrutores"
+],
+"summary": "Obter Meu Perfil Financeiro",
+"operationId": "obter_meu_perfil_financeiro_instrutores_me_financeiro_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/InstrutorFinanceiroResponse"
+}
+}
+}
+}
+},
+"security": [
+{
+"HTTPBearer": []
+}
+]
+},
+"put": {
+"tags": [
+"Instrutores"
+],
+"summary": "Atualizar Meu Perfil Financeiro",
+"operationId": "atualizar_meu_perfil_financeiro_instrutores_me_financeiro_put",
+"requestBody": {
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/InstrutorFinanceiroUpdateRequest"
+}
+}
+},
+"required": true
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/InstrutorFinanceiroResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+},
+"security": [
+{
+"HTTPBearer": []
+}
+]
+}
+},
+"/instrutores/me/stripe/onboarding-link": {
+"post": {
+"tags": [
+"Instrutores"
+],
+"summary": "Criar Meu Link Onboarding Stripe",
+"operationId": "criar_meu_link_onboarding_stripe_instrutores_me_stripe_onboarding_link_post",
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/InstrutorStripeOnboardingLinkResponse"
+}
+}
+}
+}
+},
+"security": [
+{
+"HTTPBearer": []
+}
+]
+}
+},
 "/instrutores/me/disponibilidades": {
 "get": {
 "tags": [
@@ -469,6 +566,25 @@
 "summary": "Obter Meu Calendario Disponibilidade",
 "description": "Retorna o calendário resolvido de disponibilidade do instrutor autenticado\npara a janela padrão configurada no backend.",
 "operationId": "obter_meu_calendario_disponibilidade_instrutores_me_calendario_disponibilidade_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "duracao_minutos",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 240,
+"minimum": 30,
+"default": 60,
+"title": "Duracao Minutos"
+}
+}
+],
 "responses": {
 "200": {
 "description": "Successful Response",
@@ -479,13 +595,18 @@
 }
 }
 }
-}
 },
-"security": [
-{
-"HTTPBearer": []
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
 }
-]
+}
+}
+}
+}
 }
 },
 "/instrutores/me/calendario-completo": {
@@ -1009,6 +1130,18 @@
 "schema": {
 "type": "string",
 "title": "Instrutor Id"
+}
+},
+{
+"name": "duracao_minutos",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 240,
+"minimum": 30,
+"default": 60,
+"title": "Duracao Minutos"
 }
 }
 ],
@@ -1743,6 +1876,53 @@
 ]
 }
 },
+"/agendamentos/checkout-session": {
+"post": {
+"tags": [
+"Agendamentos"
+],
+"summary": "Criar Checkout Session",
+"description": "Cria reserva temporária e sessão Stripe Checkout para o fluxo pago.",
+"operationId": "criar_checkout_session_agendamentos_checkout_session_post",
+"requestBody": {
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CheckoutSessionCreateRequest"
+}
+}
+},
+"required": true
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CheckoutSessionCreateResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+},
+"security": [
+{
+"HTTPBearer": []
+}
+]
+}
+},
 "/agendamentos/meus": {
 "get": {
 "tags": [
@@ -1765,7 +1945,7 @@
 "anyOf": [
 {
 "type": "string",
-"pattern": "^(AGENDADO|CONFIRMADO|CONCLUIDO|CANCELADO)$"
+"pattern": "^(PENDENTE_PAGAMENTO|AGENDADO|CONFIRMADO|EM_ANDAMENTO|CONCLUIDO|CANCELADO|EXPIRADO|NAO_COMPARECEU)$"
 },
 {
 "type": "null"
@@ -1803,7 +1983,217 @@
 "description": "Successful Response",
 "content": {
 "application/json": {
-"schema": {}
+"schema": {
+"$ref": "#/components/schemas/MeusAgendamentosResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/agendamentos/{agendamento_id}/checkout-status": {
+"get": {
+"tags": [
+"Agendamentos"
+],
+"summary": "Obter Checkout Status",
+"operationId": "obter_checkout_status_agendamentos__agendamento_id__checkout_status_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "agendamento_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Agendamento Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CheckoutStatusResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/agendamentos/{agendamento_id}/cancelar": {
+"post": {
+"tags": [
+"Agendamentos"
+],
+"summary": "Cancelar Agendamento",
+"operationId": "cancelar_agendamento_agendamentos__agendamento_id__cancelar_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "agendamento_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Agendamento Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AgendamentoCancelRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AgendamentoCancelResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/agendamentos/{agendamento_id}/reportar-problema": {
+"post": {
+"tags": [
+"Agendamentos"
+],
+"summary": "Reportar Problema Agendamento",
+"operationId": "reportar_problema_agendamento_agendamentos__agendamento_id__reportar_problema_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "agendamento_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Agendamento Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AgendamentoReportarProblemaRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/OcorrenciaAgendamentoResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/agendamentos/{agendamento_id}/confirmar-sem-problemas": {
+"post": {
+"tags": [
+"Agendamentos"
+],
+"summary": "Confirmar Agendamento Sem Problemas",
+"operationId": "confirmar_agendamento_sem_problemas_agendamentos__agendamento_id__confirmar_sem_problemas_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "agendamento_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Agendamento Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ConfirmarSemProblemasResponse"
+}
 }
 }
 },
@@ -2870,6 +3260,443 @@
 }
 }
 },
+"/payments/checkout/success": {
+"get": {
+"tags": [
+"Payments"
+],
+"summary": "Stripe Checkout Success",
+"operationId": "stripe_checkout_success_payments_checkout_success_get",
+"parameters": [
+{
+"name": "agendamento_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Agendamento Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"text/html": {
+"schema": {
+"type": "string"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/payments/checkout/cancel": {
+"get": {
+"tags": [
+"Payments"
+],
+"summary": "Stripe Checkout Cancel",
+"operationId": "stripe_checkout_cancel_payments_checkout_cancel_get",
+"parameters": [
+{
+"name": "agendamento_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Agendamento Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"text/html": {
+"schema": {
+"type": "string"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/payments/stripe/webhook": {
+"post": {
+"tags": [
+"Payments"
+],
+"summary": "Stripe Webhook",
+"operationId": "stripe_webhook_payments_stripe_webhook_post",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+}
+}
+}
+},
+"/payments/transfers/{repasse_id}/processar": {
+"post": {
+"tags": [
+"Payments"
+],
+"summary": "Processar Transfer Repasse",
+"operationId": "processar_transfer_repasse_payments_transfers__repasse_id__processar_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "repasse_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Repasse Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/payments/reconciliation/run": {
+"post": {
+"tags": [
+"Payments"
+],
+"summary": "Run Reconciliation Job",
+"operationId": "run_reconciliation_job_payments_reconciliation_run_post",
+"parameters": [
+{
+"name": "X-Reconciliation-Job-Secret",
+"in": "header",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "X-Reconciliation-Job-Secret"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ReconciliationRunRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ReconciliationRunResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/payments/reconciliation/trace": {
+"get": {
+"tags": [
+"Payments"
+],
+"summary": "Get Reconciliation Trace",
+"operationId": "get_reconciliation_trace_payments_reconciliation_trace_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "agendamento_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Agendamento Id"
+}
+},
+{
+"name": "transacao_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Transacao Id"
+}
+},
+{
+"name": "stripe_checkout_session_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Stripe Checkout Session Id"
+}
+},
+{
+"name": "stripe_payment_intent_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Stripe Payment Intent Id"
+}
+},
+{
+"name": "stripe_charge_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Stripe Charge Id"
+}
+},
+{
+"name": "stripe_transfer_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Stripe Transfer Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ReconciliationTraceResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/instructor/stripe/return": {
+"get": {
+"tags": [
+"Stripe Onboarding"
+],
+"summary": "Stripe Onboarding Return",
+"operationId": "stripe_onboarding_return_instructor_stripe_return_get",
+"parameters": [
+{
+"name": "state",
+"in": "query",
+"required": true,
+"schema": {
+"type": "string",
+"title": "State"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"text/html": {
+"schema": {
+"type": "string"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/instructor/stripe/refresh": {
+"get": {
+"tags": [
+"Stripe Onboarding"
+],
+"summary": "Stripe Onboarding Refresh",
+"operationId": "stripe_onboarding_refresh_instructor_stripe_refresh_get",
+"parameters": [
+{
+"name": "state",
+"in": "query",
+"required": true,
+"schema": {
+"type": "string",
+"title": "State"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
 "/": {
 "get": {
 "summary": "Root",
@@ -2905,6 +3732,416 @@
 },
 "components": {
 "schemas": {
+"AgendamentoListaItemResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"instrutor_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Instrutor Id"
+},
+"instrutor": {
+"anyOf": [
+{
+"$ref": "#/components/schemas/InstrutorResumoAgendamentoResponse"
+},
+{
+"type": "null"
+}
+]
+},
+"data": {
+"type": "string",
+"format": "date",
+"title": "Data"
+},
+"hora_inicio": {
+"type": "string",
+"title": "Hora Inicio",
+"examples": [
+"09:00:00"
+]
+},
+"hora_fim": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Hora Fim",
+"examples": [
+"10:00:00"
+]
+},
+"duracao_minutos": {
+"type": "integer",
+"title": "Duracao Minutos",
+"default": 60
+},
+"status": {
+"$ref": "#/components/schemas/StatusAgendamento"
+},
+"valor_aula": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Valor Aula"
+},
+"valor_total": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Valor Total"
+},
+"moeda": {
+"type": "string",
+"title": "Moeda",
+"default": "BRL"
+},
+"veiculo": {
+"anyOf": [
+{
+"$ref": "#/components/schemas/VeiculoResumoAgendamentoResponse"
+},
+{
+"type": "null"
+}
+]
+},
+"local": {
+"anyOf": [
+{
+"$ref": "#/components/schemas/LocalAgendamentoResponse"
+},
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Local"
+}
+},
+"type": "object",
+"required": [
+"id",
+"data",
+"hora_inicio",
+"status"
+],
+"title": "AgendamentoListaItemResponse"
+},
+"InstrutorResumoAgendamentoResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"nome": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Nome"
+},
+"sobrenome": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Sobrenome"
+},
+"nome_completo": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Nome Completo"
+},
+"foto_url": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Foto Url"
+}
+},
+"type": "object",
+"required": [
+"id"
+],
+"title": "InstrutorResumoAgendamentoResponse"
+},
+"LocalAgendamentoResponse": {
+"properties": {
+"endereco": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Endereco"
+},
+"latitude": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Latitude"
+},
+"longitude": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Longitude"
+}
+},
+"type": "object",
+"title": "LocalAgendamentoResponse"
+},
+"MeusAgendamentosResponse": {
+"properties": {
+"data": {
+"items": {
+"$ref": "#/components/schemas/AgendamentoListaItemResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"total": {
+"type": "integer",
+"title": "Total",
+"default": 0
+},
+"limite": {
+"type": "integer",
+"title": "Limite",
+"default": 50
+},
+"offset": {
+"type": "integer",
+"title": "Offset",
+"default": 0
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "MeusAgendamentosResponse"
+},
+"VeiculoResumoAgendamentoResponse": {
+"properties": {
+"id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Id"
+},
+"marca": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Marca"
+},
+"modelo": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Modelo"
+},
+"tipo_cambio": {
+"anyOf": [
+{
+"$ref": "#/components/schemas/TipoCambioEnum"
+},
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Tipo Cambio"
+}
+},
+"type": "object",
+"title": "VeiculoResumoAgendamentoResponse"
+},
+"AgendamentoCancelRequest": {
+"properties": {
+"motivo": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 500
+},
+{
+"type": "null"
+}
+],
+"title": "Motivo"
+}
+},
+"type": "object",
+"title": "AgendamentoCancelRequest"
+},
+"AgendamentoCancelResponse": {
+"properties": {
+"agendamento_id": {
+"type": "string",
+"title": "Agendamento Id"
+},
+"agendamento_status": {
+"$ref": "#/components/schemas/StatusAgendamento"
+},
+"transacao_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Transacao Id"
+},
+"transacao_status": {
+"anyOf": [
+{
+"$ref": "#/components/schemas/StatusTransacao"
+},
+{
+"type": "null"
+}
+]
+},
+"refund_requested": {
+"type": "boolean",
+"title": "Refund Requested"
+},
+"refund_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Refund Id"
+},
+"refund_status": {
+"anyOf": [
+{
+"$ref": "#/components/schemas/StatusReembolso"
+},
+{
+"type": "null"
+}
+]
+},
+"refund_amount": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Refund Amount"
+},
+"policy_version": {
+"type": "string",
+"title": "Policy Version"
+},
+"rule_code": {
+"type": "string",
+"title": "Rule Code"
+},
+"message": {
+"type": "string",
+"title": "Message"
+}
+},
+"type": "object",
+"required": [
+"agendamento_id",
+"agendamento_status",
+"refund_requested",
+"policy_version",
+"rule_code",
+"message"
+],
+"title": "AgendamentoCancelResponse"
+},
 "AgendamentoCreate": {
 "properties": {
 "instrutor_id": {
@@ -2953,12 +4190,60 @@
 ],
 "title": "AgendamentoCreate"
 },
+"AgendamentoReportarProblemaRequest": {
+"properties": {
+"tipo": {
+"$ref": "#/components/schemas/TipoOcorrenciaAgendamento"
+},
+"descricao": {
+"type": "string",
+"maxLength": 2000,
+"minLength": 10,
+"title": "Descricao"
+},
+"aconteceu_em": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Aconteceu Em"
+},
+"evidencias": {
+"anyOf": [
+{
+"items": {
+"$ref": "#/components/schemas/OcorrenciaEvidencia"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Evidencias"
+},
+"quer_reembolso": {
+"type": "boolean",
+"title": "Quer Reembolso",
+"default": false
+}
+},
+"type": "object",
+"required": [
+"tipo",
+"descricao"
+],
+"title": "AgendamentoReportarProblemaRequest"
+},
 "AgendamentoUpdateStatus": {
 "properties": {
 "status": {
-"type": "string",
-"pattern": "^(CONFIRMADO|CANCELADO|EM_ANDAMENTO|CONCLUIDO)$",
-"title": "Status"
+"$ref": "#/components/schemas/StatusAgendamento"
 }
 },
 "type": "object",
@@ -2993,36 +4278,6 @@
 "nota"
 ],
 "title": "AvaliacaoCreate"
-},
-"BookingCalendarioResponse": {
-"properties": {
-"id": {
-"type": "string",
-"title": "Id"
-},
-"status": {
-"type": "string",
-"title": "Status"
-},
-"hora_inicio": {
-"type": "string",
-"format": "time",
-"title": "Hora Inicio"
-},
-"hora_fim": {
-"type": "string",
-"format": "time",
-"title": "Hora Fim"
-}
-},
-"type": "object",
-"required": [
-"id",
-"status",
-"hora_inicio",
-"hora_fim"
-],
-"title": "BookingCalendarioResponse"
 },
 "BookingPreservadoResponse": {
 "properties": {
@@ -3235,19 +4490,12 @@
 "type": "string",
 "title": "Status Dia"
 },
-"intervalos_ofertados": {
+"horarios": {
 "items": {
-"$ref": "#/components/schemas/DisponibilidadeIntervaloResponse"
+"$ref": "#/components/schemas/HorarioSlot"
 },
 "type": "array",
-"title": "Intervalos Ofertados"
-},
-"bookings": {
-"items": {
-"$ref": "#/components/schemas/BookingCalendarioResponse"
-},
-"type": "array",
-"title": "Bookings"
+"title": "Horarios"
 },
 "bookings_preservados": {
 "items": {
@@ -3263,8 +4511,7 @@
 "dia_semana",
 "dia_nome",
 "status_dia",
-"intervalos_ofertados",
-"bookings",
+"horarios",
 "bookings_preservados"
 ],
 "title": "CalendarioDisponibilidadeDiaResponse"
@@ -3285,6 +4532,10 @@
 "format": "date",
 "title": "Data Fim"
 },
+"duracao_minutos": {
+"type": "integer",
+"title": "Duracao Minutos"
+},
 "dias": {
 "items": {
 "$ref": "#/components/schemas/CalendarioDisponibilidadeDiaResponse"
@@ -3298,9 +4549,211 @@
 "timezone",
 "data_inicio",
 "data_fim",
+"duracao_minutos",
 "dias"
 ],
 "title": "CalendarioDisponibilidadeResponse"
+},
+"CheckoutSessionCreateRequest": {
+"properties": {
+"instrutor_id": {
+"type": "string",
+"title": "Instrutor Id"
+},
+"data": {
+"type": "string",
+"format": "date",
+"title": "Data"
+},
+"hora_inicio": {
+"type": "string",
+"format": "time",
+"title": "Hora Inicio"
+},
+"duracao_minutos": {
+"type": "integer",
+"maximum": 240,
+"minimum": 30,
+"title": "Duracao Minutos"
+},
+"veiculo_instrutor": {
+"type": "boolean",
+"title": "Veiculo Instrutor",
+"default": true
+},
+"veiculo_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Veiculo Id"
+}
+},
+"type": "object",
+"required": [
+"instrutor_id",
+"data",
+"hora_inicio",
+"duracao_minutos"
+],
+"title": "CheckoutSessionCreateRequest"
+},
+"CheckoutSessionCreateResponse": {
+"properties": {
+"agendamento_id": {
+"type": "string",
+"title": "Agendamento Id"
+},
+"agendamento_status": {
+"$ref": "#/components/schemas/StatusAgendamento"
+},
+"transacao_id": {
+"type": "string",
+"title": "Transacao Id"
+},
+"transacao_status": {
+"$ref": "#/components/schemas/StatusTransacao"
+},
+"checkout_session_id": {
+"type": "string",
+"title": "Checkout Session Id"
+},
+"checkout_url": {
+"type": "string",
+"title": "Checkout Url"
+},
+"expires_at": {
+"type": "string",
+"format": "date-time",
+"title": "Expires At"
+}
+},
+"type": "object",
+"required": [
+"agendamento_id",
+"agendamento_status",
+"transacao_id",
+"transacao_status",
+"checkout_session_id",
+"checkout_url",
+"expires_at"
+],
+"title": "CheckoutSessionCreateResponse"
+},
+"CheckoutStatusResponse": {
+"properties": {
+"agendamento_id": {
+"type": "string",
+"title": "Agendamento Id"
+},
+"agendamento_status": {
+"$ref": "#/components/schemas/StatusAgendamento"
+},
+"transacao_id": {
+"type": "string",
+"title": "Transacao Id"
+},
+"transacao_status": {
+"$ref": "#/components/schemas/StatusTransacao"
+},
+"payment_confirmed": {
+"type": "boolean",
+"title": "Payment Confirmed"
+},
+"checkout_expires_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Checkout Expires At"
+},
+"paid_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Paid At"
+},
+"failure_code": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Failure Code"
+},
+"failure_message": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Failure Message"
+},
+"stripe_checkout_session_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Stripe Checkout Session Id"
+},
+"stripe_payment_intent_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Stripe Payment Intent Id"
+},
+"stripe_event_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Stripe Event Id"
+}
+},
+"type": "object",
+"required": [
+"agendamento_id",
+"agendamento_status",
+"transacao_id",
+"transacao_status",
+"payment_confirmed",
+"checkout_expires_at"
+],
+"title": "CheckoutStatusResponse"
 },
 "ConfiguracaoUpdate": {
 "properties": {
@@ -3363,6 +4816,28 @@
 },
 "type": "object",
 "title": "ConfiguracaoUpdate"
+},
+"ConfirmarSemProblemasResponse": {
+"properties": {
+"agendamento_id": {
+"type": "string",
+"title": "Agendamento Id"
+},
+"repasse": {
+"$ref": "#/components/schemas/RepasseResumoResponse"
+},
+"message": {
+"type": "string",
+"title": "Message"
+}
+},
+"type": "object",
+"required": [
+"agendamento_id",
+"repasse",
+"message"
+],
+"title": "ConfirmarSemProblemasResponse"
 },
 "DisponibilidadeAgregadaResponse": {
 "properties": {
@@ -3800,6 +5275,71 @@
 "type": "object",
 "title": "HTTPValidationError"
 },
+"HorarioSlot": {
+"properties": {
+"inicio": {
+"type": "string",
+"format": "time",
+"title": "Inicio"
+},
+"fim": {
+"type": "string",
+"format": "time",
+"title": "Fim"
+},
+"status": {
+"$ref": "#/components/schemas/HorarioStatusEnum"
+},
+"booking_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Booking Id"
+},
+"booking_status": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Booking Status"
+},
+"motivo": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Motivo"
+}
+},
+"type": "object",
+"required": [
+"inicio",
+"fim",
+"status"
+],
+"title": "HorarioSlot"
+},
+"HorarioStatusEnum": {
+"type": "string",
+"enum": [
+"DISPONIVEL",
+"RESERVADO"
+],
+"title": "HorarioStatusEnum"
+},
 "InstrutorBasicResponse": {
 "properties": {
 "id": {
@@ -3817,6 +5357,340 @@
 "geocoding_sucesso"
 ],
 "title": "InstrutorBasicResponse"
+},
+"InstrutorFinanceiroResponse": {
+"properties": {
+"instrutor_id": {
+"type": "string",
+"title": "Instrutor Id"
+},
+"stripe_account_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Stripe Account Id"
+},
+"status_conta_stripe": {
+"$ref": "#/components/schemas/StatusContaStripe"
+},
+"tipo_fiscal": {
+"anyOf": [
+{
+"$ref": "#/components/schemas/TipoFiscalInstrutor"
+},
+{
+"type": "null"
+}
+]
+},
+"cpf": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Cpf"
+},
+"telefone": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Telefone"
+},
+"data_nascimento": {
+"anyOf": [
+{
+"type": "string",
+"format": "date"
+},
+{
+"type": "null"
+}
+],
+"title": "Data Nascimento"
+},
+"cnpj": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Cnpj"
+},
+"razao_social": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Razao Social"
+},
+"nome_fantasia": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Nome Fantasia"
+},
+"endereco_fiscal": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Endereco Fiscal"
+},
+"aceite_contratual_em": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Aceite Contratual Em"
+},
+"aceite_responsabilidade_fiscal_em": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Aceite Responsabilidade Fiscal Em"
+},
+"elegibilidade_financeira": {
+"$ref": "#/components/schemas/StatusElegibilidadeFinanceira"
+},
+"elegibilidade_motivo": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Elegibilidade Motivo"
+},
+"pendencias": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Pendencias"
+},
+"stripe_requirements_pendentes": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Stripe Requirements Pendentes",
+"default": []
+},
+"stripe_onboarding_completed_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Stripe Onboarding Completed At"
+},
+"ultima_sincronizacao_financeira_em": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Ultima Sincronizacao Financeira Em"
+}
+},
+"type": "object",
+"required": [
+"instrutor_id",
+"stripe_account_id",
+"status_conta_stripe",
+"tipo_fiscal",
+"cpf",
+"telefone",
+"data_nascimento",
+"cnpj",
+"razao_social",
+"nome_fantasia",
+"endereco_fiscal",
+"aceite_contratual_em",
+"aceite_responsabilidade_fiscal_em",
+"elegibilidade_financeira",
+"elegibilidade_motivo",
+"pendencias",
+"stripe_onboarding_completed_at",
+"ultima_sincronizacao_financeira_em"
+],
+"title": "InstrutorFinanceiroResponse"
+},
+"InstrutorFinanceiroUpdateRequest": {
+"properties": {
+"tipo_fiscal": {
+"$ref": "#/components/schemas/TipoFiscalInstrutor"
+},
+"cpf": {
+"type": "string",
+"maxLength": 11,
+"minLength": 11,
+"title": "Cpf"
+},
+"telefone": {
+"type": "string",
+"maxLength": 20,
+"minLength": 8,
+"title": "Telefone"
+},
+"data_nascimento": {
+"type": "string",
+"format": "date",
+"title": "Data Nascimento"
+},
+"aceite_contratual": {
+"type": "boolean",
+"title": "Aceite Contratual"
+},
+"aceite_responsabilidade_fiscal": {
+"type": "boolean",
+"title": "Aceite Responsabilidade Fiscal"
+},
+"cnpj": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 14,
+"minLength": 14
+},
+{
+"type": "null"
+}
+],
+"title": "Cnpj"
+},
+"razao_social": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 255
+},
+{
+"type": "null"
+}
+],
+"title": "Razao Social"
+},
+"nome_fantasia": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 255
+},
+{
+"type": "null"
+}
+],
+"title": "Nome Fantasia"
+},
+"endereco_fiscal": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 500
+},
+{
+"type": "null"
+}
+],
+"title": "Endereco Fiscal"
+}
+},
+"type": "object",
+"required": [
+"tipo_fiscal",
+"cpf",
+"telefone",
+"data_nascimento",
+"aceite_contratual",
+"aceite_responsabilidade_fiscal"
+],
+"title": "InstrutorFinanceiroUpdateRequest"
+},
+"InstrutorStripeOnboardingLinkResponse": {
+"properties": {
+"instrutor_id": {
+"type": "string",
+"title": "Instrutor Id"
+},
+"stripe_account_id": {
+"type": "string",
+"title": "Stripe Account Id"
+},
+"onboarding_url": {
+"type": "string",
+"title": "Onboarding Url"
+},
+"expires_at": {
+"type": "string",
+"format": "date-time",
+"title": "Expires At"
+},
+"created_account": {
+"type": "boolean",
+"title": "Created Account"
+}
+},
+"type": "object",
+"required": [
+"instrutor_id",
+"stripe_account_id",
+"onboarding_url",
+"expires_at",
+"created_account"
+],
+"title": "InstrutorStripeOnboardingLinkResponse"
 },
 "InstrutorUpdate": {
 "properties": {
@@ -3962,6 +5836,357 @@
 "type": "string",
 "const": "SUBSTITUIR",
 "title": "ModoDisponibilidadeBulkEnum"
+},
+"OcorrenciaAgendamentoResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"agendamento_id": {
+"type": "string",
+"title": "Agendamento Id"
+},
+"transacao_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Transacao Id"
+},
+"repasse_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Repasse Id"
+},
+"aluno_id": {
+"type": "string",
+"title": "Aluno Id"
+},
+"instrutor_id": {
+"type": "string",
+"title": "Instrutor Id"
+},
+"tipo": {
+"$ref": "#/components/schemas/TipoOcorrenciaAgendamento"
+},
+"descricao": {
+"type": "string",
+"title": "Descricao"
+},
+"status": {
+"$ref": "#/components/schemas/StatusOcorrenciaAgendamento"
+},
+"bloqueia_repasse": {
+"type": "boolean",
+"title": "Bloqueia Repasse"
+},
+"repasse_bloqueado": {
+"type": "boolean",
+"title": "Repasse Bloqueado"
+},
+"quer_reembolso": {
+"type": "boolean",
+"title": "Quer Reembolso"
+},
+"aconteceu_em": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Aconteceu Em"
+},
+"criado_em": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Criado Em"
+}
+},
+"type": "object",
+"required": [
+"id",
+"agendamento_id",
+"aluno_id",
+"instrutor_id",
+"tipo",
+"descricao",
+"status",
+"bloqueia_repasse",
+"repasse_bloqueado",
+"quer_reembolso"
+],
+"title": "OcorrenciaAgendamentoResponse"
+},
+"OcorrenciaEvidencia": {
+"properties": {
+"tipo": {
+"type": "string",
+"maxLength": 50,
+"title": "Tipo"
+},
+"url": {
+"type": "string",
+"maxLength": 1000,
+"title": "Url"
+}
+},
+"type": "object",
+"required": [
+"tipo",
+"url"
+],
+"title": "OcorrenciaEvidencia"
+},
+"ReconciliationJobError": {
+"properties": {
+"entity_type": {
+"type": "string",
+"title": "Entity Type"
+},
+"entity_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Entity Id"
+},
+"message": {
+"type": "string",
+"title": "Message"
+}
+},
+"type": "object",
+"required": [
+"entity_type",
+"message"
+],
+"title": "ReconciliationJobError"
+},
+"ReconciliationJobResult": {
+"properties": {
+"job_name": {
+"type": "string",
+"title": "Job Name"
+},
+"started_at": {
+"type": "string",
+"format": "date-time",
+"title": "Started At"
+},
+"finished_at": {
+"type": "string",
+"format": "date-time",
+"title": "Finished At"
+},
+"processed": {
+"type": "integer",
+"title": "Processed",
+"default": 0
+},
+"succeeded": {
+"type": "integer",
+"title": "Succeeded",
+"default": 0
+},
+"failed": {
+"type": "integer",
+"title": "Failed",
+"default": 0
+},
+"skipped": {
+"type": "integer",
+"title": "Skipped",
+"default": 0
+},
+"dry_run": {
+"type": "boolean",
+"title": "Dry Run"
+},
+"errors": {
+"items": {
+"$ref": "#/components/schemas/ReconciliationJobError"
+},
+"type": "array",
+"title": "Errors"
+},
+"details": {
+"items": {
+"type": "object"
+},
+"type": "array",
+"title": "Details"
+}
+},
+"type": "object",
+"required": [
+"job_name",
+"started_at",
+"finished_at",
+"dry_run"
+],
+"title": "ReconciliationJobResult"
+},
+"ReconciliationRunRequest": {
+"properties": {
+"job_name": {
+"type": "string",
+"enum": [
+"expire_overdue_reservations",
+"reconcile_pending_transactions",
+"process_eligible_payouts",
+"reconcile_processing_payouts",
+"reevaluate_unblocked_payouts",
+"all"
+],
+"title": "Job Name",
+"default": "all"
+},
+"limit": {
+"type": "integer",
+"maximum": 500,
+"minimum": 1,
+"title": "Limit",
+"default": 50
+},
+"dry_run": {
+"type": "boolean",
+"title": "Dry Run",
+"default": true
+}
+},
+"type": "object",
+"title": "ReconciliationRunRequest"
+},
+"ReconciliationRunResponse": {
+"properties": {
+"started_at": {
+"type": "string",
+"format": "date-time",
+"title": "Started At"
+},
+"finished_at": {
+"type": "string",
+"format": "date-time",
+"title": "Finished At"
+},
+"dry_run": {
+"type": "boolean",
+"title": "Dry Run"
+},
+"results": {
+"items": {
+"$ref": "#/components/schemas/ReconciliationJobResult"
+},
+"type": "array",
+"title": "Results"
+}
+},
+"type": "object",
+"required": [
+"started_at",
+"finished_at",
+"dry_run",
+"results"
+],
+"title": "ReconciliationRunResponse"
+},
+"ReconciliationTraceResponse": {
+"properties": {
+"agendamento": {
+"anyOf": [
+{
+"type": "object"
+},
+{
+"type": "null"
+}
+],
+"title": "Agendamento"
+},
+"transacao": {
+"anyOf": [
+{
+"type": "object"
+},
+{
+"type": "null"
+}
+],
+"title": "Transacao"
+},
+"stripe_events": {
+"items": {
+"type": "object"
+},
+"type": "array",
+"title": "Stripe Events"
+},
+"ledger_entries": {
+"items": {
+"type": "object"
+},
+"type": "array",
+"title": "Ledger Entries"
+},
+"reembolsos": {
+"items": {
+"type": "object"
+},
+"type": "array",
+"title": "Reembolsos"
+},
+"repasses": {
+"items": {
+"type": "object"
+},
+"type": "array",
+"title": "Repasses"
+},
+"ocorrencias": {
+"items": {
+"type": "object"
+},
+"type": "array",
+"title": "Ocorrencias"
+}
+},
+"type": "object",
+"required": [
+"agendamento",
+"transacao",
+"stripe_events",
+"ledger_entries",
+"reembolsos",
+"repasses",
+"ocorrencias"
+],
+"title": "ReconciliationTraceResponse"
 },
 "RegistroAlunoRequest": {
 "properties": {
@@ -4213,6 +6438,189 @@
 ],
 "title": "RegistroResponse"
 },
+"RepasseResumoResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"status": {
+"$ref": "#/components/schemas/StatusRepasse"
+},
+"valor": {
+"type": "number",
+"title": "Valor"
+},
+"liberavel_em": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Liberavel Em"
+},
+"aluno_confirmou_em": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Aluno Confirmou Em"
+},
+"bloqueado_em": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Bloqueado Em"
+},
+"bloqueio_motivo": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Bloqueio Motivo"
+},
+"stripe_transfer_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Stripe Transfer Id"
+},
+"failure_code": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Failure Code"
+},
+"failure_message": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Failure Message"
+}
+},
+"type": "object",
+"required": [
+"id",
+"status",
+"valor"
+],
+"title": "RepasseResumoResponse"
+},
+"StatusAgendamento": {
+"type": "string",
+"enum": [
+"PENDENTE_PAGAMENTO",
+"AGENDADO",
+"CONFIRMADO",
+"EM_ANDAMENTO",
+"CONCLUIDO",
+"CANCELADO",
+"EXPIRADO",
+"NAO_COMPARECEU"
+],
+"title": "StatusAgendamento"
+},
+"StatusContaStripe": {
+"type": "string",
+"enum": [
+"PENDING",
+"ACTIVE",
+"RESTRICTED",
+"INACTIVE"
+],
+"title": "StatusContaStripe"
+},
+"StatusElegibilidadeFinanceira": {
+"type": "string",
+"enum": [
+"PENDENTE",
+"EM_ONBOARDING",
+"APTA",
+"RESTRITA",
+"INAPTA"
+],
+"title": "StatusElegibilidadeFinanceira"
+},
+"StatusOcorrenciaAgendamento": {
+"type": "string",
+"enum": [
+"ABERTA",
+"EM_ANALISE",
+"RESOLVIDA",
+"REJEITADA",
+"CANCELADA"
+],
+"title": "StatusOcorrenciaAgendamento"
+},
+"StatusReembolso": {
+"type": "string",
+"enum": [
+"PENDENTE",
+"PROCESSANDO",
+"SUCESSO",
+"FALHA",
+"CANCELADO"
+],
+"title": "StatusReembolso"
+},
+"StatusRepasse": {
+"type": "string",
+"enum": [
+"PENDENTE",
+"PROCESSANDO",
+"PAGO",
+"FALHA"
+],
+"title": "StatusRepasse"
+},
+"StatusTransacao": {
+"type": "string",
+"enum": [
+"PENDING",
+"PROCESSANDO",
+"SUCESSO",
+"FALHA",
+"EXPIRADA",
+"CANCELADA",
+"REEMBOLSADA",
+"PARCIALMENTE_REEMBOLSADA"
+],
+"title": "StatusTransacao"
+},
 "SuporteTicketCreate": {
 "properties": {
 "assunto": {
@@ -4252,6 +6660,27 @@
 ],
 "title": "TipoDisponibilidadeEnum"
 },
+"TipoFiscalInstrutor": {
+"type": "string",
+"enum": [
+"PF",
+"MEI"
+],
+"title": "TipoFiscalInstrutor"
+},
+"TipoOcorrenciaAgendamento": {
+"type": "string",
+"enum": [
+"INSTRUTOR_NAO_COMPARECEU",
+"AULA_NAO_REALIZADA",
+"ATRASO_RELEVANTE",
+"CONDUTA_INADEQUADA",
+"PROBLEMA_COM_VEICULO",
+"LOCAL_INCORRETO",
+"OUTRO"
+],
+"title": "TipoOcorrenciaAgendamento"
+},
 "UsuarioResponse": {
 "properties": {
 "id": {
@@ -4273,6 +6702,17 @@
 "tipo": {
 "type": "string",
 "title": "Tipo"
+},
+"telefone": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Telefone"
 },
 "foto_url": {
 "anyOf": [
