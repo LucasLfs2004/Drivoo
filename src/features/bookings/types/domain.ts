@@ -76,6 +76,7 @@ export interface BookingCheckoutSession {
   checkoutSessionId: string;
   checkoutUrl: string;
   expiresAt: string;
+  paymentInfo: PaymentSummary | null;
 }
 
 export interface BookingCheckoutStatus {
@@ -90,4 +91,12 @@ export interface BookingCheckoutStatus {
   failureMessage: string | null;
   stripeCheckoutSessionId: string | null;
   stripePaymentIntentId: string | null;
+  paymentInfo: PaymentSummary | null;
+}
+
+export interface PaymentSummary {
+  subtotal: number | null;
+  platformFee: number | null;
+  total: number | null;
+  currency: string;
 }

@@ -7,6 +7,7 @@ import type {
 import type {
   BookingCheckoutSession,
   BookingCheckoutStatus,
+  PaymentSummary,
 } from '../types/domain';
 
 const toDateOnly = (date: Date): string => date.toISOString().slice(0, 10);
@@ -27,6 +28,69 @@ export const mapBookingDataToCheckoutPayload = (
   veiculo_id: bookingData.vehicleId ?? null,
 });
 
+const getNumber = (
+  ...values: Array<number | null | undefined>
+): number | null => {
+  const value = values.find(
+    candidate => typeof candidate === 'number' && Number.isFinite(candidate)
+  );
+
+  return value ?? null;
+};
+
+const getString = (
+  ...values: Array<string | null | undefined>
+): string | null => {
+  const value = values.find(
+    candidate => typeof candidate === 'string' && candidate.trim()
+  );
+
+  return value?.trim() ?? null;
+};
+
+const mapPaymentSummary = (
+  response: BookingCheckoutSessionApiResponse | BookingCheckoutStatusApiResponse
+): PaymentSummary | null => {
+  const summary = response.payment_summary;
+  const subtotal = getNumber(
+    response.valor_aula,
+    response.valor_subtotal,
+    response.subtotal,
+    summary?.valor_aula,
+    summary?.valor_subtotal,
+    summary?.subtotal
+  );
+  const platformFee = getNumber(
+    response.taxa_plataforma,
+    response.platform_fee,
+    summary?.taxa_plataforma,
+    summary?.platform_fee
+  );
+  const total = getNumber(
+    response.valor_total,
+    response.total,
+    summary?.valor_total,
+    summary?.total
+  );
+  const currency = getString(
+    response.moeda,
+    response.currency,
+    summary?.moeda,
+    summary?.currency
+  ) ?? 'BRL';
+
+  if (subtotal === null && platformFee === null && total === null) {
+    return null;
+  }
+
+  return {
+    subtotal,
+    platformFee,
+    total,
+    currency,
+  };
+};
+
 export const mapBookingCheckoutSession = (
   response: BookingCheckoutSessionApiResponse
 ): BookingCheckoutSession => ({
@@ -37,6 +101,7 @@ export const mapBookingCheckoutSession = (
   checkoutSessionId: response.checkout_session_id,
   checkoutUrl: response.checkout_url,
   expiresAt: response.expires_at,
+  paymentInfo: mapPaymentSummary(response),
 });
 
 export const mapBookingCheckoutStatus = (
@@ -73,4 +138,5 @@ export const mapBookingCheckoutStatus = (
     response.stripe_payment_intent_id ??
     response.payment_summary?.stripe_payment_intent_id ??
     null,
+  paymentInfo: mapPaymentSummary(response),
 });

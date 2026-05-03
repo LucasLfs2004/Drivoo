@@ -1,5 +1,5 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -107,6 +107,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
   const [pendingCheckoutLoaded, setPendingCheckoutLoaded] =
     useState(Boolean(initialBookingId));
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const hasAutoCreateAttempted = useRef(false);
 
   const createCheckoutMutation = useCreateBookingCheckoutSessionMutation();
   const checkoutStatusQuery = useBookingCheckoutStatusQuery(
@@ -118,6 +119,13 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
     () =>
       typedBookingData ? calculateBookingPaymentInfo(typedBookingData) : null,
     [typedBookingData]
+  );
+  const displayedPaymentInfo =
+    checkoutStatusQuery.data?.paymentInfo ??
+    checkoutSession?.paymentInfo ??
+    paymentInfo;
+  const hasBackendPaymentInfo = Boolean(
+    checkoutStatusQuery.data?.paymentInfo ?? checkoutSession?.paymentInfo
   );
 
   const status =
@@ -155,17 +163,21 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
       bookingId ||
       !typedBookingData ||
       checkoutSession ||
+      sessionError ||
+      hasAutoCreateAttempted.current ||
       createCheckoutMutation.isPending
     ) {
       return;
     }
 
+    hasAutoCreateAttempted.current = true;
     createCheckoutSession();
   }, [
     bookingId,
     checkoutSession,
     createCheckoutMutation.isPending,
     createCheckoutSession,
+    sessionError,
     typedBookingData,
   ]);
 
@@ -299,7 +311,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
           onBackPress={() => navigation.goBack()}
         />
 
-        {typedBookingData && paymentInfo && (
+        {typedBookingData && displayedPaymentInfo && (
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>Resumo da aula</Text>
 
@@ -330,9 +342,16 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
             </View>
 
             <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalLabel}>
+                {hasBackendPaymentInfo && displayedPaymentInfo.total !== null
+                  ? 'Total'
+                  : 'Valor estimado'}
+              </Text>
               <Text style={styles.totalValue}>
-                {formatCurrency(paymentInfo.total, paymentInfo.currency)}
+                {formatCurrency(
+                  displayedPaymentInfo.total ?? displayedPaymentInfo.subtotal ?? 0,
+                  displayedPaymentInfo.currency
+                )}
               </Text>
             </View>
           </Card>

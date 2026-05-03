@@ -101,10 +101,8 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
 
   const isSelectableCalendarDay = useCallback(
     (calendarDay?: InstructorAvailabilityCalendarDayApiResponse) =>
-      Boolean(
-        calendarDay?.horarios?.some(slot => slot.status === 'DISPONIVEL')
-      ),
-    []
+      Boolean(calendarDay?.horarios?.some(slot => slot.status === 'DISPONIVEL')),
+    [],
   );
 
   useEffect(() => {
@@ -113,7 +111,7 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
     }
 
     const currentSelectionIsValid = availabilityCalendar.dias.some(
-      day => day.data === selectedDateApi && isSelectableCalendarDay(day)
+      day => day.data === selectedDateApi && isSelectableCalendarDay(day),
     );
 
     if (currentSelectionIsValid) {
@@ -123,7 +121,7 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
     const firstAvailableDay = availabilityCalendar.dias.find(
       day =>
         isSelectableCalendarDay(day) &&
-        (dayjs(day.data).isSame(tomorrow, 'day') || dayjs(day.data).isAfter(tomorrow, 'day'))
+        (dayjs(day.data).isSame(tomorrow, 'day') || dayjs(day.data).isAfter(tomorrow, 'day')),
     );
 
     if (!firstAvailableDay) {
@@ -177,7 +175,7 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
           marker: isPartial ? 'partial' : isSelectable ? 'available' : undefined,
         };
       }),
-    [availabilityCalendar?.dias, isSelectableCalendarDay, selectedDateApi, visibleMonth]
+    [availabilityCalendar?.dias, isSelectableCalendarDay, selectedDateApi, visibleMonth],
   );
 
   const canGoToPreviousMonth = useMemo(() => {
@@ -207,7 +205,7 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
 
     const selectedDay = availabilityCalendar?.dias.find(day => day.data === selectedDateApi);
     const selectedSlot = selectedDay?.horarios.find(
-      slot => slot.inicio === selectedTimeSlot && slot.status === 'DISPONIVEL'
+      slot => slot.inicio === selectedTimeSlot && slot.status === 'DISPONIVEL',
     );
 
     if (!selectedSlot) {
@@ -308,23 +306,20 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
           const slotLabel = `${formatSlotTime(slot.inicio)} - ${formatSlotTime(slot.fim)}`;
 
           return (
-          <TouchableOpacity
-            key={`${slot.inicio}-${slot.fim}-${index}`}
-            style={[
-              styles.timeSlot,
-              selectedTimeSlot === slotId && styles.timeSlotSelected,
-            ]}
-            onPress={() => handleTimeSlotSelect(slotId)}
-          >
-            <Text
-              style={[
-                styles.timeSlotText,
-                selectedTimeSlot === slotId && styles.timeSlotTextSelected,
-              ]}
+            <TouchableOpacity
+              key={`${slot.inicio}-${slot.fim}-${index}`}
+              style={[styles.timeSlot, selectedTimeSlot === slotId && styles.timeSlotSelected]}
+              onPress={() => handleTimeSlotSelect(slotId)}
             >
-              {slotLabel}
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.timeSlotText,
+                  selectedTimeSlot === slotId && styles.timeSlotTextSelected,
+                ]}
+              >
+                {slotLabel}
+              </Text>
+            </TouchableOpacity>
           );
         })}
       </View>
@@ -347,31 +342,25 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Instrutor não encontrado</Text>
-          <Button
-            title="Voltar"
-            variant="outline"
-            onPress={() => navigation.goBack()}
-          />
+          <Button title="Voltar" variant="outline" onPress={() => navigation.goBack()} />
         </View>
       </SafeAreaView>
     );
   }
 
-  const distanceLabel = instructorSummary?.localizacao.distancia != null
-    ? `${instructorSummary.localizacao.distancia.toFixed(1)} km • Atende na região`
-    : 'Atende na região';
+  const distanceLabel =
+    instructorSummary?.localizacao.distancia != null
+      ? `${instructorSummary.localizacao.distancia.toFixed(1)} km • Atende na região`
+      : 'Atende na região';
 
   const vehicleLabel = instructor.veiculo.modelo
     ? `🚗 ${instructor.veiculo.modelo} • ${instructor.veiculo.transmissao === 'automatico' ? 'Automático' : 'Manual'}`
     : `🚗 ${instructor.veiculo.transmissao === 'automatico' ? 'Automático' : 'Manual'}`;
 
   return (
-      <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <AppHeader
-        title='Detalhes do instrutor'
-          onBackPress={() => navigation.goBack()}
-        />
+        <AppHeader title="Detalhes do instrutor" onBackPress={() => navigation.goBack()} />
 
         {/* Instructor Profile */}
         <Card style={styles.profileCard}>
@@ -381,23 +370,20 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
               <Text style={styles.instructorName}>
                 {instructor.primeiroNome} {instructor.ultimoNome}
               </Text>
-              {
-                instructor.isNovoInstrutor ?
-                  (
-                    <View style={styles.iconTextView}>
-                      <UserPlus width={scale(18)} color={theme.colors.text.tertiary} />
-                      <Text style={styles.metaInfoText}>
-                        Novo instrutor
-                      </Text>
-                    </View>
-                  ) :
-                  <View style={styles.ratingContainer}>
-                    <Text style={styles.stars}>{renderStars(instructor.avaliacoes.media)}</Text>
-                    <Text style={styles.ratingText}>{instructor.avaliacoes.media}</Text>
-                    <Text style={styles.reviewText}>({instructor.avaliacoes.quantidade} avaliações)</Text>
-                  </View>
-
-              }
+              {instructor.isNovoInstrutor ? (
+                <View style={styles.iconTextView}>
+                  <UserPlus width={scale(18)} color={theme.colors.text.tertiary} />
+                  <Text style={styles.metaInfoText}>Novo instrutor</Text>
+                </View>
+              ) : (
+                <View style={styles.ratingContainer}>
+                  <Text style={styles.stars}>{renderStars(instructor.avaliacoes.media)}</Text>
+                  <Text style={styles.ratingText}>{instructor.avaliacoes.media}</Text>
+                  <Text style={styles.reviewText}>
+                    ({instructor.avaliacoes.quantidade} avaliações)
+                  </Text>
+                </View>
+              )}
               <View style={styles.iconTextView}>
                 <MapPin color={theme.colors.secondary[500]} width={scale(18)} />
                 <Text style={styles.locationText}>{distanceLabel}</Text>
@@ -406,9 +392,7 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
           </View>
           <View style={styles.classInfo}>
             <View style={styles.priceContainer}>
-              <Text style={styles.priceValue}>
-                R$ {instructor.precos.valorHora}
-              </Text>
+              <Text style={styles.priceValue}>R$ {instructor.precos.valorHora}</Text>
               <Text style={styles.priceLabel}> / hora</Text>
             </View>
             <View style={styles.vehicleInfo}>
@@ -476,7 +460,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.primary,
     flexDirection: 'column',
-    
   },
   content: {
     flex: 1,
@@ -507,7 +490,7 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     marginBottom: theme.spacing.lg,
-    rowGap: theme.spacing.md
+    rowGap: theme.spacing.md,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -662,8 +645,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.borders.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.border.light,
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: theme.colors.accent[200],
     minWidth: 80,
+
     alignItems: 'center',
   },
   timeSlotSelected: {

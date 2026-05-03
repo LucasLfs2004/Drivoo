@@ -3,6 +3,8 @@ import {
   mapBookingCheckoutStatus,
   mapBookingDataToCheckoutPayload,
 } from '../src/features/bookings/mappers/mapBookingCheckout';
+import { mapCreateCheckoutSessionError } from '../src/features/bookings/utils/checkoutErrors';
+import { calculateBookingPaymentInfo } from '../src/features/bookings/utils/payment';
 import type { BookingData } from '../src/features/bookings/types/domain';
 
 describe('Booking checkout mapping', () => {
@@ -56,6 +58,7 @@ describe('Booking checkout mapping', () => {
       checkoutSessionId: 'cs_test_123',
       checkoutUrl: 'https://checkout.stripe.com/test',
       expiresAt: '2026-05-01T09:10:00-03:00',
+      paymentInfo: null,
     });
   });
 
@@ -86,6 +89,64 @@ describe('Booking checkout mapping', () => {
       failureMessage: null,
       stripeCheckoutSessionId: 'cs_test_123',
       stripePaymentIntentId: 'pi_test_123',
+      paymentInfo: null,
     });
+  });
+
+  it('maps checkout values returned by backend', () => {
+    expect(
+      mapBookingCheckoutSession({
+        agendamento_id: 'agendamento-1',
+        agendamento_status: 'PENDENTE_PAGAMENTO',
+        transacao_id: 'transacao-1',
+        transacao_status: 'PENDING',
+        checkout_session_id: 'cs_test_123',
+        checkout_url: 'https://checkout.stripe.com/test',
+        expires_at: '2026-05-01T09:10:00-03:00',
+        valor_aula: 120,
+        taxa_plataforma: 0,
+        valor_total: 120,
+        moeda: 'BRL',
+      })
+    ).toEqual({
+      bookingId: 'agendamento-1',
+      bookingStatus: 'PENDENTE_PAGAMENTO',
+      transactionId: 'transacao-1',
+      transactionStatus: 'PENDING',
+      checkoutSessionId: 'cs_test_123',
+      checkoutUrl: 'https://checkout.stripe.com/test',
+      expiresAt: '2026-05-01T09:10:00-03:00',
+      paymentInfo: {
+        subtotal: 120,
+        platformFee: 0,
+        total: 120,
+        currency: 'BRL',
+      },
+    });
+  });
+
+  it('calculates local fallback from hourly rate and duration without invented fee', () => {
+    expect(
+      calculateBookingPaymentInfo({
+        price: 120,
+        duration: 90,
+        currency: 'BRL',
+      })
+    ).toEqual({
+      subtotal: 180,
+      platformFee: 0,
+      total: 180,
+      currency: 'BRL',
+    });
+  });
+
+  it('maps instructor schedule conflict to a friendly checkout error', () => {
+    const error = mapCreateCheckoutSessionError({
+      message: 'Instructor already has an appointment at this time',
+    });
+
+    expect(error.message).toBe(
+      'Este horário acabou de ser reservado por outra pessoa. Escolha outro horário disponível para continuar.'
+    );
   });
 });

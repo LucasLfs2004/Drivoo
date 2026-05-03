@@ -178,21 +178,23 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
           <Text style={styles.sectionTitle}>Resumo do Pagamento</Text>
 
           <View style={styles.paymentRow}>
-            <Text style={styles.paymentLabel}>Valor da aula</Text>
+            <Text style={styles.paymentLabel}>Valor estimado da aula</Text>
             <Text style={styles.paymentValue}>
               {paymentInfo.currency} {paymentInfo.subtotal.toFixed(2)}
             </Text>
           </View>
 
-          <View style={styles.paymentRow}>
-            <Text style={styles.paymentLabel}>Taxa da plataforma (15%)</Text>
-            <Text style={styles.paymentValue}>
-              {paymentInfo.currency} {paymentInfo.platformFee.toFixed(2)}
-            </Text>
-          </View>
+          {paymentInfo.platformFee > 0 && (
+            <View style={styles.paymentRow}>
+              <Text style={styles.paymentLabel}>Taxa da plataforma</Text>
+              <Text style={styles.paymentValue}>
+                {paymentInfo.currency} {paymentInfo.platformFee.toFixed(2)}
+              </Text>
+            </View>
+          )}
 
           <View style={[styles.paymentRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.totalLabel}>Total estimado</Text>
             <Text style={styles.totalValue}>
               {paymentInfo.currency} {paymentInfo.total.toFixed(2)}
             </Text>

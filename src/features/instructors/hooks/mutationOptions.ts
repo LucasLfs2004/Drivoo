@@ -65,6 +65,7 @@ export const instructorMutationOptions = {
           await instructorFinancialApi.createStripeOnboardingLink();
         return mapInstructorStripeOnboardingLink(response);
       },
+      retry: false,
       invalidateQueryKeys: [instructorQueryKeys.financial()],
     }),
 

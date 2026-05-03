@@ -9,6 +9,30 @@ export interface ApiError {
     originalError?: Error;
 }
 
+const getResponseMessage = (data: any, fallback: string): string => {
+    if (typeof data?.message === 'string' && data.message.trim()) {
+        return data.message;
+    }
+
+    if (typeof data?.detail === 'string' && data.detail.trim()) {
+        return data.detail;
+    }
+
+    return fallback;
+};
+
+const getResponseDetails = (data: any): Record<string, any> | undefined => {
+    if (data?.details || data?.errors) {
+        return data.details || data.errors;
+    }
+
+    if (data?.detail) {
+        return { detail: data.detail };
+    }
+
+    return undefined;
+};
+
 /**
  * Mapeia erros HTTP para mensagens amigáveis ao usuário
  * Diferencia entre erros de rede, servidor e validação
@@ -35,10 +59,13 @@ export function handleApiError(error: unknown): ApiError {
         if (statusCode === 422 || statusCode === 400) {
             return {
                 code: data?.error || 'VALIDATION_ERROR',
-                message: data?.message || 'Dados de entrada inválidos. Verifique os campos.',
+                message: getResponseMessage(
+                    data,
+                    'Dados de entrada inválidos. Verifique os campos.'
+                ),
                 statusCode,
                 type: 'validation',
-                details: data?.details || data?.errors,
+                details: getResponseDetails(data),
                 originalError: error,
             };
         }
@@ -80,10 +107,13 @@ export function handleApiError(error: unknown): ApiError {
         if (statusCode >= 500) {
             return {
                 code: data?.error || 'SERVER_ERROR',
-                message: data?.message || 'Erro no servidor. Tente novamente mais tarde.',
+                message: getResponseMessage(
+                    data,
+                    'Erro no servidor. Tente novamente mais tarde.'
+                ),
                 statusCode,
                 type: 'server',
-                details: data?.details,
+                details: getResponseDetails(data),
                 originalError: error,
             };
         }
@@ -91,10 +121,10 @@ export function handleApiError(error: unknown): ApiError {
         // Outros erros HTTP
         return {
             code: data?.error || `HTTP_${statusCode}`,
-            message: data?.message || getDefaultErrorMessage(statusCode),
+            message: getResponseMessage(data, getDefaultErrorMessage(statusCode)),
             statusCode,
             type: 'server',
-            details: data?.details,
+            details: getResponseDetails(data),
             originalError: error,
         };
     }

@@ -31,6 +31,15 @@ export interface BookingPaymentSummaryApiResponse {
   failure_message?: string | null;
   stripe_checkout_session_id?: string | null;
   stripe_payment_intent_id?: string | null;
+  valor_aula?: number | null;
+  valor_subtotal?: number | null;
+  subtotal?: number | null;
+  taxa_plataforma?: number | null;
+  platform_fee?: number | null;
+  valor_total?: number | null;
+  total?: number | null;
+  moeda?: string | null;
+  currency?: string | null;
 }
 
 export interface BookingCheckoutSessionApiResponse {
@@ -41,6 +50,16 @@ export interface BookingCheckoutSessionApiResponse {
   checkout_session_id: string;
   checkout_url: string;
   expires_at: string;
+  valor_aula?: number | null;
+  valor_subtotal?: number | null;
+  subtotal?: number | null;
+  taxa_plataforma?: number | null;
+  platform_fee?: number | null;
+  valor_total?: number | null;
+  total?: number | null;
+  moeda?: string | null;
+  currency?: string | null;
+  payment_summary?: BookingPaymentSummaryApiResponse | null;
 }
 
 export interface BookingCheckoutStatusApiResponse {
@@ -55,5 +74,14 @@ export interface BookingCheckoutStatusApiResponse {
   failure_message?: string | null;
   stripe_checkout_session_id?: string | null;
   stripe_payment_intent_id?: string | null;
+  valor_aula?: number | null;
+  valor_subtotal?: number | null;
+  subtotal?: number | null;
+  taxa_plataforma?: number | null;
+  platform_fee?: number | null;
+  valor_total?: number | null;
+  total?: number | null;
+  moeda?: string | null;
+  currency?: string | null;
   payment_summary?: BookingPaymentSummaryApiResponse | null;
 }

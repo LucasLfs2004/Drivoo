@@ -11,6 +11,7 @@ export const bookingMutationOptions = {
         const response = await bookingCheckoutApi.createCheckoutSession(payload);
         return mapBookingCheckoutSession(response);
       },
+      retry: false,
       invalidateQueryKeys: [bookingQueryKeys.all],
     }),
 };
