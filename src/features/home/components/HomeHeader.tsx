@@ -3,8 +3,11 @@ import theme from "@/theme";
 import { View, Text, StyleSheet } from "react-native";
 import { Avatar } from "../../../shared/ui/base";
 
+interface HomeHeaderProps {
+	subtitle?: string;
+}
 
-export const HomeHeader = () => {
+export const HomeHeader = ({ subtitle = 'Pronto para sua próxima aula?' }: HomeHeaderProps) => {
 	const { usuario } = useAuth();
 	return (
 
@@ -14,7 +17,7 @@ export const HomeHeader = () => {
 					Olá, {usuario?.perfil?.primeiroNome}!
 				</Text>
 				<Text style={styles.subtitle}>
-					Pronto para sua próxima aula?
+					{subtitle}
 				</Text>
 			</View>
 			<View>

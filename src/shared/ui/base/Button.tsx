@@ -11,6 +11,7 @@ import {
 import { theme } from '../../../theme';
 
 type ButtonIconComponent = React.ComponentType<{ color: string; size: number }>;
+type ButtonIconElementType = React.ElementType<{ color: string; size: number }>;
 
 export interface ButtonProps {
   title: string;
@@ -19,7 +20,7 @@ export interface ButtonProps {
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
-  icon?: React.ReactNode | ButtonIconComponent;
+  icon?: React.ReactNode | ButtonIconElementType;
   iconPosition?: 'left' | 'right';
   style?: ViewStyle;
   textStyle?: TextStyle;
@@ -68,13 +69,17 @@ export const Button: React.FC<ButtonProps> = ({
   } as const;
 
   const iconSize = iconSizeMap[size];
-  const iconIsComponent = typeof icon === 'function';
-  const IconComponent = iconIsComponent ? (icon as ButtonIconComponent) : undefined;
-  const iconElement = IconComponent ? (
-    <IconComponent color={iconColor} size={iconSize} />
-  ) : (
-    (icon as React.ReactNode)
-  );
+  const iconIsElement = React.isValidElement(icon);
+  const iconIsComponent =
+    Boolean(icon) &&
+    !iconIsElement &&
+    (typeof icon === 'function' || typeof icon === 'object');
+  const iconElement = iconIsComponent
+    ? React.createElement(icon as ButtonIconElementType, {
+      color: iconColor,
+      size: iconSize,
+    })
+    : (icon as React.ReactNode);
 
   return (
     <TouchableOpacity
