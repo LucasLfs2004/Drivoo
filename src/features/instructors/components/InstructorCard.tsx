@@ -1,15 +1,9 @@
 import { scale } from '@/utils';
 import { MapPin, UserPlus } from 'lucide-react-native';
 import React from 'react';
-import {
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { theme } from '../../../theme';
+import { getCurrencyDisplaySymbol } from '../../../utils/currency';
 
 export interface InstructorCardProps {
   id: string;
@@ -82,21 +76,14 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
   };
 
   const vehicleLabel =
-    vehicleType === 'manual'
-      ? 'Manual'
-      : vehicleType === 'automatic'
-        ? 'Automático'
-        : undefined;
+    vehicleType === 'manual' ? 'Manual' : vehicleType === 'automatic' ? 'Automático' : undefined;
 
   const metaLine = [distance, vehicleLabel].filter(Boolean).join(' • ');
+  const currencySymbol = getCurrencyDisplaySymbol(currency);
 
   if (compact) {
     return (
-      <TouchableOpacity
-        style={[styles.compactCard, style]}
-        onPress={onPress}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity style={[styles.compactCard, style]} onPress={onPress} activeOpacity={0.7}>
         <View style={styles.compactContent}>
           {renderAvatar()}
           <View style={styles.compactInfo}>
@@ -108,7 +95,7 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
           </View>
           <View style={styles.compactPrice}>
             <Text style={styles.priceText}>
-              {currency} {hourlyRate}/h
+              {currencySymbol} {hourlyRate}/h
             </Text>
           </View>
         </View>
@@ -117,11 +104,7 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
   }
 
   return (
-    <TouchableOpacity
-      style={[styles.card, style]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
         {renderAvatar()}
         <View style={styles.headerInfo}>
@@ -138,13 +121,11 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
               <Text style={styles.reviewText}>({reviewCount})</Text>
             </View>
           )}
-          {availability && (
-            <Text style={styles.availability}>{availability}</Text>
-          )}
+          {availability && <Text style={styles.availability}>{availability}</Text>}
         </View>
         <View style={styles.priceContainer}>
           <Text style={styles.price}>
-            {currency} {hourlyRate}/h
+            {currencySymbol} {hourlyRate}/h
           </Text>
         </View>
       </View>
@@ -169,11 +150,7 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({
         </View>
 
         {onBookPress && (
-          <TouchableOpacity
-            style={styles.bookButton}
-            onPress={onBookPress}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity style={styles.bookButton} onPress={onBookPress} activeOpacity={0.8}>
             <Text style={styles.bookButtonText}>Agendar</Text>
           </TouchableOpacity>
         )}

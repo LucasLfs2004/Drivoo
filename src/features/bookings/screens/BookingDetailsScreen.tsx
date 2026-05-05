@@ -1,0 +1,455 @@
+import React from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
+import {
+  CalendarDays,
+  Car,
+  Clock3,
+  CreditCard,
+  MapPin,
+  MessageCircle,
+  XCircle,
+} from 'lucide-react-native';
+
+import { AppHeader } from '../../../shared/ui/base/AppHeader';
+import { Button } from '../../../shared/ui/base/Button';
+import { Card } from '../../../shared/ui/base/Card';
+import { theme } from '../../../theme';
+import type { AlunoBookingsStackParamList } from '../../../types/navigation';
+import { formatCurrency } from '../../../utils/currency';
+import { useBookingDetailsQuery } from '../hooks/useBookingDetailsQuery';
+import { useCancelBookingMutation } from '../hooks/useCancelBookingMutation';
+import type { ScheduledBooking } from '../types/domain';
+
+type NavigationProp = NativeStackNavigationProp<AlunoBookingsStackParamList, 'BookingDetails'>;
+type ScreenRouteProp = RouteProp<AlunoBookingsStackParamList, 'BookingDetails'>;
+
+const formatDate = (date: Date) =>
+  date.toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+  });
+
+const formatTime = (date: Date) =>
+  date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+const getStatusText = (booking: ScheduledBooking) => {
+  switch (booking.apiStatus) {
+    case 'PENDENTE_PAGAMENTO':
+      return 'Pagamento pendente';
+    case 'CONFIRMADO':
+      return 'Confirmada';
+    case 'AGENDADO':
+      return 'Agendada';
+    case 'EM_ANDAMENTO':
+      return 'Em andamento';
+    case 'CONCLUIDO':
+      return 'Concluída';
+    case 'CANCELADO':
+      return 'Cancelada';
+    case 'EXPIRADO':
+      return 'Expirada';
+    case 'NAO_COMPARECEU':
+      return 'Não compareceu';
+    default:
+      return 'Agendada';
+  }
+};
+
+const getStatusTone = (booking: ScheduledBooking) => {
+  if (booking.apiStatus === 'PENDENTE_PAGAMENTO') {
+    return theme.colors.semantic.warning;
+  }
+
+  if (booking.status === 'cancelled') {
+    return theme.colors.semantic.error;
+  }
+
+  if (booking.status === 'completed') {
+    return theme.colors.semantic.success;
+  }
+
+  return theme.colors.primary[500];
+};
+
+const DetailItem = ({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) => (
+  <View style={styles.detailItem}>
+    <View style={styles.detailIcon}>{icon}</View>
+    <View style={styles.detailCopy}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
+    </View>
+  </View>
+);
+
+export const BookingDetailsScreen: React.FC = () => {
+  const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<ScreenRouteProp>();
+  const { bookingId } = route.params;
+  const { data: booking, isLoading, isError, refetch } = useBookingDetailsQuery(bookingId);
+  const cancelMutation = useCancelBookingMutation(bookingId);
+  const [meetingPoint, setMeetingPoint] = React.useState('');
+  const [suggestionSaved, setSuggestionSaved] = React.useState(false);
+
+  React.useEffect(() => {
+    if (booking?.meetingPointSuggestion) {
+      setMeetingPoint(booking.meetingPointSuggestion);
+    }
+  }, [booking?.meetingPointSuggestion]);
+
+  const handleChatPress = () => {
+    navigation.getParent()?.navigate('Chat', {
+      screen: 'ChatScreen',
+      params: {
+        conversationId: `booking-${bookingId}`,
+        participantName: booking?.instructorName ?? 'Professor',
+      },
+    });
+  };
+
+  const handleSaveMeetingPoint = () => {
+    setSuggestionSaved(true);
+  };
+
+  const handleCancelPress = () => {
+    if (!booking?.cancellationPolicy.canCancel || cancelMutation.isPending) {
+      return;
+    }
+
+    Alert.alert(
+      'Cancelar aula',
+      booking.apiStatus === 'PENDENTE_PAGAMENTO'
+        ? 'Essa reserva pendente será cancelada.'
+        : 'Sua aula será cancelada conforme a política de 24h.',
+      [
+        { text: 'Manter aula', style: 'cancel' },
+        {
+          text: 'Cancelar aula',
+          style: 'destructive',
+          onPress: () => {
+            cancelMutation.mutate(
+              { motivo: 'Cancelado pelo aluno no app' },
+              {
+                onSuccess: result => {
+                  Alert.alert('Aula cancelada', result.message);
+                },
+                onError: () => {
+                  Alert.alert('Não foi possível cancelar', 'Tente novamente em alguns instantes.');
+                },
+              },
+            );
+          },
+        },
+      ],
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <AppHeader title="Detalhes da aula" onBackPress={navigation.goBack} />
+          <Card style={styles.stateCard}>
+            <Text style={styles.stateTitle}>Carregando agendamento...</Text>
+          </Card>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError || !booking) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <AppHeader title="Detalhes da aula" onBackPress={navigation.goBack} />
+          <Card style={styles.stateCard}>
+            <Text style={styles.errorTitle}>Não foi possível carregar</Text>
+            <Text style={styles.stateMessage}>Verifique sua conexão e tente novamente.</Text>
+            <Button title="Tentar novamente" variant="outline" onPress={() => refetch()} />
+          </Card>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const deadline = booking.cancellationPolicy.deadline
+    ? `${formatDate(booking.cancellationPolicy.deadline)} às ${formatTime(
+        booking.cancellationPolicy.deadline,
+      )}`
+    : null;
+  const vehicleText = booking.vehicleLabel
+    ? `${booking.vehicleLabel}${
+        booking.vehicleType
+          ? ` - ${booking.vehicleType === 'manual' ? 'manual' : 'automático'}`
+          : ''
+      }`
+    : booking.vehicleType
+      ? booking.vehicleType === 'manual'
+        ? 'Manual'
+        : 'Automático'
+      : 'Veículo a confirmar';
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        <AppHeader title="Detalhes da aula" onBackPress={navigation.goBack} />
+
+        <Card style={styles.summaryCard}>
+          <View style={styles.summaryHeader}>
+            <View style={styles.instructorInitials}>
+              <Text style={styles.instructorInitialsText}>
+                {booking.instructorName
+                  .split(' ')
+                  .map(part => part[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.summaryCopy}>
+              <Text style={styles.kicker}>Aula com</Text>
+              <Text style={styles.instructorName}>{booking.instructorName}</Text>
+            </View>
+            <View style={[styles.statusPill, { backgroundColor: getStatusTone(booking) }]}>
+              <Text style={styles.statusPillText}>{getStatusText(booking)}</Text>
+            </View>
+          </View>
+
+          <View style={styles.detailGrid}>
+            <DetailItem
+              icon={<CalendarDays color={theme.colors.primary[500]} size={18} />}
+              label="Data"
+              value={formatDate(booking.date)}
+            />
+            <DetailItem
+              icon={<Clock3 color={theme.colors.primary[500]} size={18} />}
+              label="Horário"
+              value={`${formatTime(booking.date)} - ${
+                booking.endDate ? formatTime(booking.endDate) : 'a confirmar'
+              }`}
+            />
+            <DetailItem
+              icon={<CreditCard color={theme.colors.primary[500]} size={18} />}
+              label="Valor"
+              value={formatCurrency(booking.price, booking.currency)}
+            />
+            <DetailItem
+              icon={<Car color={theme.colors.primary[500]} size={18} />}
+              label="Veículo"
+              value={vehicleText}
+            />
+          </View>
+        </Card>
+
+        <Card style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Ponto de encontro</Text>
+          <View style={styles.currentLocation}>
+            <MapPin color={theme.colors.text.secondary} size={18} />
+            <Text style={styles.currentLocationText}>
+              {booking.location ?? 'Endereço a combinar com o professor'}
+            </Text>
+          </View>
+          <TextInput
+            value={meetingPoint}
+            onChangeText={text => {
+              setMeetingPoint(text);
+              setSuggestionSaved(false);
+            }}
+            placeholder="Sugira um ponto de encontro"
+            placeholderTextColor={theme.colors.text.tertiary}
+            multiline
+            style={styles.meetingInput}
+          />
+          <Button
+            title={suggestionSaved ? 'Sugestão registrada' : 'Sugerir ponto'}
+            variant={suggestionSaved ? 'secondary' : 'outline'}
+            disabled={!meetingPoint.trim()}
+            onPress={handleSaveMeetingPoint}
+          />
+        </Card>
+
+        <Card style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Ações</Text>
+          <View style={styles.actions}>
+            <Button
+              title="Chat com professor"
+              icon={MessageCircle}
+              variant="primary"
+              onPress={handleChatPress}
+            />
+            <Button
+              title="Cancelar aula"
+              icon={XCircle}
+              variant="destructive"
+              disabled={!booking.cancellationPolicy.canCancel}
+              loading={cancelMutation.isPending}
+              onPress={handleCancelPress}
+            />
+          </View>
+          <Text style={styles.policyText}>
+            {booking.cancellationPolicy.reason}
+            {deadline ? ` Prazo: ${deadline}.` : ''}
+          </Text>
+        </Card>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background.primary,
+  },
+  content: {
+    flex: 1,
+    padding: theme.spacing.lg,
+  },
+  contentContainer: {
+    paddingBottom: theme.spacing['3xl'],
+    rowGap: theme.spacing.md,
+  },
+  summaryCard: {
+    rowGap: theme.spacing.lg,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: theme.spacing.md,
+  },
+  instructorInitials: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary[500],
+  },
+  instructorInitialsText: {
+    color: theme.colors.text.inverse,
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
+  summaryCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  kicker: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+  },
+  instructorName: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+  },
+  statusPill: {
+    borderRadius: theme.borders.radius.full,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+  },
+  statusPillText: {
+    color: theme.colors.text.inverse,
+    fontSize: theme.typography.fontSize.xs,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  detailGrid: {
+    rowGap: theme.spacing.md,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: theme.spacing.sm,
+  },
+  detailIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: theme.borders.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary[50],
+  },
+  detailCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  detailLabel: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.tertiary,
+  },
+  detailValue: {
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.text.primary,
+  },
+  sectionCard: {
+    rowGap: theme.spacing.md,
+  },
+  sectionTitle: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+  },
+  currentLocation: {
+    flexDirection: 'row',
+    columnGap: theme.spacing.sm,
+  },
+  currentLocationText: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+  },
+  meetingInput: {
+    minHeight: 92,
+    borderWidth: theme.borders.width.base,
+    borderColor: theme.colors.border.medium,
+    borderRadius: theme.borders.radius.md,
+    padding: theme.spacing.md,
+    textAlignVertical: 'top',
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.fontSize.sm,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  actions: {
+    rowGap: theme.spacing.sm,
+  },
+  policyText: {
+    fontSize: theme.typography.fontSize.sm,
+    lineHeight: 20,
+    color: theme.colors.text.secondary,
+  },
+  stateCard: {
+    rowGap: theme.spacing.md,
+    alignItems: 'center',
+  },
+  stateTitle: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+  },
+  stateMessage: {
+    textAlign: 'center',
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+  },
+  errorTitle: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.semantic.error,
+  },
+});

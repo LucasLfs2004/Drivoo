@@ -1,15 +1,10 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import {
-  Home,
-  Search,
-  Calendar,
-  MessageCircle,
-  User,
-} from 'lucide-react-native';
+import { Home, Search, Calendar, MessageCircle, User } from 'lucide-react-native';
 import {
   AlunoBookingsScreen,
+  BookingDetailsScreen,
   BookingConfirmationScreen,
   PaymentConfirmationScreen,
 } from '../features/bookings';
@@ -17,13 +12,10 @@ import {
   AlunoInstructorDetailsScreen as InstructorDetailsScreen,
   AlunoInstructorSearchScreen as AlunoSearchScreen,
 } from '../features/instructors';
-import {
-  AlunoProfileScreen,
-  EditProfileScreen,
-  SettingsScreen,
-} from '../features/profile';
+import { AlunoProfileScreen, EditProfileScreen, SettingsScreen } from '../features/profile';
 import { AlunoHomeScreen } from '../features/home';
 import { ProgressDetailsScreen } from '../features/progress';
+import { ChatConversationScreen } from '../screens/shared/ChatConversationScreen';
 import { ChatListScreen } from '../screens/shared/ChatListScreen';
 import { ComponentShowcaseScreen } from '../screens/shared/ComponentShowcaseScreen';
 import { DesignSystemScreen } from '../screens/shared/DesignSystemScreen';
@@ -69,12 +61,14 @@ const SearchStackNavigator = () => (
 const BookingsStackNavigator = () => (
   <BookingsStack.Navigator screenOptions={{ headerShown: false }}>
     <BookingsStack.Screen name="BookingsScreen" component={AlunoBookingsScreen} />
+    <BookingsStack.Screen name="BookingDetails" component={BookingDetailsScreen} />
   </BookingsStack.Navigator>
 );
 
 const ChatStackNavigator = () => (
   <ChatStack.Navigator screenOptions={{ headerShown: false }}>
     <ChatStack.Screen name="ChatList" component={ChatListScreen} />
+    <ChatStack.Screen name="ChatScreen" component={ChatConversationScreen} />
   </ChatStack.Navigator>
 );
 
@@ -101,8 +95,6 @@ export const AlunoTabNavigator: React.FC = () => {
           height: 32,
         },
 
-
-
         // tabBarStyle: {
         //   backgroundColor: theme.colors.background.primary,
         //   borderTopColor: theme.colors.border.light,
@@ -118,7 +110,6 @@ export const AlunoTabNavigator: React.FC = () => {
         // tabBarActiveTintColor: colors.primary,
         // tabBarInactiveTintColor: colors.gray_200,
         // tabBarShowLabel: false,
-
       }}
     >
       <Tab.Screen
@@ -126,9 +117,7 @@ export const AlunoTabNavigator: React.FC = () => {
         component={HomeStackNavigator}
         options={{
           tabBarLabel: 'Início',
-          tabBarIcon: ({ color }) => (
-            <Home color={color} size={scale(24)} />
-          ),
+          tabBarIcon: ({ color }) => <Home color={color} size={scale(24)} />,
         }}
       />
       <Tab.Screen
@@ -136,9 +125,7 @@ export const AlunoTabNavigator: React.FC = () => {
         component={SearchStackNavigator}
         options={{
           tabBarLabel: 'Buscar',
-          tabBarIcon: ({ color }) => (
-            <Search color={color} size={scale(24)} />
-          ),
+          tabBarIcon: ({ color }) => <Search color={color} size={scale(24)} />,
         }}
       />
       <Tab.Screen
@@ -146,9 +133,7 @@ export const AlunoTabNavigator: React.FC = () => {
         component={BookingsStackNavigator}
         options={{
           tabBarLabel: 'Aulas',
-          tabBarIcon: ({ color }) => (
-            <Calendar color={color} size={scale(24)} />
-          ),
+          tabBarIcon: ({ color }) => <Calendar color={color} size={scale(24)} />,
         }}
       />
       <Tab.Screen
@@ -156,9 +141,7 @@ export const AlunoTabNavigator: React.FC = () => {
         component={ChatStackNavigator}
         options={{
           tabBarLabel: 'Chat',
-          tabBarIcon: ({ color }) => (
-            <MessageCircle color={color} size={scale(24)} />
-          ),
+          tabBarIcon: ({ color }) => <MessageCircle color={color} size={scale(24)} />,
         }}
       />
       <Tab.Screen
@@ -166,9 +149,7 @@ export const AlunoTabNavigator: React.FC = () => {
         component={ProfileStackNavigator}
         options={{
           tabBarLabel: 'Perfil',
-          tabBarIcon: ({ color }) => (
-            <User color={color} size={scale(24)} />
-          ),
+          tabBarIcon: ({ color }) => <User color={color} size={scale(24)} />,
         }}
       />
     </Tab.Navigator>

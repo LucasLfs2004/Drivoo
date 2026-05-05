@@ -149,6 +149,8 @@ export interface BookingListItemApiResponse {
   veiculo_id?: string | null;
   local?: BookingListLocationApiResponse | string | null;
   endereco?: string | null;
+  ponto_encontro_sugerido?: string | null;
+  sugestao_ponto_encontro?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 }
@@ -163,3 +165,17 @@ export type ListMyBookingsApiResponse =
       limite?: number;
       offset?: number;
     };
+
+export type BookingDetailsApiResponse = BookingListItemApiResponse & Record<string, unknown>;
+
+export interface CancelBookingApiRequest {
+  motivo?: string | null;
+}
+
+export interface CancelBookingApiResponse {
+  agendamento_id: string;
+  agendamento_status: BookingListApiStatus | string;
+  refund_requested?: boolean | null;
+  refund_amount?: number | null;
+  message?: string | null;
+}

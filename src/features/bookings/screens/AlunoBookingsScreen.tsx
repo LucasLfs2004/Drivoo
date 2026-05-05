@@ -5,13 +5,13 @@ import { useNavigation } from '@react-navigation/native';
 import { Card } from '../../../shared/ui/base/Card';
 import { Button } from '../../../shared/ui/base/Button';
 import { theme } from '../../../theme';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import type { AlunoTabParamList } from '../../../types/navigation';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { AlunoBookingsStackParamList } from '../../../types/navigation';
 import { BookingCard } from '../components/BookingCard';
 import { useMyBookingsQuery } from '../hooks/useMyBookingsQuery';
 import type { BookingListApiStatus } from '../types/api';
 
-type NavigationProp = BottomTabNavigationProp<AlunoTabParamList>;
+type NavigationProp = NativeStackNavigationProp<AlunoBookingsStackParamList>;
 
 type BookingTab = 'upcoming' | 'completed' | 'cancelled';
 
@@ -57,7 +57,7 @@ export const AlunoBookingsScreen: React.FC = () => {
   });
 
   const handleSearchInstructorsPress = () => {
-    navigation.navigate('Search', { screen: 'SearchScreen' });
+    navigation.getParent()?.navigate('Search', { screen: 'SearchScreen' });
   };
 
   const activeEmptyCopy = emptyCopy[activeTab];
@@ -117,8 +117,11 @@ export const AlunoBookingsScreen: React.FC = () => {
                   price={booking.price}
                   currency={booking.currency}
                   status={booking.status}
+                  apiStatus={booking.apiStatus}
                   vehicleType={booking.vehicleType}
+                  vehicleLabel={booking.vehicleLabel}
                   location={booking.location}
+                  onPress={() => navigation.navigate('BookingDetails', { bookingId: booking.id })}
                 />
               ))}
             </View>

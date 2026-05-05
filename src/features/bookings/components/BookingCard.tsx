@@ -1,12 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ViewStyle,
-} from 'react-native';
+import { Image, View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { CalendarDays, Car, ChevronRight, Clock3, MapPin } from 'lucide-react-native';
 import { theme } from '../../../theme';
+import { formatCurrency } from '../../../utils/currency';
+import type { BookingCheckoutStatusValue } from '../types/domain';
 
 export interface BookingCardProps {
   id: string;
@@ -17,7 +14,9 @@ export interface BookingCardProps {
   price: number;
   currency?: string;
   status: 'scheduled' | 'completed' | 'cancelled' | 'in_progress';
+  apiStatus?: BookingCheckoutStatusValue | string | null;
   vehicleType?: 'manual' | 'automatic';
+  vehicleLabel?: string;
   location?: string;
   onPress?: () => void;
   onCancelPress?: () => void;
@@ -35,13 +34,13 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   price,
   currency = 'R$',
   status,
+  apiStatus,
   vehicleType,
+  vehicleLabel,
   location,
   onPress,
-  onCancelPress,
-  onReschedulePress,
   style,
-  compact = false,
+  compact = true,
 }) => {
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('pt-BR', {
@@ -61,7 +60,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    
+
     if (hours > 0) {
       return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
     }
@@ -69,6 +68,10 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   };
 
   const getStatusColor = () => {
+    if (apiStatus === 'PENDENTE_PAGAMENTO') {
+      return theme.colors.semantic.warning;
+    }
+
     switch (status) {
       case 'scheduled':
         return theme.colors.primary[500];
@@ -84,6 +87,10 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   };
 
   const getStatusText = () => {
+    if (apiStatus === 'PENDENTE_PAGAMENTO') {
+      return 'Pagamento pendente';
+    }
+
     switch (status) {
       case 'scheduled':
         return 'Agendada';
@@ -102,11 +109,11 @@ export const BookingCard: React.FC<BookingCardProps> = ({
     if (instructorAvatar) {
       return (
         <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>👤</Text>
+          <Image source={{ uri: instructorAvatar }} style={styles.avatarImage} />
         </View>
       );
     }
-    
+
     // Default avatar with initials
     const initials = instructorName
       .split(' ')
@@ -114,7 +121,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
       .join('')
       .toUpperCase()
       .slice(0, 2);
-    
+
     return (
       <View style={styles.avatarContainer}>
         <Text style={styles.avatarText}>{initials}</Text>
@@ -122,64 +129,49 @@ export const BookingCard: React.FC<BookingCardProps> = ({
     );
   };
 
-  const renderActions = () => {
-    if (status === 'completed' || status === 'cancelled') {
-      return null;
-    }
-
-    return (
-      <View style={styles.actionsContainer}>
-        {status === 'scheduled' && onReschedulePress && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.rescheduleButton]}
-            onPress={onReschedulePress}
-          >
-            <Text style={styles.rescheduleButtonText}>Reagendar</Text>
-          </TouchableOpacity>
-        )}
-        {status === 'scheduled' && onCancelPress && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.cancelButton]}
-            onPress={onCancelPress}
-          >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  };
+  const dateLabel = `${formatDate(date)} às ${formatTime(date)}`;
+  const vehicleLabelText =
+    vehicleLabel ?? (vehicleType ? (vehicleType === 'manual' ? 'Manual' : 'Automático') : null);
+  const priceLabel = formatCurrency(price, currency);
 
   if (compact) {
     return (
-      <TouchableOpacity
-        style={[styles.compactCard, style]}
-        onPress={onPress}
-        activeOpacity={0.7}
-      >
-        <View style={styles.compactContent}>
-          {renderAvatar()}
-          <View style={styles.compactInfo}>
-            <Text style={styles.compactInstructorName}>{instructorName}</Text>
-            <Text style={styles.compactDateTime}>
-              {formatDate(date)} • {formatTime(date)}
-            </Text>
-          </View>
-          <View style={styles.compactStatus}>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
-              <Text style={styles.statusText}>{getStatusText()}</Text>
+      <TouchableOpacity style={[styles.compactCard, style]} onPress={onPress} activeOpacity={0.7}>
+        <View style={styles.compactHeader}>
+          <View style={styles.identity}>
+            {renderAvatar()}
+            <View style={styles.compactInfo}>
+              <Text style={styles.compactInstructorName} numberOfLines={1}>
+                {instructorName}
+              </Text>
+              <Text style={styles.compactDateTime}>{dateLabel}</Text>
             </View>
           </View>
+          <ChevronRight color={theme.colors.text.tertiary} size={18} />
         </View>
+
+        <View style={styles.compactMeta}>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
+            <Text style={styles.statusText}>{getStatusText()}</Text>
+          </View>
+          <Text style={styles.metaText}>{formatDuration(duration)}</Text>
+          <Text style={styles.priceText}>{priceLabel}</Text>
+        </View>
+
+        {location ? (
+          <View style={styles.locationRow}>
+            <MapPin color={theme.colors.text.tertiary} size={14} />
+            <Text style={styles.locationText} numberOfLines={1}>
+              {location}
+            </Text>
+          </View>
+        ) : null}
       </TouchableOpacity>
     );
   }
 
   return (
-    <TouchableOpacity
-      style={[styles.card, style]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
         {renderAvatar()}
         <View style={styles.headerInfo}>
@@ -189,45 +181,35 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           </View>
         </View>
         <View style={styles.priceContainer}>
-          <Text style={styles.price}>
-            {currency} {price.toFixed(2)}
-          </Text>
+          <Text style={styles.price}>{priceLabel}</Text>
         </View>
       </View>
 
       <View style={styles.details}>
         <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>📅</Text>
-          <Text style={styles.detailText}>
-            {formatDate(date)} às {formatTime(date)}
-          </Text>
-        </View>
-        
-        <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>⏱️</Text>
-          <Text style={styles.detailText}>
-            Duração: {formatDuration(duration)}
-          </Text>
+          <CalendarDays color={theme.colors.text.tertiary} size={18} />
+          <Text style={styles.detailText}>{dateLabel}</Text>
         </View>
 
-        {vehicleType && (
+        <View style={styles.detailRow}>
+          <Clock3 color={theme.colors.text.tertiary} size={18} />
+          <Text style={styles.detailText}>Duração: {formatDuration(duration)}</Text>
+        </View>
+
+        {vehicleLabelText && (
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>🚗</Text>
-            <Text style={styles.detailText}>
-              {vehicleType === 'manual' ? 'Manual' : 'Automático'}
-            </Text>
+            <Car color={theme.colors.text.tertiary} size={18} />
+            <Text style={styles.detailText}>{vehicleLabelText}</Text>
           </View>
         )}
 
         {location && (
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>📍</Text>
+            <MapPin color={theme.colors.text.tertiary} size={18} />
             <Text style={styles.detailText}>{location}</Text>
           </View>
         )}
       </View>
-
-      {renderActions()}
     </TouchableOpacity>
   );
 };
@@ -235,10 +217,9 @@ export const BookingCard: React.FC<BookingCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: theme.colors.background.primary,
-    borderRadius: theme.borders.radius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.md,
+    borderRadius: theme.borders.radius.md,
+    padding: theme.spacing.md,
+    ...theme.shadows.sm,
     borderWidth: theme.borders.width.thin,
     borderColor: theme.colors.border.light,
   },
@@ -246,7 +227,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.primary,
     borderRadius: theme.borders.radius.md,
     padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
     ...theme.shadows.sm,
     borderWidth: theme.borders.width.thin,
     borderColor: theme.colors.border.light,
@@ -256,18 +236,30 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: theme.spacing.md,
   },
-  compactContent: {
+  compactHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: theme.spacing.sm,
+  },
+  identity: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
   },
   avatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: theme.colors.primary[500],
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: theme.spacing.md,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarText: {
     color: theme.colors.text.inverse,
@@ -280,6 +272,7 @@ const styles = StyleSheet.create({
   compactInfo: {
     flex: 1,
     marginLeft: theme.spacing.sm,
+    minWidth: 0,
   },
   instructorName: {
     fontSize: theme.typography.fontSize.lg,
@@ -297,19 +290,32 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
   },
+  compactMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
+  },
   statusBadge: {
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borders.radius.full,
     alignSelf: 'flex-start',
   },
-  compactStatus: {
-    alignItems: 'flex-end',
-  },
   statusText: {
     color: theme.colors.text.inverse,
     fontSize: theme.typography.fontSize.xs,
     fontWeight: theme.typography.fontWeight.medium,
+  },
+  metaText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+  },
+  priceText: {
+    fontSize: theme.typography.fontSize.xs,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.semantic.success,
   },
   priceContainer: {
     alignItems: 'flex-end',
@@ -320,50 +326,27 @@ const styles = StyleSheet.create({
     color: theme.colors.semantic.success,
   },
   details: {
-    marginBottom: theme.spacing.md,
+    rowGap: theme.spacing.sm,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
-  },
-  detailIcon: {
-    fontSize: theme.typography.fontSize.md,
-    marginRight: theme.spacing.sm,
-    width: 20,
+    columnGap: theme.spacing.sm,
   },
   detailText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
     flex: 1,
   },
-  actionsContainer: {
+  locationRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: theme.spacing.sm,
+    alignItems: 'center',
+    columnGap: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
   },
-  actionButton: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borders.radius.md,
-    borderWidth: theme.borders.width.base,
-  },
-  rescheduleButton: {
-    backgroundColor: theme.colors.background.primary,
-    borderColor: theme.colors.primary[500],
-  },
-  rescheduleButtonText: {
-    color: theme.colors.primary[500],
+  locationText: {
+    flex: 1,
     fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  cancelButton: {
-    backgroundColor: theme.colors.background.primary,
-    borderColor: theme.colors.semantic.error,
-  },
-  cancelButtonText: {
-    color: theme.colors.semantic.error,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.text.secondary,
   },
 });

@@ -49,7 +49,7 @@ describe('Booking checkout mapping', () => {
         checkout_session_id: 'cs_test_123',
         checkout_url: 'https://checkout.stripe.com/test',
         expires_at: '2026-05-01T09:10:00-03:00',
-      })
+      }),
     ).toEqual({
       bookingId: 'agendamento-1',
       bookingStatus: 'PENDENTE_PAGAMENTO',
@@ -76,7 +76,7 @@ describe('Booking checkout mapping', () => {
           stripe_checkout_session_id: 'cs_test_123',
           stripe_payment_intent_id: 'pi_test_123',
         },
-      })
+      }),
     ).toEqual({
       bookingId: 'agendamento-1',
       bookingStatus: 'AGENDADO',
@@ -107,7 +107,7 @@ describe('Booking checkout mapping', () => {
         taxa_plataforma: 0,
         valor_total: 120,
         moeda: 'BRL',
-      })
+      }),
     ).toEqual({
       bookingId: 'agendamento-1',
       bookingStatus: 'PENDENTE_PAGAMENTO',
@@ -125,16 +125,18 @@ describe('Booking checkout mapping', () => {
     });
   });
 
-  it('calculates local fallback from hourly rate and duration without invented fee', () => {
+  it('calculates local fallback from hourly rate and duration with platform split', () => {
     expect(
       calculateBookingPaymentInfo({
         price: 120,
         duration: 90,
         currency: 'BRL',
-      })
+      }),
     ).toEqual({
       subtotal: 180,
-      platformFee: 0,
+      platformFee: 27,
+      platformFeeRate: 0.15,
+      instructorAmount: 153,
       total: 180,
       currency: 'BRL',
     });
@@ -146,7 +148,7 @@ describe('Booking checkout mapping', () => {
     });
 
     expect(error.message).toBe(
-      'Este horário acabou de ser reservado por outra pessoa. Escolha outro horário disponível para continuar.'
+      'Este horário acabou de ser reservado por outra pessoa. Escolha outro horário disponível para continuar.',
     );
   });
 });

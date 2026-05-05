@@ -8,14 +8,24 @@
  */
 export const normalizeCurrencyCode = (currency: string): string => {
   const currencyMap: Record<string, string> = {
-    'R$': 'BRL',
-    'US$': 'USD',
-    '$': 'USD',
+    R$: 'BRL',
+    US$: 'USD',
+    $: 'USD',
     '€': 'EUR',
     '£': 'GBP',
   };
 
   return currencyMap[currency] || currency || 'BRL';
+};
+
+export const getCurrencyDisplaySymbol = (currency: string = 'BRL'): string => {
+  const normalized = normalizeCurrencyCode(currency);
+
+  if (normalized === 'BRL') {
+    return 'R$';
+  }
+
+  return currency || 'R$';
 };
 
 /**
@@ -24,9 +34,13 @@ export const normalizeCurrencyCode = (currency: string): string => {
 export const formatCurrency = (
   value: number,
   currency: string = 'BRL',
-  locale: string = 'pt-BR'
+  locale: string = 'pt-BR',
 ): string => {
   const validCurrency = normalizeCurrencyCode(currency);
+
+  if (validCurrency === 'BRL') {
+    return `R$ ${formatCurrencyValue(value, locale)}`;
+  }
 
   try {
     return new Intl.NumberFormat(locale, {
@@ -43,10 +57,7 @@ export const formatCurrency = (
 /**
  * Formata valor monetário sem símbolo
  */
-export const formatCurrencyValue = (
-  value: number,
-  locale: string = 'pt-BR'
-): string => {
+export const formatCurrencyValue = (value: number, locale: string = 'pt-BR'): string => {
   return new Intl.NumberFormat(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

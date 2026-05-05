@@ -3,7 +3,12 @@ import type {
   BookingListItemApiResponse,
   ListMyBookingsApiResponse,
 } from '../types/api';
-import type { ScheduledBooking, ScheduledBookingStatus } from '../types/domain';
+import type {
+  BookingCancellationResult,
+  BookingCheckoutStatusValue,
+  ScheduledBooking,
+  ScheduledBookingStatus,
+} from '../types/domain';
 
 const getListItems = (response: ListMyBookingsApiResponse): BookingListItemApiResponse[] => {
   if (Array.isArray(response)) {
@@ -62,6 +67,16 @@ const getBookingDate = (item: BookingListItemApiResponse): Date | null => {
   return parseDate(dateOnly, item.hora_inicio) ?? parseDate(dateTime);
 };
 
+const getBookingEndDate = (item: BookingListItemApiResponse, startDate: Date): Date | null => {
+  const parsedEnd = parseDate(item.data ?? item.data_aula, item.hora_fim) ?? parseDate(item.fim);
+
+  if (parsedEnd) {
+    return parsedEnd;
+  }
+
+  return new Date(startDate.getTime() + (item.duracao_minutos ?? 60) * 60 * 1000);
+};
+
 const mapStatus = (status?: BookingListApiStatus | string | null): ScheduledBookingStatus => {
   switch (status) {
     case 'CONCLUIDO':
@@ -109,28 +124,93 @@ const getPrice = (item: BookingListItemApiResponse): number =>
 const getCurrencySymbol = (currency?: string | null): string =>
   !currency || currency === 'BRL' ? 'R$' : currency;
 
+const getVehicleLabel = (item: BookingListItemApiResponse): string | undefined => {
+  const vehicle = item.veiculo;
+  const label = [vehicle?.marca, vehicle?.modelo].filter(Boolean).join(' ').trim();
+
+  return label || undefined;
+};
+
+const getMeetingPointSuggestion = (item: BookingListItemApiResponse): string | undefined =>
+  item.ponto_encontro_sugerido ?? item.sugestao_ponto_encontro ?? undefined;
+
+const getCancellationPolicy = (
+  apiStatus: BookingCheckoutStatusValue | string | null,
+  date: Date,
+): ScheduledBooking['cancellationPolicy'] => {
+  if (apiStatus === 'PENDENTE_PAGAMENTO') {
+    return {
+      canCancel: true,
+      reason: 'Reserva pendente de pagamento pode ser cancelada agora.',
+      deadline: null,
+    };
+  }
+
+  if (apiStatus !== 'AGENDADO' && apiStatus !== 'CONFIRMADO') {
+    return {
+      canCancel: false,
+      reason: 'Cancelamento disponível apenas para aulas agendadas ou pendentes de pagamento.',
+      deadline: null,
+    };
+  }
+
+  const deadline = new Date(date.getTime() - 24 * 60 * 60 * 1000);
+  const canCancel = Date.now() <= deadline.getTime();
+
+  return {
+    canCancel,
+    reason: canCancel
+      ? 'Cancelamento disponível até 24h antes da aula.'
+      : 'O prazo de cancelamento encerrou 24h antes da aula.',
+    deadline,
+  };
+};
+
+export const mapScheduledBooking = (item: BookingListItemApiResponse): ScheduledBooking | null => {
+  const date = getBookingDate(item);
+
+  if (!date) {
+    return null;
+  }
+
+  const apiStatus = item.status ?? item.agendamento_status ?? null;
+
+  return {
+    id: item.id ?? item.agendamento_id ?? '',
+    instructorId: item.instrutor?.id ?? item.instrutor_id ?? null,
+    instructorName: getInstructorName(item),
+    instructorAvatar: item.instrutor?.foto_url ?? null,
+    date,
+    endDate: getBookingEndDate(item, date),
+    duration: item.duracao_minutos ?? 60,
+    price: getPrice(item),
+    currency: getCurrencySymbol(item.moeda ?? item.currency),
+    status: mapStatus(apiStatus),
+    apiStatus,
+    vehicleType: mapVehicleType(item),
+    vehicleLabel: getVehicleLabel(item),
+    location: getLocation(item),
+    meetingPointSuggestion: getMeetingPointSuggestion(item),
+    cancellationPolicy: getCancellationPolicy(apiStatus, date),
+  };
+};
+
 export const mapScheduledBookings = (response: ListMyBookingsApiResponse): ScheduledBooking[] =>
   getListItems(response)
-    .map(item => {
-      const date = getBookingDate(item);
-
-      if (!date) {
-        return null;
-      }
-
-      return {
-        id: item.id ?? item.agendamento_id ?? '',
-        instructorId: item.instrutor?.id ?? item.instrutor_id ?? null,
-        instructorName: getInstructorName(item),
-        instructorAvatar: item.instrutor?.foto_url ?? null,
-        date,
-        duration: item.duracao_minutos ?? 60,
-        price: getPrice(item),
-        currency: getCurrencySymbol(item.moeda ?? item.currency),
-        status: mapStatus(item.status ?? item.agendamento_status),
-        vehicleType: mapVehicleType(item),
-        location: getLocation(item),
-      };
-    })
+    .map(mapScheduledBooking)
     .filter((item): item is ScheduledBooking => Boolean(item?.id))
     .sort((left, right) => left.date.getTime() - right.date.getTime());
+
+export const mapBookingCancellationResult = (response: {
+  agendamento_id: string;
+  agendamento_status: BookingCheckoutStatusValue | string;
+  refund_requested?: boolean | null;
+  refund_amount?: number | null;
+  message?: string | null;
+}): BookingCancellationResult => ({
+  bookingId: response.agendamento_id,
+  bookingStatus: response.agendamento_status,
+  refundRequested: Boolean(response.refund_requested),
+  refundAmount: response.refund_amount ?? null,
+  message: response.message ?? 'Agendamento cancelado com sucesso.',
+});

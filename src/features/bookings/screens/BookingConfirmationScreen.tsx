@@ -1,4 +1,5 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Car, Gauge } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +8,7 @@ import { Button } from '../../../shared/ui/base/Button';
 import { Card } from '../../../shared/ui/base/Card';
 import { theme } from '../../../theme';
 import { AlunoSearchStackParamList } from '../../../types/navigation';
+import { formatCurrency } from '../../../utils/currency';
 import { calculateBookingPaymentInfo } from '../utils/payment';
 import { validateBookingData } from '../utils/validation';
 
@@ -19,6 +21,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const paymentInfo = calculateBookingPaymentInfo(bookingData);
+  const formatPaymentValue = (value: number) => formatCurrency(value, paymentInfo.currency);
 
   useEffect(() => {
     const validation = validateBookingData(bookingData);
@@ -132,12 +135,18 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
             {renderInstructorAvatar()}
             <View style={styles.instructorInfo}>
               <Text style={styles.instructorName}>{bookingData.instructorName}</Text>
-              <Text style={styles.vehicleInfo}>
-                🚗 {bookingData.vehicleInfo.marca} {bookingData.vehicleInfo.modelo}
-              </Text>
-              <Text style={styles.transmissionInfo}>
-                ⚙️ {bookingData.vehicleInfo.transmissao === 'automatico' ? 'Automático' : 'Manual'}
-              </Text>
+              <View style={styles.vehicleMetaRow}>
+                <Car color={theme.colors.text.secondary} size={18} />
+                <Text style={styles.vehicleInfo}>
+                  {bookingData.vehicleInfo.marca} {bookingData.vehicleInfo.modelo}
+                </Text>
+              </View>
+              <View style={styles.vehicleMetaRow}>
+                <Gauge color={theme.colors.text.secondary} size={18} />
+                <Text style={styles.transmissionInfo}>
+                  {bookingData.vehicleInfo.transmissao === 'automatico' ? 'Automático' : 'Manual'}
+                </Text>
+              </View>
             </View>
           </View>
         </Card>
@@ -147,7 +156,6 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
           <Text style={styles.sectionTitle}>Detalhes da Aula</Text>
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>📅</Text>
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>Data e Horário</Text>
               <Text style={styles.detailValue}>
@@ -157,7 +165,6 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>⏱️</Text>
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>Duração</Text>
               <Text style={styles.detailValue}>{formatDuration(bookingData.duration)}</Text>
@@ -165,7 +172,6 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>📍</Text>
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>Local de Encontro</Text>
               <Text style={styles.detailValue}>{bookingData.location.endereco}</Text>
@@ -175,29 +181,36 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
 
         {/* Payment Summary */}
         <Card style={styles.paymentCard}>
-          <Text style={styles.sectionTitle}>Resumo do Pagamento</Text>
+          <Text style={styles.paymentSectionTitle}>Resumo do pagamento</Text>
 
           <View style={styles.paymentRow}>
-            <Text style={styles.paymentLabel}>Valor estimado da aula</Text>
-            <Text style={styles.paymentValue}>
-              {paymentInfo.currency} {paymentInfo.subtotal.toFixed(2)}
+            <Text style={styles.paymentLabel}>Valor da aula</Text>
+            <Text style={styles.paymentValue}>{formatPaymentValue(paymentInfo.subtotal)}</Text>
+          </View>
+
+          <View style={styles.paymentSplitBox}>
+            <View style={styles.paymentRow}>
+              <Text style={styles.paymentLabel}>Valor para o professor</Text>
+              <Text style={styles.paymentValue}>
+                {formatPaymentValue(paymentInfo.instructorAmount)}
+              </Text>
+            </View>
+
+            <View style={styles.paymentRow}>
+              <Text style={styles.paymentLabel}>
+                Taxa plataforma ({Math.round(paymentInfo.platformFeeRate * 100)}%)
+              </Text>
+              <Text style={styles.paymentValue}>{formatPaymentValue(paymentInfo.platformFee)}</Text>
+            </View>
+
+            <Text style={styles.paymentDescription}>
+              Taxa já incluída no valor da aula. O restante é repassado ao professor.
             </Text>
           </View>
 
-          {paymentInfo.platformFee > 0 && (
-            <View style={styles.paymentRow}>
-              <Text style={styles.paymentLabel}>Taxa da plataforma</Text>
-              <Text style={styles.paymentValue}>
-                {paymentInfo.currency} {paymentInfo.platformFee.toFixed(2)}
-              </Text>
-            </View>
-          )}
-
           <View style={[styles.paymentRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total estimado</Text>
-            <Text style={styles.totalValue}>
-              {paymentInfo.currency} {paymentInfo.total.toFixed(2)}
-            </Text>
+            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.totalValue}>{formatPaymentValue(paymentInfo.total)}</Text>
           </View>
         </Card>
 
@@ -281,11 +294,18 @@ const styles = StyleSheet.create({
   vehicleInfo: {
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
+    flex: 1,
   },
   transmissionInfo: {
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
+    flex: 1,
+  },
+  vehicleMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   lessonCard: {
     marginBottom: theme.spacing.lg,
@@ -299,7 +319,7 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   detailIcon: {
     fontSize: theme.typography.fontSize.lg,
@@ -322,20 +342,48 @@ const styles = StyleSheet.create({
   paymentCard: {
     marginBottom: theme.spacing.lg,
   },
+  paymentSectionTitle: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
+  },
+  paymentSplitBox: {
+    borderRadius: theme.borders.radius.md,
+    backgroundColor: theme.colors.background.secondary,
+    borderWidth: theme.borders.width.thin,
+    borderColor: theme.colors.border.light,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+  },
   paymentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.xs,
+    columnGap: theme.spacing.sm,
   },
   paymentLabel: {
-    fontSize: theme.typography.fontSize.md,
+    flex: 1,
+    flexShrink: 1,
+    fontSize: theme.typography.fontSize.sm,
+    lineHeight: 18,
     color: theme.colors.text.secondary,
   },
   paymentValue: {
-    fontSize: theme.typography.fontSize.md,
+    flexShrink: 0,
+    fontSize: theme.typography.fontSize.sm,
+    lineHeight: 18,
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeight.medium,
+  },
+  paymentDescription: {
+    fontSize: theme.typography.fontSize.xs,
+    lineHeight: 16,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
   },
   totalRow: {
     borderTopWidth: 1,
@@ -344,14 +392,15 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
   },
   totalLabel: {
-    fontSize: theme.typography.fontSize.lg,
+    flex: 1,
+    fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeight.semibold,
   },
   totalValue: {
-    fontSize: theme.typography.fontSize.lg,
+    fontSize: theme.typography.fontSize.md,
     color: theme.colors.semantic.success,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: theme.typography.fontWeight.semibold,
   },
   termsCard: {
     marginBottom: theme.spacing.lg,

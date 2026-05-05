@@ -16,6 +16,7 @@ import { Button } from '../../../shared/ui/base/Button';
 import { Card } from '../../../shared/ui/base/Card';
 import { theme } from '../../../theme';
 import { AlunoSearchStackParamList } from '../../../types/navigation';
+import { formatCurrency } from '../../../utils/currency';
 import { calculateBookingPaymentInfo } from '../utils/payment';
 import { mapBookingDataToCheckoutPayload } from '../mappers/mapBookingCheckout';
 import {
@@ -29,16 +30,9 @@ import type {
   BookingData,
 } from '../types/domain';
 
-type Props = NativeStackScreenProps<
-  AlunoSearchStackParamList,
-  'PaymentConfirmation'
->;
+type Props = NativeStackScreenProps<AlunoSearchStackParamList, 'PaymentConfirmation'>;
 
-const FINAL_STATUSES: BookingCheckoutStatusValue[] = [
-  'AGENDADO',
-  'EXPIRADO',
-  'CANCELADO',
-];
+const FINAL_STATUSES: BookingCheckoutStatusValue[] = ['AGENDADO', 'EXPIRADO', 'CANCELADO'];
 
 const formatDate = (date: Date) =>
   date.toLocaleDateString('pt-BR', {
@@ -47,9 +41,6 @@ const formatDate = (date: Date) =>
     month: 'long',
     year: 'numeric',
   });
-
-const formatCurrency = (value: number, currency: string) =>
-  `${currency} ${value.toFixed(2)}`;
 
 const getStatusTitle = (status?: BookingCheckoutStatusValue) => {
   switch (status) {
@@ -92,52 +83,38 @@ const getReturnDescription = (checkoutReturn?: 'sucesso' | 'cancelado') => {
   }
 };
 
-export const PaymentConfirmationScreen: React.FC<Props> = ({
-  route,
-  navigation,
-}) => {
+export const PaymentConfirmationScreen: React.FC<Props> = ({ route, navigation }) => {
   const { bookingData, checkoutBookingId, checkoutReturn } = route.params;
   const typedBookingData = bookingData as BookingData | undefined;
   const initialBookingId = checkoutBookingId ?? '';
 
-  const [checkoutSession, setCheckoutSession] =
-    useState<BookingCheckoutSession | null>(null);
+  const [checkoutSession, setCheckoutSession] = useState<BookingCheckoutSession | null>(null);
   const [bookingId, setBookingId] = useState(initialBookingId);
   const [openingCheckout, setOpeningCheckout] = useState(false);
-  const [pendingCheckoutLoaded, setPendingCheckoutLoaded] =
-    useState(Boolean(initialBookingId));
+  const [pendingCheckoutLoaded, setPendingCheckoutLoaded] = useState(Boolean(initialBookingId));
   const [sessionError, setSessionError] = useState<string | null>(null);
   const hasAutoCreateAttempted = useRef(false);
 
   const createCheckoutMutation = useCreateBookingCheckoutSessionMutation();
-  const checkoutStatusQuery = useBookingCheckoutStatusQuery(
-    bookingId,
-    Boolean(bookingId)
-  );
+  const checkoutStatusQuery = useBookingCheckoutStatusQuery(bookingId, Boolean(bookingId));
 
   const paymentInfo = useMemo(
-    () =>
-      typedBookingData ? calculateBookingPaymentInfo(typedBookingData) : null,
-    [typedBookingData]
+    () => (typedBookingData ? calculateBookingPaymentInfo(typedBookingData) : null),
+    [typedBookingData],
   );
   const displayedPaymentInfo =
-    checkoutStatusQuery.data?.paymentInfo ??
-    checkoutSession?.paymentInfo ??
-    paymentInfo;
+    checkoutStatusQuery.data?.paymentInfo ?? checkoutSession?.paymentInfo ?? paymentInfo;
   const hasBackendPaymentInfo = Boolean(
-    checkoutStatusQuery.data?.paymentInfo ?? checkoutSession?.paymentInfo
+    checkoutStatusQuery.data?.paymentInfo ?? checkoutSession?.paymentInfo,
   );
 
-  const status =
-    checkoutStatusQuery.data?.bookingStatus ?? checkoutSession?.bookingStatus;
+  const status = checkoutStatusQuery.data?.bookingStatus ?? checkoutSession?.bookingStatus;
   const isFinalStatus = status ? FINAL_STATUSES.includes(status) : false;
   const returnDescription = getReturnDescription(checkoutReturn);
 
   const createCheckoutSession = useCallback(async () => {
     if (!typedBookingData) {
-      setSessionError(
-        'Não encontramos os dados do agendamento para iniciar o checkout.'
-      );
+      setSessionError('Não encontramos os dados do agendamento para iniciar o checkout.');
       return;
     }
 
@@ -151,9 +128,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
       await pendingCheckoutStorage.saveBookingId(session.bookingId);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'Não foi possível iniciar o checkout.';
+        error instanceof Error ? error.message : 'Não foi possível iniciar o checkout.';
       setSessionError(message);
     }
   }, [createCheckoutMutation, typedBookingData]);
@@ -205,7 +180,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
     }
 
     setSessionError(
-      'Não encontramos um checkout pendente para consultar. Volte para escolher um horário e iniciar o pagamento.'
+      'Não encontramos um checkout pendente para consultar. Volte para escolher um horário e iniciar o pagamento.',
     );
   }, [bookingId, pendingCheckoutLoaded, typedBookingData]);
 
@@ -233,7 +208,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
     if (!checkoutUrl) {
       Alert.alert(
         'Checkout indisponível',
-        'Ainda não temos uma URL de checkout ativa. Tente iniciar novamente.'
+        'Ainda não temos uma URL de checkout ativa. Tente iniciar novamente.',
       );
       return;
     }
@@ -250,7 +225,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
     } catch {
       Alert.alert(
         'Erro ao abrir Checkout',
-        'Não conseguimos abrir a página segura da Stripe. Tente novamente.'
+        'Não conseguimos abrir a página segura da Stripe. Tente novamente.',
       );
     } finally {
       setOpeningCheckout(false);
@@ -262,8 +237,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
   };
 
   const isPreparingCheckout =
-    createCheckoutMutation.isPending ||
-    (!bookingId && !sessionError && !pendingCheckoutLoaded);
+    createCheckoutMutation.isPending || (!bookingId && !sessionError && !pendingCheckoutLoaded);
 
   if (isPreparingCheckout) {
     return (
@@ -317,16 +291,12 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
 
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Instrutor</Text>
-              <Text style={styles.summaryValue}>
-                {typedBookingData.instructorName}
-              </Text>
+              <Text style={styles.summaryValue}>{typedBookingData.instructorName}</Text>
             </View>
 
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Data</Text>
-              <Text style={styles.summaryValue}>
-                {formatDate(typedBookingData.date)}
-              </Text>
+              <Text style={styles.summaryValue}>{formatDate(typedBookingData.date)}</Text>
             </View>
 
             <View style={styles.summaryRow}>
@@ -336,9 +306,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
 
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Duração</Text>
-              <Text style={styles.summaryValue}>
-                {typedBookingData.duration} minutos
-              </Text>
+              <Text style={styles.summaryValue}>{typedBookingData.duration} minutos</Text>
             </View>
 
             <View style={[styles.summaryRow, styles.totalRow]}>
@@ -350,7 +318,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
               <Text style={styles.totalValue}>
                 {formatCurrency(
                   displayedPaymentInfo.total ?? displayedPaymentInfo.subtotal ?? 0,
-                  displayedPaymentInfo.currency
+                  displayedPaymentInfo.currency,
                 )}
               </Text>
             </View>
@@ -359,9 +327,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
 
         <Card style={styles.card}>
           <Text style={styles.sectionTitle}>{getStatusTitle(status)}</Text>
-          {returnDescription && (
-            <Text style={styles.returnDescription}>{returnDescription}</Text>
-          )}
+          {returnDescription && <Text style={styles.returnDescription}>{returnDescription}</Text>}
           <Text style={styles.description}>{getStatusDescription(status)}</Text>
 
           {checkoutStatusQuery.isFetching && (
@@ -386,24 +352,18 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
           )}
 
           {checkoutStatusQuery.data?.failureMessage && (
-            <Text style={styles.errorMessage}>
-              {checkoutStatusQuery.data.failureMessage}
-            </Text>
+            <Text style={styles.errorMessage}>{checkoutStatusQuery.data.failureMessage}</Text>
           )}
         </Card>
 
-        {status !== 'AGENDADO' &&
-          status !== 'CANCELADO' &&
-          status !== 'EXPIRADO' && (
-            <Button
-              title={
-                openingCheckout ? 'Abrindo Checkout...' : 'Abrir Checkout Stripe'
-              }
-              onPress={handleOpenCheckout}
-              disabled={!checkoutSession?.checkoutUrl || openingCheckout}
-              style={styles.actionButton}
-            />
-          )}
+        {status !== 'AGENDADO' && status !== 'CANCELADO' && status !== 'EXPIRADO' && (
+          <Button
+            title={openingCheckout ? 'Abrindo Checkout...' : 'Abrir Checkout Stripe'}
+            onPress={handleOpenCheckout}
+            disabled={!checkoutSession?.checkoutUrl || openingCheckout}
+            style={styles.actionButton}
+          />
+        )}
 
         <Button
           title="Atualizar status"
@@ -423,7 +383,8 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({
 
         <View style={styles.notice}>
           <Text style={styles.noticeText}>
-            O retorno da Stripe não confirma o pagamento sozinho. Esta tela sempre consulta o backend para mostrar o estado real do agendamento.
+            O retorno da Stripe não confirma o pagamento sozinho. Esta tela sempre consulta o
+            backend para mostrar o estado real do agendamento.
           </Text>
         </View>
       </ScrollView>

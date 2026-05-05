@@ -1,6 +1,7 @@
 import {
   normalizeCurrencyCode,
   formatCurrency,
+  getCurrencyDisplaySymbol,
   centsToReais,
   reaisToCents,
 } from '../src/utils/currency';
@@ -41,6 +42,8 @@ describe('Currency Utilities', () => {
   describe('formatCurrency', () => {
     it('should format BRL currency correctly', () => {
       const result = formatCurrency(100, 'BRL');
+      expect(result).toContain('R$');
+      expect(result).not.toContain('BRL');
       expect(result).toContain('100');
     });
 
@@ -62,6 +65,14 @@ describe('Currency Utilities', () => {
     it('should default to BRL when no currency provided', () => {
       const result = formatCurrency(100);
       expect(result).toContain('100');
+    });
+  });
+
+  describe('getCurrencyDisplaySymbol', () => {
+    it('should display BRL as R$', () => {
+      expect(getCurrencyDisplaySymbol('BRL')).toBe('R$');
+      expect(getCurrencyDisplaySymbol('R$')).toBe('R$');
+      expect(getCurrencyDisplaySymbol()).toBe('R$');
     });
   });
 

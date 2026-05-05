@@ -113,10 +113,27 @@ export interface ScheduledBooking {
   instructorName: string;
   instructorAvatar: string | null;
   date: Date;
+  endDate: Date | null;
   duration: number;
   price: number;
   currency: string;
   status: ScheduledBookingStatus;
+  apiStatus: BookingCheckoutStatusValue | string | null;
   vehicleType: 'manual' | 'automatic' | undefined;
+  vehicleLabel: string | undefined;
   location: string | undefined;
+  meetingPointSuggestion: string | undefined;
+  cancellationPolicy: {
+    canCancel: boolean;
+    reason: string;
+    deadline: Date | null;
+  };
+}
+
+export interface BookingCancellationResult {
+  bookingId: string;
+  bookingStatus: BookingCheckoutStatusValue | string;
+  refundRequested: boolean;
+  refundAmount: number | null;
+  message: string;
 }
