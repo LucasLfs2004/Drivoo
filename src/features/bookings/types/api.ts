@@ -106,6 +106,14 @@ export interface BookingListInstructorApiResponse {
   foto_url?: string | null;
 }
 
+export interface BookingListStudentApiResponse {
+  id?: string | null;
+  nome?: string | null;
+  sobrenome?: string | null;
+  nome_completo?: string | null;
+  foto_url?: string | null;
+}
+
 export interface BookingListVehicleApiResponse {
   id?: string | null;
   marca?: string | null;
@@ -128,6 +136,10 @@ export interface BookingListItemApiResponse {
   instrutor_nome?: string | null;
   nome_instrutor?: string | null;
   aluno_id?: string | null;
+  aluno?: BookingListStudentApiResponse | null;
+  aluno_nome?: string | null;
+  nome_aluno?: string | null;
+  student_name?: string | null;
   data?: string | null;
   data_aula?: string | null;
   data_inicio?: string | null;
@@ -179,3 +191,9 @@ export interface CancelBookingApiResponse {
   refund_amount?: number | null;
   message?: string | null;
 }
+
+export interface UpdateBookingStatusApiRequest {
+  status: BookingCheckoutApiStatus;
+}
+
+export type UpdateBookingStatusApiResponse = Record<string, unknown> | null;

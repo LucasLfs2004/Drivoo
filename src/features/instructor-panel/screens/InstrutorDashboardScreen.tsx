@@ -1,12 +1,15 @@
 import dayjs from 'dayjs';
+import 'dayjs/locale/pt-br';
 import React from 'react';
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CalendarDays, ChevronRight, Clock3, MapPin, UserRound } from 'lucide-react-native';
 
 import { useAuth } from '../../../core/auth';
 import { buildCalendarMonthCells, Button, Calendar, Card, type CalendarCellModel } from '../../../shared/ui/base';
@@ -20,6 +23,19 @@ interface NavigationLike {
 interface Props {
   navigation: NavigationLike;
 }
+
+const getBookingStatusLabel = (status: string) => {
+  switch (status) {
+    case 'CONFIRMADO':
+      return 'Confirmada';
+    case 'PENDENTE':
+      return 'Pendente';
+    case 'AGENDADO':
+      return 'Agendada';
+    default:
+      return status;
+  }
+};
 
 export const InstrutorDashboardScreen: React.FC<Props> = ({ navigation }) => {
   const { usuario } = useAuth();
@@ -132,20 +148,84 @@ export const InstrutorDashboardScreen: React.FC<Props> = ({ navigation }) => {
         </Card>
 
         <Card style={styles.recentBookingsCard}>
-          <Text style={styles.sectionTitle}>Próximas aulas</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Próximas aulas</Text>
+            <Text style={styles.sectionMeta}>Toque para abrir</Text>
+          </View>
           {upcomingBookings.length ? (
             <View style={styles.upcomingList}>
-              {upcomingBookings.map(item => (
-                <View key={item.id} style={styles.upcomingRow}>
-                  <Text style={styles.upcomingDate}>{dayjs(item.data).format('DD/MM')}</Text>
-                  <View style={styles.upcomingInfo}>
-                    <Text style={styles.upcomingTime}>
-                      {item.hora_inicio} - {item.hora_fim}
-                    </Text>
-                    <Text style={styles.upcomingStatus}>{item.status}</Text>
-                  </View>
-                </View>
-              ))}
+              {upcomingBookings.map(item => {
+                const studentName = item.aluno_nome ?? item.student_name ?? 'Aluno a confirmar';
+                const location = item.local ?? item.endereco ?? 'Local a combinar';
+
+                return (
+                  <Pressable
+                    key={item.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Abrir detalhes da aula com ${studentName}`}
+                    onPress={() =>
+                      navigation.navigate('BookingDetails', {
+                        bookingId: item.id,
+                        viewerRole: 'instrutor',
+                      })
+                    }
+                    style={({ pressed }) => [
+                      styles.upcomingRow,
+                      pressed && styles.upcomingRowPressed,
+                    ]}
+                  >
+                    <View style={styles.upcomingDateBlock}>
+                      <Text style={styles.upcomingWeekday}>
+                        {dayjs(item.data).locale('pt-br').format('ddd').replace('.', '')}
+                      </Text>
+                      <Text style={styles.upcomingDay}>{dayjs(item.data).format('DD')}</Text>
+                      <Text style={styles.upcomingMonth}>
+                        {dayjs(item.data).locale('pt-br').format('MMM').replace('.', '')}
+                      </Text>
+                    </View>
+
+                    <View style={styles.upcomingInfo}>
+                      <View style={styles.upcomingTitleRow}>
+                        <Text style={styles.upcomingStudent} numberOfLines={1}>
+                          {studentName}
+                        </Text>
+                        <View style={styles.statusPill}>
+                          <Text style={styles.statusPillText}>
+                            {getBookingStatusLabel(item.status)}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.upcomingMetaGrid}>
+                        <View style={styles.upcomingMetaItem}>
+                          <Clock3 color={theme.colors.text.secondary} size={14} />
+                          <Text style={styles.upcomingMetaText}>
+                            {item.hora_inicio} - {item.hora_fim}
+                          </Text>
+                        </View>
+                        <View style={styles.upcomingMetaItem}>
+                          <CalendarDays color={theme.colors.text.secondary} size={14} />
+                          <Text style={styles.upcomingMetaText}>
+                            {dayjs(item.data).format('DD/MM/YYYY')}
+                          </Text>
+                        </View>
+                        <View style={styles.upcomingMetaItem}>
+                          <MapPin color={theme.colors.text.secondary} size={14} />
+                          <Text style={styles.upcomingMetaText} numberOfLines={1}>
+                            {location}
+                          </Text>
+                        </View>
+                        <View style={styles.upcomingMetaItem}>
+                          <UserRound color={theme.colors.text.secondary} size={14} />
+                          <Text style={styles.upcomingMetaText}>Detalhes do aluno</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <ChevronRight color={theme.colors.text.tertiary} size={18} />
+                  </Pressable>
+                );
+              })}
             </View>
           ) : (
             <Text style={styles.emptyText}>
@@ -267,30 +347,81 @@ const styles = StyleSheet.create({
   },
   upcomingRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
-    borderBottomWidth: theme.borders.width.base,
-    borderBottomColor: theme.colors.border.light,
+    padding: theme.spacing.sm,
+    borderRadius: theme.borders.radius.md,
+    borderWidth: theme.borders.width.base,
+    borderColor: theme.colors.border.light,
+    backgroundColor: theme.colors.background.secondary,
   },
-  upcomingDate: {
-    width: 48,
-    fontSize: theme.typography.fontSize.md,
+  upcomingRowPressed: {
+    opacity: 0.72,
+  },
+  upcomingDateBlock: {
+    width: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.borders.radius.md,
+    backgroundColor: theme.colors.primary[50],
+    paddingVertical: theme.spacing.xs,
+  },
+  upcomingWeekday: {
+    fontSize: theme.typography.fontSize['2xs'],
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.primary[600],
+    textTransform: 'uppercase',
+  },
+  upcomingDay: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary[700],
+  },
+  upcomingMonth: {
+    fontSize: theme.typography.fontSize['2xs'],
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.text.secondary,
+    textTransform: 'uppercase',
+  },
+  upcomingTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  upcomingStudent: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
   },
   upcomingInfo: {
     flex: 1,
     rowGap: theme.spacing.xs,
   },
-  upcomingTime: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
+  upcomingMetaGrid: {
+    rowGap: theme.spacing.xs,
   },
-  upcomingStatus: {
-    fontSize: theme.typography.fontSize.sm,
+  upcomingMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  upcomingMetaText: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
+    lineHeight: theme.typography.lineHeight.xs,
+  },
+  statusPill: {
+    borderRadius: theme.borders.radius.full,
+    backgroundColor: theme.colors.success[50],
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+  },
+  statusPillText: {
+    fontSize: theme.typography.fontSize['2xs'],
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.success[700],
   },
   emptyText: {
     fontSize: theme.typography.fontSize.sm,

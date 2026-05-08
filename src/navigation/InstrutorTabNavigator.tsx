@@ -14,6 +14,7 @@ import {
   InstrutorEarningsScreen,
   InstrutorScheduleScreen,
 } from '../features/instructor-panel';
+import { BookingDetailsScreen } from '../features/bookings';
 import {
   EditInstructorAvailabilityDayScreen,
   InstructorAvailabilityEditorScreen,
@@ -28,6 +29,7 @@ import {
   SettingsScreen,
 } from '../features/profile';
 import { ChatListScreen } from '../screens/shared/ChatListScreen';
+import { ChatConversationScreen } from '../screens/shared/ChatConversationScreen';
 import { theme } from '../theme';
 import type {
   ChatStackParamList,
@@ -52,6 +54,7 @@ const DashboardStackNavigator = () => (
   <DashboardStack.Navigator screenOptions={{ headerShown: false }}>
     <DashboardStack.Screen name="DashboardScreen" component={InstrutorDashboardScreen} />
     <DashboardStack.Screen name="BookingsScreen" component={InstrutorBookingsScreen} />
+    <DashboardStack.Screen name="BookingDetails" component={BookingDetailsScreen} />
   </DashboardStack.Navigator>
 );
 
@@ -88,6 +91,7 @@ const EarningsStackNavigator = () => (
 const ChatStackNavigator = () => (
   <ChatStack.Navigator screenOptions={{ headerShown: false }}>
     <ChatStack.Screen name="ChatList" component={ChatListScreen} />
+    <ChatStack.Screen name="ChatScreen" component={ChatConversationScreen} />
   </ChatStack.Navigator>
 );
 

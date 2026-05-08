@@ -70,14 +70,14 @@ export type AlunoSearchStackParamList = {
 
 export type AlunoBookingsStackParamList = {
   BookingsScreen: undefined;
-  BookingDetails: { bookingId: string };
+  BookingDetails: { bookingId: string; viewerRole?: 'aluno' | 'instrutor' };
   BookingConfirmation: { bookingData: any };
 };
 
 export type InstrutorDashboardStackParamList = {
   DashboardScreen: undefined;
   BookingsScreen: undefined;
-  BookingDetails: { bookingId: string };
+  BookingDetails: { bookingId: string; viewerRole?: 'aluno' | 'instrutor' };
 };
 
 export type InstrutorScheduleStackParamList = {

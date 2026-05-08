@@ -220,6 +220,10 @@ export interface InstructorBookingsPreviewItemApiResponse {
   data: string;
   hora_inicio: string;
   hora_fim: string;
+  aluno_nome?: string | null;
+  student_name?: string | null;
+  local?: string | null;
+  endereco?: string | null;
 }
 
 export interface InstructorBookingsPreviewApiResponse {
@@ -327,4 +331,108 @@ export interface InstructorEarningsTrendQueryParams {
   periodo?: 'dia' | 'semana' | 'mes';
   data_inicio?: string;
   data_fim?: string;
+}
+
+export interface InstructorFinancialSummaryQueryParams {
+  data_inicio?: string;
+  data_fim?: string;
+  limite_aulas_recentes?: number;
+}
+
+export interface InstructorFinancialSummaryPeriodApiResponse {
+  data_inicio?: string | null;
+  data_fim?: string | null;
+  dias?: number | null;
+}
+
+export interface InstructorFinancialSummaryAmountsApiResponse {
+  recebido?: number | null;
+  disponivel_para_repasse?: number | null;
+  em_processamento?: number | null;
+  a_liberar?: number | null;
+  bloqueado_em_analise?: number | null;
+  falha_repasse?: number | null;
+  previsto_aulas_futuras_confirmadas?: number | null;
+  valor_concluido_periodo?: number | null;
+  valor_concluido_periodo_anterior?: number | null;
+  variacao_concluido_percentual?: number | null;
+}
+
+export interface InstructorFinancialSummaryFutureLessonsApiResponse {
+  quantidade?: number | null;
+  valor_instrutor?: number | null;
+}
+
+export interface InstructorFinancialPeriodSummaryApiResponse {
+  aulas_no_periodo?: number | null;
+  aulas_criadas?: number | null;
+  aulas_agendadas?: number | null;
+  aulas_previstas?: number | null;
+  aulas_concluidas?: number | null;
+  aulas_canceladas?: number | null;
+  nao_compareceu?: number | null;
+  valor_agendado?: number | null;
+  valor_concluido?: number | null;
+  valor_previsto?: number | null;
+}
+
+export interface InstructorFinancialEvolutionPointApiResponse {
+  data?: string | null;
+  valor?: number | null;
+  acumulado?: number | null;
+  quantidade_aulas?: number | null;
+}
+
+export interface InstructorFinancialEvolutionApiResponse {
+  tipo?: 'acumulado' | string | null;
+  total?: number | null;
+  pontos?: InstructorFinancialEvolutionPointApiResponse[] | null;
+}
+
+export interface InstructorFinancialStatusSummaryApiResponse {
+  status?: string | null;
+  label?: string | null;
+  quantidade?: number | null;
+}
+
+export interface InstructorFinancialRecentLessonStudentApiResponse {
+  id?: string | null;
+  nome?: string | null;
+  foto_url?: string | null;
+}
+
+export interface InstructorFinancialRecentLessonLocationApiResponse {
+  resumo?: string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  estado?: string | null;
+  endereco_completo?: string | null;
+}
+
+export interface InstructorFinancialRecentLessonApiResponse {
+  id?: string | null;
+  data?: string | null;
+  inicio?: string | null;
+  fim?: string | null;
+  hora_inicio?: string | null;
+  hora_fim?: string | null;
+  duracao_minutos?: number | null;
+  aluno?: InstructorFinancialRecentLessonStudentApiResponse | null;
+  status?: string | null;
+  status_label?: string | null;
+  local?: InstructorFinancialRecentLessonLocationApiResponse | null;
+  valor_instrutor?: number | null;
+  valor_total?: number | null;
+  avaliado?: boolean | null;
+}
+
+export interface InstructorFinancialSummaryApiResponse {
+  instrutor_id?: string | null;
+  periodo?: InstructorFinancialSummaryPeriodApiResponse | null;
+  financeiro?: InstructorFinancialSummaryAmountsApiResponse | null;
+  aulas_futuras_confirmadas?: InstructorFinancialSummaryFutureLessonsApiResponse | null;
+  periodo_resumo?: InstructorFinancialPeriodSummaryApiResponse | null;
+  evolucao_financeira?: InstructorFinancialEvolutionApiResponse | null;
+  resumo_aulas_por_status?: InstructorFinancialStatusSummaryApiResponse[] | null;
+  aulas_recentes?: InstructorFinancialRecentLessonApiResponse[] | null;
 }

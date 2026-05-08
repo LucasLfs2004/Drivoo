@@ -14,7 +14,7 @@ type ButtonIconComponent = React.ComponentType<{ color: string; size: number }>;
 type ButtonIconElementType = React.ElementType<{ color: string; size: number }>;
 
 export interface ButtonProps {
-  title: string;
+  title?: string;
   onPress?: () => void;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
   size?: 'sm' | 'md' | 'lg';
@@ -71,14 +71,12 @@ export const Button: React.FC<ButtonProps> = ({
   const iconSize = iconSizeMap[size];
   const iconIsElement = React.isValidElement(icon);
   const iconIsComponent =
-    Boolean(icon) &&
-    !iconIsElement &&
-    (typeof icon === 'function' || typeof icon === 'object');
+    Boolean(icon) && !iconIsElement && (typeof icon === 'function' || typeof icon === 'object');
   const iconElement = iconIsComponent
     ? React.createElement(icon as ButtonIconElementType, {
-      color: iconColor,
-      size: iconSize,
-    })
+        color: iconColor,
+        size: iconSize,
+      })
     : (icon as React.ReactNode);
 
   return (

@@ -4,6 +4,7 @@ import type {
   ListMyBookingsApiResponse,
 } from '../types/api';
 import type {
+  BookingActionResult,
   BookingCancellationResult,
   BookingCheckoutStatusValue,
   ScheduledBooking,
@@ -30,6 +31,26 @@ const getInstructorName = (item: BookingListItemApiResponse): string => {
   const nestedName = nameParts.join(' ').trim();
 
   return nestedName || item.instrutor_nome?.trim() || item.nome_instrutor?.trim() || 'Instrutor';
+};
+
+const getStudentName = (item: BookingListItemApiResponse): string => {
+  const student = item.aluno;
+  const fullName = student?.nome_completo?.trim();
+
+  if (fullName) {
+    return fullName;
+  }
+
+  const nameParts = [student?.nome, student?.sobrenome].filter(Boolean);
+  const nestedName = nameParts.join(' ').trim();
+
+  return (
+    nestedName ||
+    item.aluno_nome?.trim() ||
+    item.nome_aluno?.trim() ||
+    item.student_name?.trim() ||
+    'Aluno a confirmar'
+  );
 };
 
 const parsePtBrDate = (value: string): string | null => {
@@ -180,6 +201,9 @@ export const mapScheduledBooking = (item: BookingListItemApiResponse): Scheduled
     instructorId: item.instrutor?.id ?? item.instrutor_id ?? null,
     instructorName: getInstructorName(item),
     instructorAvatar: item.instrutor?.foto_url ?? null,
+    studentId: item.aluno?.id ?? item.aluno_id ?? null,
+    studentName: getStudentName(item),
+    studentAvatar: item.aluno?.foto_url ?? null,
     date,
     endDate: getBookingEndDate(item, date),
     duration: item.duracao_minutos ?? 60,
@@ -213,4 +237,12 @@ export const mapBookingCancellationResult = (response: {
   refundRequested: Boolean(response.refund_requested),
   refundAmount: response.refund_amount ?? null,
   message: response.message ?? 'Agendamento cancelado com sucesso.',
+});
+
+export const mapBookingActionResult = (response: {
+  agendamento_id: string;
+  message?: string | null;
+}): BookingActionResult => ({
+  bookingId: response.agendamento_id,
+  message: response.message ?? 'Agendamento atualizado com sucesso.',
 });

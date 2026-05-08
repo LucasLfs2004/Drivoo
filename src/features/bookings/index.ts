@@ -7,6 +7,7 @@ export * from './hooks/useBookingDetailsQuery';
 export * from './hooks/useCancelBookingMutation';
 export * from './hooks/useMyBookingsQuery';
 export * from './hooks/usePaymentSplit';
+export * from './hooks/useUpdateBookingStatusMutation';
 export * from './screens/AlunoBookingsScreen';
 export * from './screens/BookingDetailsScreen';
 export * from './screens/BookingConfirmationScreen';

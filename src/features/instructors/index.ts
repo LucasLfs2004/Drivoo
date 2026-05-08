@@ -11,6 +11,7 @@ export * from './hooks/useInstructorDetailsQuery';
 export * from './hooks/useInstructorPublicAvailabilityCalendarQuery';
 export * from './hooks/useMyInstructorProfileQuery';
 export * from './hooks/useInstructorEarningsOverviewQuery';
+export * from './hooks/useInstructorFinancialSummaryQuery';
 export * from './hooks/useInstructorFinancialQuery';
 export * from './hooks/useInstructorFinancialMutations';
 export * from './hooks/useInstructorAvailabilityQuery';

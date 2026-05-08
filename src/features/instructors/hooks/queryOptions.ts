@@ -12,12 +12,16 @@ import {
   mapInstructorAvailabilityToBulkPayload,
 } from '../mappers/mapInstructorAvailability';
 import { mapInstructorDetails } from '../mappers/mapInstructorDetails';
-import { mapInstructorEarningsOverview } from '../mappers/mapInstructorEarnings';
+import {
+  mapInstructorEarningsOverview,
+  mapInstructorFinancialSummary,
+} from '../mappers/mapInstructorEarnings';
 import { mapInstructorFinancialProfile } from '../mappers/mapInstructorFinancial';
 import { mapInstructorSchedule } from '../mappers/mapInstructorSchedule';
 import { mapInstructorSearchResult } from '../mappers/mapInstructorSearchResult';
 import { mapInstructorVehicles } from '../mappers/mapInstructorVehicle';
 import type { InstructorAvailabilityDraft } from '../types/availability';
+import type { InstructorFinancialSummaryQueryParams } from '../types/api';
 import type { FiltrosBusca } from '../types/filters';
 import { createAppQueryOptions } from '../../../shared/hooks';
 import { instructorQueryKeys } from './queryKeys';
@@ -91,12 +95,11 @@ export const instructorQueryOptions = {
     createAppQueryOptions({
       queryKey: instructorQueryKeys.earningsOverview(),
       queryFn: async () => {
-        const [historyResult, recentPaymentsResult, trendResult] =
-          await Promise.allSettled([
-            instructorEarningsApi.getMyEarningsHistory(),
-            instructorEarningsApi.getMyRecentPayments(),
-            instructorEarningsApi.getMyEarningsTrend(),
-          ]);
+        const [historyResult, recentPaymentsResult, trendResult] = await Promise.allSettled([
+          instructorEarningsApi.getMyEarningsHistory(),
+          instructorEarningsApi.getMyRecentPayments(),
+          instructorEarningsApi.getMyEarningsTrend(),
+        ]);
 
         if (historyResult.status === 'rejected') {
           throw historyResult.reason;
@@ -111,6 +114,16 @@ export const instructorQueryOptions = {
           recentPaymentsResponse: recentPaymentsResult.value,
           trendResponse: trendResult.status === 'fulfilled' ? trendResult.value : undefined,
         });
+      },
+      enabled,
+    }),
+
+  financialSummary: (params: InstructorFinancialSummaryQueryParams = {}, enabled = true) =>
+    createAppQueryOptions({
+      queryKey: instructorQueryKeys.financialSummary(params),
+      queryFn: async () => {
+        const response = await instructorEarningsApi.getMyFinancialSummary(params);
+        return mapInstructorFinancialSummary(response);
       },
       enabled,
     }),
@@ -182,7 +195,7 @@ export const instructorQueryOptions = {
 
 export const buildAvailabilityBulkPayload = (
   draft: InstructorAvailabilityDraft,
-  initialDraft: InstructorAvailabilityDraft
+  initialDraft: InstructorAvailabilityDraft,
 ) => {
   const payload = mapInstructorAvailabilityToBulkPayload(draft, initialDraft);
 

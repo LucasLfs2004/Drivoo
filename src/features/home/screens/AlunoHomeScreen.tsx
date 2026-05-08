@@ -1,13 +1,3 @@
-import React from 'react';
-import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -22,6 +12,16 @@ import {
   Star,
   Users,
 } from 'lucide-react-native';
+import React from 'react';
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar, Badge, Button, Card, Divider, Typography } from '../../../shared/ui/base';
 import { theme } from '../../../theme';
 import type { AlunoHomeStackParamList } from '../../../types/navigation';
@@ -148,22 +148,20 @@ const NextLessonCard = ({
     <Card variant="elevated" padding="md" style={styles.sectionCard}>
       <View style={styles.cardHeader}>
         <View>
-          <Typography variant="label" color="secondary">
-            Próxima aula
-          </Typography>
+          <View style={styles.rowHeader}>
+            <Typography variant="label" color="secondary">
+              Próxima aula
+            </Typography>
+            <Badge variant={status.variant} size="sm">
+              {status.label}
+            </Badge>
+          </View>
           <Typography variant="h4">Seu próximo compromisso</Typography>
         </View>
-        <Badge variant={status.variant} size="sm">
-          {status.label}
-        </Badge>
       </View>
 
       <View style={styles.instructorRow}>
-        <Avatar
-          name={lesson.instructor.fullName}
-          source={lesson.instructor.avatarUrl}
-          size="lg"
-        />
+        <Avatar name={lesson.instructor.fullName} source={lesson.instructor.avatarUrl} size="lg" />
         <View style={styles.instructorText}>
           <Typography variant="body" weight="semibold">
             {lesson.instructor.fullName}
@@ -310,13 +308,7 @@ const LearningSnapshot = ({ dashboard }: { dashboard: StudentDashboard }) => {
 
 export const AlunoHomeScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const {
-    data: dashboard,
-    isError,
-    isLoading,
-    isRefetching,
-    refetch,
-  } = useStudentDashboardQuery();
+  const { data: dashboard, isError, isLoading, isRefetching, refetch } = useStudentDashboardQuery();
 
   const handleSearchInstructorsPress = () => {
     navigation.getParent()?.navigate('Search' as never);
@@ -471,6 +463,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: theme.spacing.md,
+    flex: 1,
+  },
+  rowHeader: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // gap: theme.spacing.sm,
   },
   instructorRow: {
     flexDirection: 'row',

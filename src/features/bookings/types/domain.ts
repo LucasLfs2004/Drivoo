@@ -112,6 +112,9 @@ export interface ScheduledBooking {
   instructorId: string | null;
   instructorName: string;
   instructorAvatar: string | null;
+  studentId: string | null;
+  studentName: string;
+  studentAvatar: string | null;
   date: Date;
   endDate: Date | null;
   duration: number;
@@ -135,5 +138,10 @@ export interface BookingCancellationResult {
   bookingStatus: BookingCheckoutStatusValue | string;
   refundRequested: boolean;
   refundAmount: number | null;
+  message: string;
+}
+
+export interface BookingActionResult {
+  bookingId: string;
   message: string;
 }

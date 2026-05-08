@@ -1,16 +1,19 @@
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import {
+  AlertTriangle,
   CalendarDays,
   Car,
+  CheckCircle2,
   Clock3,
   CreditCard,
-  MapPin,
   MessageCircle,
+  PlayCircle,
+  UserX,
   XCircle,
 } from 'lucide-react-native';
 
@@ -22,6 +25,8 @@ import type { AlunoBookingsStackParamList } from '../../../types/navigation';
 import { formatCurrency } from '../../../utils/currency';
 import { useBookingDetailsQuery } from '../hooks/useBookingDetailsQuery';
 import { useCancelBookingMutation } from '../hooks/useCancelBookingMutation';
+import { useUpdateBookingStatusMutation } from '../hooks/useUpdateBookingStatusMutation';
+import type { BookingCheckoutStatusValue } from '../types/domain';
 import type { ScheduledBooking } from '../types/domain';
 
 type NavigationProp = NativeStackNavigationProp<AlunoBookingsStackParamList, 'BookingDetails'>;
@@ -100,30 +105,59 @@ const DetailItem = ({
 export const BookingDetailsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ScreenRouteProp>();
-  const { bookingId } = route.params;
+  const { bookingId, viewerRole = 'aluno' } = route.params;
+  const isInstructorView = viewerRole === 'instrutor';
   const { data: booking, isLoading, isError, refetch } = useBookingDetailsQuery(bookingId);
   const cancelMutation = useCancelBookingMutation(bookingId);
-  const [meetingPoint, setMeetingPoint] = React.useState('');
-  const [suggestionSaved, setSuggestionSaved] = React.useState(false);
-
-  React.useEffect(() => {
-    if (booking?.meetingPointSuggestion) {
-      setMeetingPoint(booking.meetingPointSuggestion);
-    }
-  }, [booking?.meetingPointSuggestion]);
+  const updateStatusMutation = useUpdateBookingStatusMutation(bookingId);
 
   const handleChatPress = () => {
     navigation.getParent()?.navigate('Chat', {
       screen: 'ChatScreen',
       params: {
         conversationId: `booking-${bookingId}`,
-        participantName: booking?.instructorName ?? 'Professor',
+        participantName: isInstructorView
+          ? booking?.studentName ?? 'Aluno'
+          : booking?.instructorName ?? 'Professor',
       },
     });
   };
 
-  const handleSaveMeetingPoint = () => {
-    setSuggestionSaved(true);
+  const handleUpdateStatusPress = (
+    status: BookingCheckoutStatusValue,
+    title: string,
+    message: string,
+  ) => {
+    if (updateStatusMutation.isPending) {
+      return;
+    }
+
+    Alert.alert(title, message, [
+      { text: 'Voltar', style: 'cancel' },
+      {
+        text: 'Confirmar',
+        onPress: () => {
+          updateStatusMutation.mutate(
+            { status },
+            {
+              onSuccess: result => {
+                Alert.alert('Aula atualizada', result.message);
+              },
+              onError: () => {
+                Alert.alert('Nao foi possivel atualizar', 'Verifique o status atual e tente novamente.');
+              },
+            },
+          );
+        },
+      },
+    ]);
+  };
+
+  const handleReportProblemPress = () => {
+    Alert.alert(
+      'Relato do instrutor indisponivel',
+      'O backend ainda nao possui uma rota propria para o instrutor registrar problema com motivo, descricao e evidencias. Por enquanto, use o chat ou marque o status permitido quando aplicavel.',
+    );
   };
 
   const handleCancelPress = () => {
@@ -222,8 +256,10 @@ export const BookingDetailsScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.summaryCopy}>
-              <Text style={styles.kicker}>Aula com</Text>
-              <Text style={styles.instructorName}>{booking.instructorName}</Text>
+              <Text style={styles.kicker}>{isInstructorView ? 'Aula para' : 'Aula com'}</Text>
+              <Text style={styles.instructorName}>
+                {isInstructorView ? booking.studentName : booking.instructorName}
+              </Text>
             </View>
             <View style={[styles.statusPill, { backgroundColor: getStatusTone(booking) }]}>
               <Text style={styles.statusPillText}>{getStatusText(booking)}</Text>
@@ -257,54 +293,94 @@ export const BookingDetailsScreen: React.FC = () => {
         </Card>
 
         <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Ponto de encontro</Text>
-          <View style={styles.currentLocation}>
-            <MapPin color={theme.colors.text.secondary} size={18} />
-            <Text style={styles.currentLocationText}>
-              {booking.location ?? 'Endereço a combinar com o professor'}
-            </Text>
-          </View>
-          <TextInput
-            value={meetingPoint}
-            onChangeText={text => {
-              setMeetingPoint(text);
-              setSuggestionSaved(false);
-            }}
-            placeholder="Sugira um ponto de encontro"
-            placeholderTextColor={theme.colors.text.tertiary}
-            multiline
-            style={styles.meetingInput}
-          />
-          <Button
-            title={suggestionSaved ? 'Sugestão registrada' : 'Sugerir ponto'}
-            variant={suggestionSaved ? 'secondary' : 'outline'}
-            disabled={!meetingPoint.trim()}
-            onPress={handleSaveMeetingPoint}
-          />
-        </Card>
-
-        <Card style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Ações</Text>
-          <View style={styles.actions}>
-            <Button
-              title="Chat com professor"
-              icon={MessageCircle}
-              variant="primary"
-              onPress={handleChatPress}
-            />
-            <Button
-              title="Cancelar aula"
-              icon={XCircle}
-              variant="destructive"
-              disabled={!booking.cancellationPolicy.canCancel}
-              loading={cancelMutation.isPending}
-              onPress={handleCancelPress}
-            />
-          </View>
-          <Text style={styles.policyText}>
-            {booking.cancellationPolicy.reason}
-            {deadline ? ` Prazo: ${deadline}.` : ''}
-          </Text>
+          {isInstructorView ? (
+            <>
+              <View style={styles.actions}>
+                <Button
+                  title="Acessar chat"
+                  icon={MessageCircle}
+                  variant="primary"
+                  onPress={handleChatPress}
+                />
+                <Button
+                  title="Iniciar aula"
+                  icon={PlayCircle}
+                  variant="outline"
+                  disabled={booking.apiStatus !== 'CONFIRMADO'}
+                  loading={updateStatusMutation.isPending}
+                  onPress={() =>
+                    handleUpdateStatusPress(
+                      'EM_ANDAMENTO',
+                      'Iniciar aula',
+                      'A aula sera marcada como em andamento.',
+                    )
+                  }
+                />
+                <Button
+                  title="Concluir aula"
+                  icon={CheckCircle2}
+                  variant="secondary"
+                  disabled={booking.apiStatus !== 'EM_ANDAMENTO'}
+                  loading={updateStatusMutation.isPending}
+                  onPress={() =>
+                    handleUpdateStatusPress(
+                      'CONCLUIDO',
+                      'Concluir aula',
+                      'A aula sera marcada como concluida.',
+                    )
+                  }
+                />
+                <Button
+                  title="Aluno nao compareceu"
+                  icon={UserX}
+                  variant="destructive"
+                  disabled={booking.apiStatus !== 'CONFIRMADO'}
+                  loading={updateStatusMutation.isPending}
+                  onPress={() =>
+                    handleUpdateStatusPress(
+                      'NAO_COMPARECEU',
+                      'Marcar nao comparecimento',
+                      'Use esta acao apenas quando o aluno nao compareceu a uma aula confirmada.',
+                    )
+                  }
+                />
+                <Button
+                  title="Relatar problema"
+                  icon={AlertTriangle}
+                  variant="ghost"
+                  onPress={handleReportProblemPress}
+                />
+              </View>
+              <Text style={styles.policyText}>
+                Acoes seguem as transicoes atuais do backend: CONFIRMADO para EM_ANDAMENTO,
+                EM_ANDAMENTO para CONCLUIDO, ou CONFIRMADO para NAO_COMPARECEU.
+              </Text>
+            </>
+          ) : (
+            <>
+              <View style={styles.actions}>
+                <Button
+                  title="Chat com professor"
+                  icon={MessageCircle}
+                  variant="primary"
+                  onPress={handleChatPress}
+                />
+                <Button
+                  title="Cancelar aula"
+                  icon={XCircle}
+                  variant="destructive"
+                  disabled={!booking.cancellationPolicy.canCancel}
+                  loading={cancelMutation.isPending}
+                  onPress={handleCancelPress}
+                />
+              </View>
+              <Text style={styles.policyText}>
+                {booking.cancellationPolicy.reason}
+                {deadline ? ` Prazo: ${deadline}.` : ''}
+              </Text>
+            </>
+          )}
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -404,26 +480,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,
-  },
-  currentLocation: {
-    flexDirection: 'row',
-    columnGap: theme.spacing.sm,
-  },
-  currentLocationText: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-  },
-  meetingInput: {
-    minHeight: 92,
-    borderWidth: theme.borders.width.base,
-    borderColor: theme.colors.border.medium,
-    borderRadius: theme.borders.radius.md,
-    padding: theme.spacing.md,
-    textAlignVertical: 'top',
-    color: theme.colors.text.primary,
-    fontSize: theme.typography.fontSize.sm,
-    backgroundColor: theme.colors.background.secondary,
   },
   actions: {
     rowGap: theme.spacing.sm,

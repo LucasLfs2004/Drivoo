@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 
 import type {
   InstructorEarningsOverview,
+  InstructorFinancialSummary,
   InstructorEarningsTrendPoint,
   InstructorPaymentStatus,
   InstructorRecentPayment,
@@ -9,6 +10,7 @@ import type {
 import type {
   InstructorEarningsHistoryApiResponse,
   InstructorEarningsHistoryItemApiResponse,
+  InstructorFinancialSummaryApiResponse,
   InstructorRecentPaymentItemApiResponse,
   InstructorRecentPaymentsApiResponse,
 } from '../types/api';
@@ -64,8 +66,17 @@ const parseDate = (...values: Array<string | null | undefined>): Date | undefine
   return parsed.isValid() ? parsed.toDate() : undefined;
 };
 
+const formatChartDateLabel = (date?: string): string => {
+  if (!date) {
+    return '';
+  }
+
+  const parsed = dayjs(date);
+  return parsed.isValid() ? parsed.format('DD/MM') : date;
+};
+
 const buildPaymentDescription = (
-  item: InstructorEarningsHistoryItemApiResponse | InstructorRecentPaymentItemApiResponse
+  item: InstructorEarningsHistoryItemApiResponse | InstructorRecentPaymentItemApiResponse,
 ): string => {
   const explicitDescription = getString(item.descricao, item.description);
   if (explicitDescription) {
@@ -82,7 +93,7 @@ const buildPaymentDescription = (
 
 const mapRecentPayment = (
   item: InstructorRecentPaymentItemApiResponse,
-  index: number
+  index: number,
 ): InstructorRecentPayment => ({
   id: getString(item.id) ?? `recent-payment-${index}`,
   description: buildPaymentDescription(item),
@@ -93,7 +104,7 @@ const mapRecentPayment = (
 
 const mapHistoryItem = (
   item: InstructorEarningsHistoryItemApiResponse,
-  index: number
+  index: number,
 ): InstructorRecentPayment => ({
   id: getString(item.id) ?? `earning-history-${index}`,
   description: buildPaymentDescription(item),
@@ -102,7 +113,7 @@ const mapHistoryItem = (
     item.valor_liquido,
     item.valor,
     item.valor_bruto,
-    item.amount
+    item.amount,
   ),
   date: parseDate(item.data_pagamento, item.data_aula, item.data),
   status: normalizePaymentStatus(item.status),
@@ -127,13 +138,10 @@ const extractTrendItems = (response: unknown): unknown[] => {
     record.series,
   ];
 
-  return candidates.find(Array.isArray) as unknown[] | undefined ?? [];
+  return (candidates.find(Array.isArray) as unknown[] | undefined) ?? [];
 };
 
-const mapTrendPoint = (
-  item: unknown,
-  index: number
-): InstructorEarningsTrendPoint | null => {
+const mapTrendPoint = (item: unknown, index: number): InstructorEarningsTrendPoint | null => {
   if (!item || typeof item !== 'object') {
     return null;
   }
@@ -143,7 +151,7 @@ const mapTrendPoint = (
     typeof record.valor === 'number' ? record.valor : null,
     typeof record.total === 'number' ? record.total : null,
     typeof record.ganhos === 'number' ? record.ganhos : null,
-    typeof record.amount === 'number' ? record.amount : null
+    typeof record.amount === 'number' ? record.amount : null,
   );
 
   const label =
@@ -152,12 +160,12 @@ const mapTrendPoint = (
       typeof record.periodo_label === 'string' ? record.periodo_label : null,
       typeof record.periodo === 'string' ? record.periodo : null,
       typeof record.mes === 'string' ? record.mes : null,
-      typeof record.data === 'string' ? record.data : null
+      typeof record.data === 'string' ? record.data : null,
     ) ?? `P${index + 1}`;
 
   const referenceDate = parseDate(
     typeof record.data === 'string' ? record.data : null,
-    typeof record.periodo_inicio === 'string' ? record.periodo_inicio : null
+    typeof record.periodo_inicio === 'string' ? record.periodo_inicio : null,
   );
 
   return {
@@ -168,9 +176,7 @@ const mapTrendPoint = (
   };
 };
 
-const calculateCurrentMonthEarnings = (
-  historyItems: InstructorRecentPayment[]
-): number =>
+const calculateCurrentMonthEarnings = (historyItems: InstructorRecentPayment[]): number =>
   historyItems.reduce((total, item) => {
     if (!item.date || !dayjs(item.date).isSame(dayjs(), 'month')) {
       return total;
@@ -213,5 +219,132 @@ export const mapInstructorEarningsOverview = ({
       totalPaid: getNumber(recentPaymentsResponse.resumo?.total_pago),
       totalPending: getNumber(recentPaymentsResponse.resumo?.total_pendente),
     },
+  };
+};
+
+export const mapInstructorFinancialSummary = (
+  response: InstructorFinancialSummaryApiResponse,
+): InstructorFinancialSummary => {
+  const amounts = {
+    received: getNumber(response.financeiro?.recebido),
+    completedInPeriod: getNumber(response.financeiro?.valor_concluido_periodo),
+    completedInPreviousPeriod: getNumber(response.financeiro?.valor_concluido_periodo_anterior),
+    completedVariationPercent: getNumber(response.financeiro?.variacao_concluido_percentual),
+    availableForPayout: getNumber(response.financeiro?.disponivel_para_repasse),
+    processing: getNumber(response.financeiro?.em_processamento),
+    toRelease: getNumber(response.financeiro?.a_liberar),
+    blockedUnderReview: getNumber(response.financeiro?.bloqueado_em_analise),
+    payoutFailed: getNumber(response.financeiro?.falha_repasse),
+    forecastFutureConfirmedLessons: getNumber(
+      response.financeiro?.previsto_aulas_futuras_confirmadas,
+    ),
+  };
+
+  const periodMovement = {
+    lessonsInPeriod: getNumber(response.periodo_resumo?.aulas_no_periodo),
+    created: getNumber(response.periodo_resumo?.aulas_criadas),
+    scheduled: getNumber(response.periodo_resumo?.aulas_agendadas),
+    forecasted: getNumber(response.periodo_resumo?.aulas_previstas),
+    completed: getNumber(response.periodo_resumo?.aulas_concluidas),
+    canceled: getNumber(response.periodo_resumo?.aulas_canceladas),
+    noShow: getNumber(response.periodo_resumo?.nao_compareceu),
+    scheduledAmount: getNumber(response.periodo_resumo?.valor_agendado),
+    completedAmount: getNumber(response.periodo_resumo?.valor_concluido),
+    forecastedAmount: getNumber(response.periodo_resumo?.valor_previsto),
+  };
+
+  const amountValues = Object.values(amounts);
+  const movementValues = Object.values(periodMovement);
+  const financialEvolutionPoints = (response.evolucao_financeira?.pontos ?? []).map(
+    (point, index) => {
+      const date = getString(point.data) ?? '';
+
+      return {
+        id: date || `financial-evolution-${index}`,
+        date,
+        label: formatChartDateLabel(date) || `P${index + 1}`,
+        value: getNumber(point.valor),
+        accumulated: getNumber(point.acumulado),
+        lessonsCount: getNumber(point.quantidade_aulas),
+      };
+    },
+  );
+
+  const lessonsByStatus = (response.resumo_aulas_por_status ?? []).map((item, index) => {
+    const status = getString(item.status) ?? `status-${index}`;
+
+    return {
+      id: status,
+      status,
+      label: getString(item.label, status) ?? status,
+      count: getNumber(item.quantidade),
+    };
+  });
+
+  const recentLessons = (response.aulas_recentes ?? []).map((lesson, index) => {
+    const locationSummary = getString(
+      lesson.local?.resumo,
+      lesson.local?.bairro && lesson.local?.estado
+        ? `${lesson.local.bairro} - ${lesson.local.estado}`
+        : undefined,
+      lesson.local?.cidade && lesson.local?.estado
+        ? `${lesson.local.cidade} - ${lesson.local.estado}`
+        : undefined,
+      lesson.local?.endereco_completo,
+    );
+
+    return {
+      id: getString(lesson.id) ?? `recent-lesson-${index}`,
+      date: getString(lesson.data) ?? '',
+      startTime: getString(lesson.hora_inicio, lesson.inicio) ?? '',
+      endTime: getString(lesson.hora_fim, lesson.fim) ?? '',
+      durationMinutes: getNumber(lesson.duracao_minutos),
+      student: {
+        id: getString(lesson.aluno?.id) ?? '',
+        name: getString(lesson.aluno?.nome) ?? 'Aluno',
+        avatar: getString(lesson.aluno?.foto_url),
+      },
+      status: getString(lesson.status) ?? 'UNKNOWN',
+      statusLabel: getString(lesson.status_label, lesson.status) ?? 'Sem status',
+      location: {
+        summary: locationSummary ?? 'Local não informado',
+        neighborhood: getString(lesson.local?.bairro),
+        city: getString(lesson.local?.cidade),
+        state: getString(lesson.local?.estado),
+        fullAddress: getString(lesson.local?.endereco_completo),
+      },
+      instructorAmount: getNumber(lesson.valor_instrutor),
+      totalAmount: getNumber(lesson.valor_total),
+      evaluated: Boolean(lesson.avaliado),
+    };
+  });
+
+  return {
+    instructorId: getString(response.instrutor_id) ?? '',
+    period: {
+      startDate: getString(response.periodo?.data_inicio) ?? '',
+      endDate: getString(response.periodo?.data_fim) ?? '',
+      days: getNumber(response.periodo?.dias),
+    },
+    amounts,
+    futureConfirmedLessons: {
+      count: getNumber(response.aulas_futuras_confirmadas?.quantidade),
+      instructorAmount: getNumber(response.aulas_futuras_confirmadas?.valor_instrutor),
+    },
+    periodMovement,
+    financialEvolution: {
+      type: getString(response.evolucao_financeira?.tipo) ?? 'acumulado',
+      total: getNumber(response.evolucao_financeira?.total),
+      points: financialEvolutionPoints,
+    },
+    lessonsByStatus,
+    recentLessons,
+    isEmpty:
+      amountValues.every(value => value === 0) &&
+      movementValues.every(value => value === 0) &&
+      getNumber(response.aulas_futuras_confirmadas?.quantidade) === 0 &&
+      financialEvolutionPoints.length === 0 &&
+      lessonsByStatus.length === 0 &&
+      recentLessons.length === 0,
   };
 };

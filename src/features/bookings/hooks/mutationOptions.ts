@@ -2,8 +2,15 @@ import { createAppMutationOptions } from '../../../shared/hooks';
 import { bookingCheckoutApi } from '../api/bookingCheckoutApi';
 import { bookingsApi } from '../api/bookingsApi';
 import { mapBookingCheckoutSession } from '../mappers/mapBookingCheckout';
-import { mapBookingCancellationResult } from '../mappers/mapScheduledBookings';
-import type { CancelBookingApiRequest, CreateBookingCheckoutSessionApiRequest } from '../types/api';
+import {
+  mapBookingActionResult,
+  mapBookingCancellationResult,
+} from '../mappers/mapScheduledBookings';
+import type {
+  CancelBookingApiRequest,
+  CreateBookingCheckoutSessionApiRequest,
+  UpdateBookingStatusApiRequest,
+} from '../types/api';
 import { bookingQueryKeys } from './queryKeys';
 
 export const bookingMutationOptions = {
@@ -22,6 +29,19 @@ export const bookingMutationOptions = {
       mutationFn: async (payload: CancelBookingApiRequest = {}) => {
         const response = await bookingsApi.cancel(bookingId, payload);
         return mapBookingCancellationResult(response);
+      },
+      retry: false,
+      invalidateQueryKeys: [bookingQueryKeys.all],
+    }),
+
+  updateStatus: (bookingId: string) =>
+    createAppMutationOptions({
+      mutationFn: async (payload: UpdateBookingStatusApiRequest) => {
+        await bookingsApi.updateStatus(bookingId, payload);
+        return mapBookingActionResult({
+          agendamento_id: bookingId,
+          message: 'Status da aula atualizado com sucesso.',
+        });
       },
       retry: false,
       invalidateQueryKeys: [bookingQueryKeys.all],

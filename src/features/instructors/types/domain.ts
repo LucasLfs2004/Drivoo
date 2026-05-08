@@ -135,6 +135,94 @@ export interface InstructorEarningsOverview {
   };
 }
 
+export interface InstructorFinancialSummaryPeriod {
+  startDate: string;
+  endDate: string;
+  days: number;
+}
+
+export interface InstructorFinancialSummary {
+  instructorId: string;
+  period: InstructorFinancialSummaryPeriod;
+  amounts: {
+    received: number;
+    completedInPeriod: number;
+    completedInPreviousPeriod: number;
+    completedVariationPercent: number;
+    availableForPayout: number;
+    processing: number;
+    toRelease: number;
+    blockedUnderReview: number;
+    payoutFailed: number;
+    forecastFutureConfirmedLessons: number;
+  };
+  futureConfirmedLessons: {
+    count: number;
+    instructorAmount: number;
+  };
+  periodMovement: {
+    lessonsInPeriod: number;
+    created: number;
+    scheduled: number;
+    forecasted: number;
+    completed: number;
+    canceled: number;
+    noShow: number;
+    scheduledAmount: number;
+    completedAmount: number;
+    forecastedAmount: number;
+  };
+  financialEvolution: {
+    type: string;
+    total: number;
+    points: InstructorFinancialEvolutionPoint[];
+  };
+  lessonsByStatus: InstructorFinancialStatusSummary[];
+  recentLessons: InstructorFinancialRecentLesson[];
+  isEmpty: boolean;
+}
+
+export interface InstructorFinancialEvolutionPoint {
+  id: string;
+  date: string;
+  label: string;
+  value: number;
+  accumulated: number;
+  lessonsCount: number;
+}
+
+export interface InstructorFinancialStatusSummary {
+  id: string;
+  status: string;
+  label: string;
+  count: number;
+}
+
+export interface InstructorFinancialRecentLesson {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  student: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  status: string;
+  statusLabel: string;
+  location: {
+    summary: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    fullAddress?: string;
+  };
+  instructorAmount: number;
+  totalAmount: number;
+  evaluated: boolean;
+}
+
 export type InstructorFiscalType = 'PF' | 'MEI';
 
 export interface InstructorFinancialProfile {

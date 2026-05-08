@@ -5,6 +5,8 @@ import type {
   CancelBookingApiResponse,
   ListMyBookingsApiParams,
   ListMyBookingsApiResponse,
+  UpdateBookingStatusApiRequest,
+  UpdateBookingStatusApiResponse,
 } from '../types/api';
 
 export const bookingsApi = {
@@ -33,6 +35,18 @@ export const bookingsApi = {
     const response = await apiClient.post<CancelBookingApiResponse>(
       `/agendamentos/${bookingId}/cancelar`,
       { motivo: payload.motivo ?? null },
+    );
+
+    return response.data;
+  },
+
+  async updateStatus(
+    bookingId: string,
+    payload: UpdateBookingStatusApiRequest,
+  ): Promise<UpdateBookingStatusApiResponse> {
+    const response = await apiClient.put<UpdateBookingStatusApiResponse>(
+      `/agendamentos/${bookingId}/status`,
+      payload,
     );
 
     return response.data;

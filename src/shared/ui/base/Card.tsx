@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { theme } from '../../../theme';
 
 export interface CardProps {
   children: React.ReactNode;
   variant?: 'elevated' | 'outlined' | 'filled';
   padding?: keyof typeof theme.spacing;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -15,12 +15,7 @@ export const Card: React.FC<CardProps> = ({
   padding = 'md',
   style,
 }) => {
-  const cardStyle = [
-    styles.base,
-    styles[variant],
-    { padding: theme.spacing[padding] },
-    style,
-  ];
+  const cardStyle = [styles.base, styles[variant], { padding: theme.spacing[padding] }, style];
 
   return <View style={cardStyle}>{children}</View>;
 };
