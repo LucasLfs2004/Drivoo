@@ -19,6 +19,7 @@ export interface SearchInstructorApiInstructor {
   coordenadas?: Coordenadas | null;
   veiculo?: {
     id: string;
+    marca?: string | null;
     modelo: string;
     ano?: number | null;
     tipo_cambio?: 'MANUAL' | 'AUTOMATICO' | null;
@@ -49,6 +50,7 @@ export interface InstructorDetailsApiResponse {
 
 export interface InstructorVehicleApiResponse {
   id: string;
+  marca?: string | null;
   modelo: string;
   ano?: number | null;
   placa?: string | null;
@@ -65,6 +67,14 @@ export interface InstructorProfileUpdateApiRequest {
   bio?: string | null;
   tags?: string[] | null;
   genero?: 'M' | 'F' | 'Outro' | null;
+  veiculo?: {
+    marca?: string | null;
+    modelo: string;
+    ano?: number | null;
+    placa?: string | null;
+    tipo_cambio: 'MANUAL' | 'AUTOMATICO';
+    aceita_veiculo_aluno?: boolean | null;
+  };
 }
 
 export type InstructorFiscalTypeApi = 'PF' | 'MEI';
@@ -112,6 +122,7 @@ export interface InstructorStripeOnboardingLinkApiResponse {
 }
 
 export interface InstructorVehicleCreateApiRequest {
+  marca?: string | null;
   modelo: string;
   ano?: number | null;
   placa?: string | null;
@@ -120,6 +131,7 @@ export interface InstructorVehicleCreateApiRequest {
 }
 
 export interface InstructorVehicleUpdateApiRequest {
+  marca?: string | null;
   modelo?: string | null;
   ano?: number | null;
   placa?: string | null;

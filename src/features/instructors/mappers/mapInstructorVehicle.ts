@@ -12,6 +12,7 @@ export const mapInstructorVehicle = (
   vehicle: InstructorVehicleApiResponse
 ): InstructorVehicle => ({
   id: vehicle.id,
+  marca: vehicle.marca ?? undefined,
   modelo: vehicle.modelo,
   ano: vehicle.ano ?? undefined,
   placa: vehicle.placa ?? undefined,

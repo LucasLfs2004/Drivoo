@@ -148,6 +148,7 @@ export const authService = {
     cidade?: string;
     estado?: string;
     veiculo?: {
+      marca?: string;
       modelo: string;
       ano: number;
       placa: string;

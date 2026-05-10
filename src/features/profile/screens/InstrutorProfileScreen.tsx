@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../../shared/ui/base/Card';
@@ -25,8 +26,12 @@ interface Props {
   navigation: NavigationLike;
 }
 
+const BIO_COLLAPSED_LINES = 4;
+
 export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { usuario, logout } = useAuth();
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
+  const [isBioExpandable, setIsBioExpandable] = useState(false);
   const {
     data: profile,
     isLoading: isLoadingProfile,
@@ -45,6 +50,8 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
   const initials = profile
     ? `${profile.primeiroNome[0] ?? ''}${profile.ultimoNome[0] ?? ''}`.toUpperCase()
     : `${usuario?.perfil?.primeiroNome?.[0] ?? ''}${usuario?.perfil?.ultimoNome?.[0] ?? ''}`;
+  const bioText = profile?.bio?.trim() ? profile.bio.trim() : 'Nenhuma bio cadastrada.';
+  const hasBio = Boolean(profile?.bio?.trim());
 
   if (isLoadingProfile) {
     return (
@@ -122,9 +129,32 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
           </View>
           <View style={[styles.infoItem, styles.infoItemStacked]}>
             <Text style={styles.infoLabel}>Bio</Text>
-            <Text style={[styles.infoValue, styles.infoValueStacked]}>
-              {profile.bio?.trim() ? profile.bio : 'Nenhuma bio cadastrada.'}
+            {hasBio ? (
+              <Text
+                style={[styles.infoValue, styles.infoValueStacked, styles.bioMeasureText]}
+                onTextLayout={event => {
+                  setIsBioExpandable(event.nativeEvent.lines.length > BIO_COLLAPSED_LINES);
+                }}
+              >
+                {bioText}
+              </Text>
+            ) : null}
+            <Text
+              style={[styles.infoValue, styles.infoValueStacked]}
+              numberOfLines={isBioExpanded ? undefined : BIO_COLLAPSED_LINES}
+            >
+              {bioText}
             </Text>
+            {hasBio && isBioExpandable ? (
+              <TouchableOpacity
+                onPress={() => setIsBioExpanded(current => !current)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.bioToggleText}>
+                  {isBioExpanded ? 'Mostrar menos' : 'Mostrar mais'}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
           <View style={[styles.infoItem, styles.infoItemStacked]}>
             <Text style={styles.infoLabel}>Especialidades</Text>
@@ -138,6 +168,12 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
 
         <Card style={styles.vehicleCard}>
           <Text style={styles.sectionTitle}>Veículo</Text>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Marca</Text>
+            <Text style={styles.infoValue}>
+              {primaryVehicle?.marca || profile.veiculo.marca || 'Nao informada'}
+            </Text>
+          </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Modelo</Text>
             <Text style={styles.infoValue}>
@@ -323,5 +359,15 @@ const styles = StyleSheet.create({
   infoValueStacked: {
     width: '100%',
     textAlign: 'left',
+  },
+  bioMeasureText: {
+    position: 'absolute',
+    opacity: 0,
+    zIndex: -1,
+  },
+  bioToggleText: {
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.primary[500],
   },
 });

@@ -16,12 +16,10 @@ import { Button } from '../../../shared/ui/base/Button';
 import { FormInput, FormSelect } from '../../../shared/ui/forms';
 import { theme } from '../../../theme';
 import {
-  useCreateInstructorVehicleMutation,
   useDeleteInstructorVehicleMutation,
   useInstructorProfileUpdateMutation,
   useInstructorVehiclesQuery,
   useMyInstructorProfileQuery,
-  useUpdateInstructorVehicleMutation,
 } from '../../instructors';
 
 interface InstructorProfileFormData {
@@ -30,6 +28,7 @@ interface InstructorProfileFormData {
   valorHora: string;
   bio: string;
   tags: string;
+  veiculoMarca: string;
   veiculoModelo: string;
   veiculoAno: string;
   veiculoPlaca: string;
@@ -43,6 +42,8 @@ interface Props {
   };
 }
 
+const INSTRUCTOR_BIO_MAX_LENGTH = 500;
+
 export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => {
   const {
     data: profile,
@@ -54,8 +55,6 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
     isLoading: isLoadingVehicles,
   } = useInstructorVehiclesQuery();
   const updateProfileMutation = useInstructorProfileUpdateMutation();
-  const createVehicleMutation = useCreateInstructorVehicleMutation();
-  const updateVehicleMutation = useUpdateInstructorVehicleMutation();
   const deleteVehicleMutation = useDeleteInstructorVehicleMutation();
 
   const primaryVehicle = vehicles.find(vehicle => vehicle.ativo) ?? vehicles[0];
@@ -72,6 +71,7 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
       valorHora: '',
       bio: '',
       tags: '',
+      veiculoMarca: '',
       veiculoModelo: '',
       veiculoAno: '',
       veiculoPlaca: '',
@@ -96,8 +96,9 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
               : '',
       experienciaAnos: String(profile.experienciaAnos ?? 0),
       valorHora: String(profile.precos.valorHora ?? ''),
-      bio: profile.bio ?? '',
+      bio: profile.bio?.slice(0, INSTRUCTOR_BIO_MAX_LENGTH) ?? '',
       tags: profile.especialidades.join(', '),
+      veiculoMarca: primaryVehicle?.marca ?? profile.veiculo.marca ?? '',
       veiculoModelo: primaryVehicle?.modelo ?? profile.veiculo.modelo ?? '',
       veiculoAno: String(primaryVehicle?.ano ?? profile.veiculo.ano ?? ''),
       veiculoPlaca: primaryVehicle?.placa ?? '',
@@ -120,6 +121,7 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
       .map(item => item.trim())
       .filter(Boolean);
     const hasVehicleData = Boolean(
+      data.veiculoMarca.trim() ||
       data.veiculoModelo.trim() ||
       data.veiculoAno.trim() ||
       data.veiculoPlaca.trim() ||
@@ -130,29 +132,21 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
       await updateProfileMutation.mutateAsync({
         valor_hora: Number.isFinite(valorHora) ? valorHora : null,
         experiencia_anos: Number.isFinite(experienciaAnos) ? experienciaAnos : 0,
-        bio: data.bio.trim() || null,
+        bio: data.bio.trim().slice(0, INSTRUCTOR_BIO_MAX_LENGTH) || null,
         tags,
         genero: data.genero || null,
+        veiculo:
+          hasVehicleData && data.tipoCambio
+            ? {
+                marca: data.veiculoMarca.trim() || null,
+                modelo: data.veiculoModelo.trim(),
+                ano: data.veiculoAno.trim() ? Number.parseInt(data.veiculoAno, 10) : null,
+                placa: data.veiculoPlaca.trim() || null,
+                tipo_cambio: data.tipoCambio,
+                aceita_veiculo_aluno: data.aceitaVeiculoAluno,
+              }
+            : undefined,
       });
-
-      if (hasVehicleData && data.tipoCambio) {
-        const vehiclePayload = {
-          modelo: data.veiculoModelo.trim(),
-          ano: data.veiculoAno.trim() ? Number.parseInt(data.veiculoAno, 10) : null,
-          placa: data.veiculoPlaca.trim() || null,
-          tipo_cambio: data.tipoCambio,
-          aceita_veiculo_aluno: data.aceitaVeiculoAluno,
-        } as const;
-
-        if (primaryVehicle) {
-          await updateVehicleMutation.mutateAsync({
-            vehicleId: primaryVehicle.id,
-            payload: vehiclePayload,
-          });
-        } else {
-          await createVehicleMutation.mutateAsync(vehiclePayload);
-        }
-      }
 
       Alert.alert('Sucesso', 'Seu perfil foi atualizado com sucesso!', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -188,10 +182,11 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
                             : '',
                     experienciaAnos: String(profile.experienciaAnos ?? 0),
                     valorHora: String(profile.precos.valorHora ?? ''),
-                    bio: profile.bio ?? '',
+                    bio: profile.bio?.slice(0, INSTRUCTOR_BIO_MAX_LENGTH) ?? '',
                     tags: profile.especialidades.join(', '),
                   }
                 : {}),
+              veiculoMarca: '',
               veiculoModelo: '',
               veiculoAno: '',
               veiculoPlaca: '',
@@ -209,8 +204,6 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
 
   const isSaving =
     updateProfileMutation.isPending ||
-    createVehicleMutation.isPending ||
-    updateVehicleMutation.isPending ||
     deleteVehicleMutation.isPending;
 
   if (isLoadingProfile || isLoadingVehicles) {
@@ -315,11 +308,12 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
               <FormInput
                 label="Bio"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={text => onChange(text.slice(0, INSTRUCTOR_BIO_MAX_LENGTH))}
                 error={errors.bio?.message}
                 placeholder="Fale um pouco sobre sua experiência"
                 multiline
                 numberOfLines={4}
+                maxLength={INSTRUCTOR_BIO_MAX_LENGTH}
                 style={styles.multilineInput}
               />
             )}
@@ -328,6 +322,19 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
 
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Veículo</Text>
+          <Controller
+            control={control}
+            name="veiculoMarca"
+            render={({ field: { onChange, value } }) => (
+              <FormInput
+                label="Marca"
+                value={value}
+                onChangeText={onChange}
+                error={errors.veiculoMarca?.message}
+                placeholder="Ex: Volkswagen"
+              />
+            )}
+          />
           <Controller
             control={control}
             name="veiculoModelo"

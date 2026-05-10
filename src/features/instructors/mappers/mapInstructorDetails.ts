@@ -46,6 +46,7 @@ export const mapInstructorDetails = (
   },
   veiculo: {
     id: instructor.veiculo?.id ?? '',
+    marca: instructor.veiculo?.marca ?? undefined,
     modelo: instructor.veiculo?.modelo ?? '',
     ano: instructor.veiculo?.ano ?? undefined,
     transmissao: mapTransmissao(instructor.veiculo?.tipo_cambio),

@@ -45,7 +45,10 @@ export const instructorMutationOptions = {
     createAppMutationOptions({
       mutationFn: (payload: InstructorProfileUpdateApiRequest) =>
         instructorProfileApi.updateMyProfile(payload),
-      invalidateQueryKeys: [instructorQueryKeys.me()],
+      invalidateQueryKeys: [
+        instructorQueryKeys.me(),
+        instructorQueryKeys.vehicles(),
+      ],
     }),
 
   updateFinancial: () =>

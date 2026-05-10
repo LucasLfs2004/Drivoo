@@ -33,7 +33,7 @@ export const mapInstructorSearchItem = (
     moeda: 'BRL',
   },
   veiculo: {
-    marca: undefined,
+    marca: instructor.veiculo?.marca ?? undefined,
     modelo: instructor.veiculo?.modelo ?? '',
     transmissao: mapCambio(instructor.veiculo?.tipo_cambio),
     aceitaVeiculoAluno: instructor.veiculo?.aceita_veiculo_aluno ?? undefined,

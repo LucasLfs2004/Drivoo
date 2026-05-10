@@ -403,14 +403,11 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     const fields: Array<keyof OnboardingFormData> = [
+      'veiculo_marca',
       'veiculo_modelo',
       'veiculo_ano',
       'veiculo_placa',
     ];
-
-    if (isInstrutor) {
-      fields.unshift('veiculo_marca');
-    }
 
     return fields;
   };
@@ -734,9 +731,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
 
       {(possuiVeiculo || isInstrutor) && (
         <>
-          {isInstrutor
-            ? renderInput('veiculo_marca', 'Marca', 'Ex: Volkswagen')
-            : null}
+          {renderInput('veiculo_marca', 'Marca', 'Ex: Volkswagen')}
           {renderInput('veiculo_modelo', 'Modelo', 'Ex: Gol')}
           {renderInput('veiculo_ano', 'Ano', '2020', {
             keyboardType: 'numeric',

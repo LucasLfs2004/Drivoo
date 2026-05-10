@@ -58,6 +58,7 @@ export interface InstructorDetails {
   };
   veiculo: {
     id: string;
+    marca?: string;
     modelo: string;
     ano?: number;
     transmissao: 'manual' | 'automatico';
@@ -77,6 +78,7 @@ export interface InstructorDetails {
 
 export interface InstructorVehicle {
   id: string;
+  marca?: string;
   modelo: string;
   ano?: number;
   placa?: string;
