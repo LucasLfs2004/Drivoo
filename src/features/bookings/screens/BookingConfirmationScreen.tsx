@@ -1,11 +1,13 @@
+import { Divider, Typography } from '@/shared/ui/base';
+import InfoDisplay from '@/shared/ui/base/InfoDisplay';
+import { FormCheckbox } from '@/shared/ui/forms/FormCheckbox';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Car, Gauge } from 'lucide-react-native';
+import { Calendar, Car, Clock, MapPin, Star } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '../../../shared/ui/base/AppHeader';
 import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
 import { theme } from '../../../theme';
 import { AlunoSearchStackParamList } from '../../../types/navigation';
 import { formatCurrency } from '../../../utils/currency';
@@ -122,130 +124,134 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <AppHeader
-          title="Confirmar Agendamento"
-          subtitle="Revise os detalhes antes de seguir para o pagamento"
-          onBackPress={() => navigation.goBack()}
-        />
-
+      <AppHeader
+        title="Confirmar Agendamento"
+        subtitle="Revise os detalhes antes de seguir para o pagamento"
+        onBackPress={() => navigation.goBack()}
+      />
+      <ScrollView
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Instructor Summary */}
-        <Card style={styles.instructorCard}>
-          <View style={styles.instructorHeader}>
+        {/* <Card style={styles.instructorCard}> */}
+        <View style={styles.instructorHeader}>
+          <View style={styles.instructorHeaderInfo}>
             {renderInstructorAvatar()}
-            <View style={styles.instructorInfo}>
-              <Text style={styles.instructorName}>{bookingData.instructorName}</Text>
-              <View style={styles.vehicleMetaRow}>
-                <Car color={theme.colors.text.secondary} size={18} />
-                <Text style={styles.vehicleInfo}>
-                  {bookingData.vehicleInfo.marca} {bookingData.vehicleInfo.modelo}
-                </Text>
-              </View>
-              <View style={styles.vehicleMetaRow}>
-                <Gauge color={theme.colors.text.secondary} size={18} />
-                <Text style={styles.transmissionInfo}>
-                  {bookingData.vehicleInfo.transmissao === 'automatico' ? 'Automático' : 'Manual'}
-                </Text>
+            <View>
+              <Typography variant="body" weight="bold">
+                {bookingData.instructorName}
+              </Typography>
+              <View style={styles.rating}>
+                <Star color={theme.colors.accent[500]} size={18} />
+                <Typography variant="label" color="tertiary">
+                  4.5
+                </Typography>
               </View>
             </View>
           </View>
-        </Card>
-
-        {/* Lesson Details */}
-        <Card style={styles.lessonCard}>
-          <Text style={styles.sectionTitle}>Detalhes da Aula</Text>
-
-          <View style={styles.detailRow}>
-            <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Data e Horário</Text>
-              <Text style={styles.detailValue}>
-                {formatDate(bookingData.date)} às {bookingData.timeSlot}
-              </Text>
-            </View>
+          <View style={styles.vehicleMetaRow}>
+            <Car color={theme.colors.text.secondary} size={18} />
+            <Text style={styles.vehicleInfo}>{bookingData.vehicleInfo.marca}</Text>
           </View>
+        </View>
 
-          <View style={styles.detailRow}>
-            <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Duração</Text>
-              <Text style={styles.detailValue}>{formatDuration(bookingData.duration)}</Text>
-            </View>
-          </View>
+        <Divider />
+        <View style={styles.detailContent}>
+          <Typography variant="h4" weight="semibold" style={styles.sectionTitle}>
+            Detalhes da Aula
+          </Typography>
+          <InfoDisplay
+            icon={Calendar}
+            title="Data e horário"
+            info={`${formatDate(bookingData.date)} às ${bookingData.timeSlot}`}
+          />
+          <InfoDisplay icon={Clock} title="Duração" info={formatDuration(bookingData.duration)} />
+          <InfoDisplay
+            icon={MapPin}
+            title="Local de Encontro"
+            info={bookingData.location.endereco}
+          />
+          <InfoDisplay
+            icon={Car}
+            title="Veículo"
+            info={`${bookingData.vehicleInfo.marca} ${bookingData.vehicleInfo.modelo} (${bookingData.vehicleInfo.transmissao})`}
+          />
+        </View>
+        <Divider />
 
-          <View style={styles.detailRow}>
-            <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Local de Encontro</Text>
-              <Text style={styles.detailValue}>{bookingData.location.endereco}</Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* Payment Summary */}
-        <Card style={styles.paymentCard}>
-          <Text style={styles.paymentSectionTitle}>Resumo do pagamento</Text>
+        <View style={styles.paymentCard}>
+          <Typography variant="h4" weight="semibold">
+            Resumo do pagamento
+          </Typography>
 
           <View style={styles.paymentRow}>
-            <Text style={styles.paymentLabel}>Valor da aula</Text>
-            <Text style={styles.paymentValue}>{formatPaymentValue(paymentInfo.subtotal)}</Text>
+            <Typography>Valor da aula</Typography>
+            <Typography color="contrast">{formatPaymentValue(paymentInfo.subtotal)}</Typography>
           </View>
 
           <View style={styles.paymentSplitBox}>
             <View style={styles.paymentRow}>
-              <Text style={styles.paymentLabel}>Valor para o professor</Text>
-              <Text style={styles.paymentValue}>
+              <Typography color="secondary" variant="caption" weight="medium">
+                Valor para o professor
+              </Typography>
+              <Typography variant="caption">
                 {formatPaymentValue(paymentInfo.instructorAmount)}
-              </Text>
+              </Typography>
             </View>
-
             <View style={styles.paymentRow}>
-              <Text style={styles.paymentLabel}>
+              <Typography color="secondary" variant="caption" weight="medium">
                 Taxa plataforma ({Math.round(paymentInfo.platformFeeRate * 100)}%)
-              </Text>
-              <Text style={styles.paymentValue}>{formatPaymentValue(paymentInfo.platformFee)}</Text>
+              </Typography>
+              <Typography variant="caption">
+                {formatPaymentValue(paymentInfo.platformFee)}
+              </Typography>
             </View>
 
-            <Text style={styles.paymentDescription}>
+            <Typography variant="label" color="secondary">
               Taxa já incluída no valor da aula. O restante é repassado ao professor.
-            </Text>
+            </Typography>
           </View>
-
-          <View style={[styles.paymentRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatPaymentValue(paymentInfo.total)}</Text>
+          <View style={[styles.paymentRow]}>
+            <Typography weight="medium">Total</Typography>
+            <Typography weight="semibold" color="success">
+              {formatPaymentValue(paymentInfo.total)}
+            </Typography>
           </View>
-        </Card>
+        </View>
+        <Divider />
+        <View style={styles.termsCard}>
+          <FormCheckbox onChange={() => setTermsAccepted(!termsAccepted)} checked={termsAccepted} />
+          <Typography variant="caption" color="secondary" weight="medium">
+            Eu aceito os{' '}
+            <Typography
+              color="link"
+              variant="caption"
+              weight="medium"
+              // onPress={() => navigation.navigate('terms')}
+            >
+              termos e condições
+            </Typography>{' '}
+            e a{' '}
+            <Typography
+              color="link"
+              variant="caption"
+              weight="medium"
+              // onPress={() => navigation.navigate('terms')}
+            >
+              política de privacidade
+            </Typography>
+          </Typography>
+        </View>
 
-        {/* Terms and Conditions */}
-        <Card style={styles.termsCard}>
-          <TouchableOpacity
-            style={styles.termsRow}
-            onPress={() => setTermsAccepted(!termsAccepted)}
-          >
-            <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
-              {termsAccepted && <Text style={styles.checkmark}>✓</Text>}
-            </View>
-            <Text style={styles.termsText}>
-              Eu aceito os <Text style={styles.termsLink}>termos e condições</Text> e a{' '}
-              <Text style={styles.termsLink}>política de privacidade</Text>
-            </Text>
-          </TouchableOpacity>
-        </Card>
-
-        {/* Action Buttons */}
         <View style={styles.actionsContainer}>
-          <Button
-            title="Editar Agendamento"
-            variant="outline"
-            onPress={handleEditBooking}
-            style={styles.editButton}
-          />
-
           <Button
             title="Continuar para Pagamento"
             variant="primary"
             onPress={handleConfirmBooking}
             disabled={!termsAccepted}
-            style={styles.confirmButton}
           />
+          <Button title="Editar Agendamento" variant="outline" onPress={handleEditBooking} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -257,9 +263,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.primary,
   },
-  content: {
-    flex: 1,
-    padding: theme.spacing.lg,
+  contentContainer: {
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.bottomTabPadding,
   },
   instructorCard: {
     marginBottom: theme.spacing.lg,
@@ -267,6 +273,13 @@ const styles = StyleSheet.create({
   instructorHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
+  },
+  instructorHeaderInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: theme.spacing.md,
   },
   avatarContainer: {
     width: 60,
@@ -275,15 +288,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary[500],
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: theme.spacing.md,
   },
   avatarText: {
     color: theme.colors.text.inverse,
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semibold,
-  },
-  instructorInfo: {
-    flex: 1,
   },
   instructorName: {
     fontSize: theme.typography.fontSize.xl,
@@ -291,15 +300,14 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
+  rating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: theme.spacing.xs,
+  },
   vehicleInfo: {
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
-    flex: 1,
-  },
-  transmissionInfo: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-    flex: 1,
   },
   vehicleMetaRow: {
     flexDirection: 'row',
@@ -314,46 +322,21 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     marginBottom: theme.spacing.sm,
-  },
-  detailIcon: {
-    fontSize: theme.typography.fontSize.lg,
-    marginRight: theme.spacing.md,
-    width: 24,
   },
   detailContent: {
     flex: 1,
-  },
-  detailLabel: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
-  },
-  detailValue: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+    rowGap: theme.spacing.sm - theme.spacing.xs,
   },
   paymentCard: {
-    marginBottom: theme.spacing.lg,
-  },
-  paymentSectionTitle: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
+    flexDirection: 'column',
+    rowGap: theme.spacing.sm,
   },
   paymentSplitBox: {
     borderRadius: theme.borders.radius.md,
     backgroundColor: theme.colors.background.secondary,
     borderWidth: theme.borders.width.thin,
     borderColor: theme.colors.border.light,
-    paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.sm,
     marginTop: theme.spacing.xs,
     marginBottom: theme.spacing.sm,
@@ -365,49 +348,12 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
     columnGap: theme.spacing.sm,
   },
-  paymentLabel: {
-    flex: 1,
-    flexShrink: 1,
-    fontSize: theme.typography.fontSize.sm,
-    lineHeight: 18,
-    color: theme.colors.text.secondary,
-  },
-  paymentValue: {
-    flexShrink: 0,
-    fontSize: theme.typography.fontSize.sm,
-    lineHeight: 18,
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  paymentDescription: {
-    fontSize: theme.typography.fontSize.xs,
-    lineHeight: 16,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
-  },
-  totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.light,
-    paddingTop: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
-  },
-  totalLabel: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.semibold,
-  },
-  totalValue: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.semantic.success,
-    fontWeight: theme.typography.fontWeight.semibold,
-  },
+
   termsCard: {
-    marginBottom: theme.spacing.lg,
-  },
-  termsRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    columnGap: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
   },
   checkbox: {
     width: 20,
@@ -420,40 +366,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 2,
   },
-  checkboxChecked: {
-    backgroundColor: theme.colors.primary[500],
-    borderColor: theme.colors.primary[500],
-  },
-  checkmark: {
-    color: theme.colors.text.inverse,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.bold,
-  },
-  termsText: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
-  },
-  termsLink: {
-    color: theme.colors.primary[500],
-    fontWeight: theme.typography.fontWeight.medium,
-  },
   actionsContainer: {
     gap: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
-  },
-  editButton: {
-    marginBottom: theme.spacing.sm,
-  },
-  confirmButton: {
-    marginBottom: theme.spacing.lg,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.lg,
   },
   errorTitle: {
     fontSize: theme.typography.fontSize.xl,
