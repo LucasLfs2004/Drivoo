@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    minWidth: 0,
     ...theme.shadows.sm,
   },
   // Variants
@@ -159,6 +160,8 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: theme.typography.fontFamily.medium,
     fontWeight: theme.typography.fontWeight.medium,
+    flexShrink: 1,
+    textAlign: 'center',
   },
   primaryText: {
     color: theme.colors.text.inverse,

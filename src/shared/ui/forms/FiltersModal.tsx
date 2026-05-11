@@ -1,20 +1,13 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '../base/Button';
-import { FormInput } from './FormInput';
-import { FormSelect, SelectOption } from './FormSelect';
-import { FormDatePicker } from './FormDatePicker';
-import { FilterChips, FilterChip } from './FilterChips';
 import { theme } from '../../../theme';
 import { FiltrosBusca } from '../../../types';
+import { Button } from '../primitives/Button';
+import { FilterChip, FilterChips } from './FilterChips';
+import { FormDatePicker } from './FormDatePicker';
+import { FormInput } from './FormInput';
+import { FormSelect, SelectOption } from './FormSelect';
 
 interface FiltersModalProps {
   visible: boolean;
@@ -36,13 +29,15 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
   const [horarioInicio, setHorarioInicio] = useState(initialFilters.horario?.inicio || '');
   const [horarioFim, setHorarioFim] = useState(initialFilters.horario?.fim || '');
   const [generoSelecionado, setGeneroSelecionado] = useState<string[]>(
-    initialFilters.generoInstrutor ? [initialFilters.generoInstrutor] : []
+    initialFilters.generoInstrutor ? [initialFilters.generoInstrutor] : [],
   );
   const [tipoVeiculoSelecionado, setTipoVeiculoSelecionado] = useState<string[]>(
-    initialFilters.tipoVeiculo ? [initialFilters.tipoVeiculo] : []
+    initialFilters.tipoVeiculo ? [initialFilters.tipoVeiculo] : [],
   );
   const [precoMaximo, setPrecoMaximo] = useState(initialFilters.precoMaximo?.toString() || '');
-  const [avaliacaoMinima, setAvaliacaoMinima] = useState(initialFilters.avaliacaoMinima?.toString() || '');
+  const [avaliacaoMinima, setAvaliacaoMinima] = useState(
+    initialFilters.avaliacaoMinima?.toString() || '',
+  );
 
   // Filter options
   const raioOptions: SelectOption[] = [
@@ -154,14 +149,14 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
           {/* Location Filters */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Localização</Text>
-            
+
             <FormInput
               label="Endereço"
               value={endereco}
               onChangeText={setEndereco}
               placeholder="Digite seu bairro ou CEP"
             />
-            
+
             <FormSelect
               label="Raio de busca"
               options={raioOptions}
@@ -174,7 +169,7 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
           {/* Date and Time Filters */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Data e Horário</Text>
-            
+
             <FormDatePicker
               label="Data preferida"
               value={dataSelecionada || undefined}
@@ -203,7 +198,7 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
           {/* Preferences */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Preferências</Text>
-            
+
             <FilterChips
               label="Gênero do instrutor"
               chips={generoChips}
@@ -224,7 +219,7 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
           {/* Price and Rating */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Preço e Avaliação</Text>
-            
+
             <FormInput
               label="Preço máximo por hora (R$)"
               value={precoMaximo}

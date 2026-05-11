@@ -6,42 +6,53 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { X } from 'lucide-react-native';
-import React, { useEffect, useMemo, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { theme } from '../../../theme';
+import { Typography } from '../primitives/Typography';
 
-const renderBottomSheetBackdrop = (backdropProps: BottomSheetBackdropProps) => (
-  <BottomSheetBackdrop
-    {...backdropProps}
-    disappearsOnIndex={-1}
-    appearsOnIndex={0}
-    opacity={0.36}
-  />
-);
-
-type Props = {
+type BottomSheetProps = {
   visible: boolean;
   onClose: () => void;
   title?: string;
+  showHeader?: boolean;
   children: React.ReactNode;
   snapPoints?: Array<string | number>;
   scrollable?: boolean;
+  footer?: React.ReactNode;
 };
 
-export const BottomSheet: React.FC<Props> = ({
+export const BottomSheet: React.FC<BottomSheetProps> = ({
   visible,
   onClose,
   title,
+  showHeader,
   children,
   snapPoints,
   scrollable = false,
+  footer,
 }) => {
   const modalRef = useRef<BottomSheetModal>(null);
-  const resolvedSnapPoints = useMemo(
-    () => snapPoints ?? ['55%', '80%'],
-    [snapPoints]
+  const shouldShowHeader = showHeader ?? Boolean(title);
+  const resolvedSnapPoints = useMemo(() => snapPoints ?? ['55%', '80%'], [snapPoints]);
+
+  const renderBackdrop = useCallback(
+    (backdropProps: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...backdropProps}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.36}
+      />
+    ),
+
+    [],
   );
+
+  const handleClose = useCallback(() => {
+    modalRef.current?.dismiss();
+  }, []);
 
   useEffect(() => {
     if (visible) {
@@ -70,17 +81,24 @@ export const BottomSheet: React.FC<Props> = ({
       snapPoints={resolvedSnapPoints}
       onDismiss={onClose}
       enablePanDownToClose
-      backdropComponent={renderBottomSheetBackdrop}
+      backdropComponent={renderBackdrop}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.handleIndicator}
     >
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{title ?? ''}</Text>
-          <Pressable style={styles.closeButton} onPress={() => modalRef.current?.dismiss()}>
-            <X color={theme.colors.text.primary} size={18} />
-          </Pressable>
-        </View>
+        {shouldShowHeader && (
+          <View style={styles.header}>
+            {title && <Typography variant="h4">{title}</Typography>}
+            <Pressable
+              style={styles.closeButton}
+              onPress={handleClose}
+              accessibilityRole="button"
+              accessibilityLabel="Fechar"
+            >
+              <X color={theme.colors.text.primary} size={18} />
+            </Pressable>
+          </View>
+        )}
         {content}
       </View>
     </BottomSheetModal>
@@ -108,12 +126,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: theme.spacing.sm,
-  },
-  title: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
   },
   closeButton: {
     width: 32,

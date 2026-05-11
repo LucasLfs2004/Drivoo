@@ -4,8 +4,8 @@ import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { theme } from '../../../theme';
+import { Card } from '../layout/Card';
 import { CalendarDayCell, type CalendarDayTone } from './CalendarDayCell';
-import { Card } from './Card';
 
 export const DEFAULT_CALENDAR_WEEK_DAYS = [
   { key: 'sun', label: 'SUN' },
@@ -64,7 +64,7 @@ export const Calendar: React.FC<Props> = ({
   }, [cells]);
 
   return (
-    <Card >
+    <Card variant="outlined">
       <View style={styles.header}>
         {title ? <Text style={styles.title}>{title}</Text> : null}
         <View style={styles.monthSwitcher}>

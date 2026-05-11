@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Modal,
-} from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { theme } from '../../../theme';
 import { AgendaSemanal, SlotTempo } from '../../../types/auth';
-import { Button } from '../base/Button';
+import { Button } from '../primitives/Button';
 
 interface WeeklyScheduleEditorProps {
   initialSchedule?: AgendaSemanal;
@@ -50,12 +43,8 @@ export const WeeklyScheduleEditor: React.FC<WeeklyScheduleEditorProps> = ({
   onSave,
   onCancel,
 }) => {
-  const [schedule, setSchedule] = useState<AgendaSemanal>(
-    initialSchedule || createEmptySchedule()
-  );
-  const [selectedDay, setSelectedDay] = useState<keyof AgendaSemanal | null>(
-    null
-  );
+  const [schedule, setSchedule] = useState<AgendaSemanal>(initialSchedule || createEmptySchedule());
+  const [selectedDay, setSelectedDay] = useState<keyof AgendaSemanal | null>(null);
 
   const toggleDayAvailability = (day: keyof AgendaSemanal) => {
     setSchedule((prev: AgendaSemanal) => ({
@@ -67,16 +56,11 @@ export const WeeklyScheduleEditor: React.FC<WeeklyScheduleEditorProps> = ({
     }));
   };
 
-  const toggleTimeSlot = (
-    day: keyof AgendaSemanal,
-    slotIndex: number
-  ) => {
+  const toggleTimeSlot = (day: keyof AgendaSemanal, slotIndex: number) => {
     setSchedule((prev: AgendaSemanal) => {
       const daySchedule = prev[day];
       const updatedSlots = daySchedule.horarios.map((slot: SlotTempo, idx: number) =>
-        idx === slotIndex
-          ? { ...slot, disponivel: !slot.disponivel }
-          : slot
+        idx === slotIndex ? { ...slot, disponivel: !slot.disponivel } : slot,
       );
 
       return {
@@ -96,15 +80,11 @@ export const WeeklyScheduleEditor: React.FC<WeeklyScheduleEditorProps> = ({
   const renderDayEditor = (day: keyof AgendaSemanal, label: string) => {
     const daySchedule = schedule[day];
     const availableSlotsCount = daySchedule.horarios.filter(
-      (slot: SlotTempo) => slot.disponivel
+      (slot: SlotTempo) => slot.disponivel,
     ).length;
 
     return (
-      <TouchableOpacity
-        key={day}
-        style={styles.dayCard}
-        onPress={() => setSelectedDay(day)}
-      >
+      <TouchableOpacity key={day} style={styles.dayCard} onPress={() => setSelectedDay(day)}>
         <View style={styles.dayHeader}>
           <View style={styles.dayInfo}>
             <Text style={styles.dayLabel}>{label}</Text>
@@ -115,10 +95,7 @@ export const WeeklyScheduleEditor: React.FC<WeeklyScheduleEditorProps> = ({
             )}
           </View>
           <TouchableOpacity
-            style={[
-              styles.toggleButton,
-              daySchedule.disponivel && styles.toggleButtonActive,
-            ]}
+            style={[styles.toggleButton, daySchedule.disponivel && styles.toggleButtonActive]}
             onPress={() => toggleDayAvailability(day)}
           >
             <Text
@@ -139,7 +116,7 @@ export const WeeklyScheduleEditor: React.FC<WeeklyScheduleEditorProps> = ({
     if (!selectedDay) return null;
 
     const daySchedule = schedule[selectedDay];
-    const dayLabel = DIAS_SEMANA.find((day) => day.key === selectedDay)?.label;
+    const dayLabel = DIAS_SEMANA.find(day => day.key === selectedDay)?.label;
 
     return (
       <Modal
@@ -173,12 +150,7 @@ export const WeeklyScheduleEditor: React.FC<WeeklyScheduleEditorProps> = ({
                   }}
                   disabled={!daySchedule.disponivel}
                 >
-                  <Text
-                    style={[
-                      styles.slotTime,
-                      slot.disponivel && styles.slotTimeActive,
-                    ]}
-                  >
+                  <Text style={[styles.slotTime, slot.disponivel && styles.slotTimeActive]}>
                     {slot.horaInicio} - {slot.horaFim}
                   </Text>
                   {slot.disponivel && (
