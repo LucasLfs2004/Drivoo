@@ -14,9 +14,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppHeader } from '../../../shared/ui/base/AppHeader';
-import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
+import { Card } from '../../../shared/ui/layout/Card';
+import { AppHeader } from '../../../shared/ui/navigation/AppHeader';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import { AlunoSearchStackParamList } from '../../../types/navigation';
 import {
@@ -224,7 +224,7 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
       price: instructor?.precos.valorHora || 0,
       currency: 'BRL', // Código ISO para Real Brasileiro
       vehicleInfo: {
-        marca: '',
+        marca: instructor?.veiculo.marca || '',
         modelo: instructor?.veiculo.modelo || '',
         transmissao: instructor?.veiculo.transmissao || 'manual',
       },
@@ -372,7 +372,7 @@ export const AlunoInstructorDetailsScreen: React.FC<Props> = ({ route, navigatio
               </Text>
               {instructor.isNovoInstrutor ? (
                 <View style={styles.iconTextView}>
-                  <UserPlus width={scale(18)} color={theme.colors.text.tertiary} />
+                  <UserPlus width={scale(18)} color={theme.colors.text.secondary} />
                   <Text style={styles.metaInfoText}>Novo instrutor</Text>
                 </View>
               ) : (

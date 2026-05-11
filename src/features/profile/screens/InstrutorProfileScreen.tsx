@@ -1,22 +1,19 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
   ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card } from '../../../shared/ui/base/Card';
-import { Button } from '../../../shared/ui/base/Button';
 import { useAuth } from '../../../core/auth';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
-import {
-  useInstructorVehiclesQuery,
-  useMyInstructorProfileQuery,
-} from '../../instructors';
+import { useInstructorVehiclesQuery, useMyInstructorProfileQuery } from '../../instructors';
 
 interface NavigationLike {
   navigate: (screen: string) => void;
@@ -86,12 +83,8 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
           </Text>
           <Text style={styles.email}>{usuario?.email}</Text>
           <View style={styles.ratingContainer}>
-            <Text style={styles.rating}>
-              ⭐ {profile.avaliacoes.media.toFixed(1)}
-            </Text>
-            <Text style={styles.ratingText}>
-              ({profile.avaliacoes.quantidade} avaliações)
-            </Text>
+            <Text style={styles.rating}>⭐ {profile.avaliacoes.media.toFixed(1)}</Text>
+            <Text style={styles.ratingText}>({profile.avaliacoes.quantidade} avaliações)</Text>
           </View>
         </View>
 
@@ -111,9 +104,7 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Valor/Hora</Text>
-            <Text style={styles.infoValue}>
-              R$ {profile.precos.valorHora.toFixed(2)}
-            </Text>
+            <Text style={styles.infoValue}>R$ {profile.precos.valorHora.toFixed(2)}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Gênero</Text>
@@ -198,9 +189,9 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.infoLabel}>Placa</Text>
             <Text style={styles.infoValue}>{primaryVehicle?.placa || 'Nao informada'}</Text>
           </View>
-        </Card>
+          {/* </Card>
 
-        <Card style={styles.actionsCard}>
+        <Card style={styles.actionsCard}> */}
           <Text style={styles.sectionTitle}>Ações</Text>
           <Button
             title="Editar Perfil"
@@ -212,10 +203,7 @@ export const InstrutorProfileScreen: React.FC<Props> = ({ navigation }) => {
             title="Credenciais"
             variant="outline"
             onPress={() =>
-              Alert.alert(
-                'Credenciais',
-                'A tela de credenciais ainda não existe no app.'
-              )
+              Alert.alert('Credenciais', 'A tela de credenciais ainda não existe no app.')
             }
             style={styles.actionButton}
           />

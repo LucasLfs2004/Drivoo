@@ -1,19 +1,19 @@
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Book, CreditCard, HelpCircle, RefreshCw, Settings, User } from 'lucide-react-native';
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
   ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RefreshCw } from 'lucide-react-native';
-import { Card } from '../../../shared/ui/base/Card';
-import { Button } from '../../../shared/ui/base/Button';
 import { useAuth } from '../../../core/auth';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import { AlunoProfileStackParamList } from '../../../types/navigation';
 import { useUserQuery } from '../hooks/useUserQuery';
@@ -78,19 +78,19 @@ export const AlunoProfileScreen: React.FC<Props> = ({ navigation }) => {
 
   const menuItems = [
     {
-      icon: '👤',
+      icon: <User size={20} color={theme.colors.primary[500]} />,
       title: 'Editar Perfil',
       description: 'Atualize suas informações pessoais',
       onPress: () => navigation.navigate('EditProfile'),
     },
     {
-      icon: '⚙️',
+      icon: <Settings size={20} color={theme.colors.primary[500]} />,
       title: 'Configurações',
       description: 'Notificações, privacidade e mais',
       onPress: () => navigation.navigate('Settings'),
     },
     {
-      icon: '📚',
+      icon: <Book size={20} color={theme.colors.primary[500]} />,
       title: 'Minhas Aulas',
       description: 'Histórico e aulas agendadas',
       onPress: () => {
@@ -98,7 +98,7 @@ export const AlunoProfileScreen: React.FC<Props> = ({ navigation }) => {
       },
     },
     {
-      icon: '💳',
+      icon: <CreditCard size={20} color={theme.colors.primary[500]} />,
       title: 'Pagamentos',
       description: 'Métodos de pagamento e histórico',
       onPress: () => {
@@ -106,7 +106,7 @@ export const AlunoProfileScreen: React.FC<Props> = ({ navigation }) => {
       },
     },
     {
-      icon: '❓',
+      icon: <HelpCircle size={20} color={theme.colors.primary[500]} />,
       title: 'Ajuda e Suporte',
       description: 'Central de ajuda e contato',
       onPress: () => {
@@ -117,83 +117,71 @@ export const AlunoProfileScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {getInitials(
-                  [user?.perfil?.primeiroNome, user?.perfil?.ultimoNome]
-                    .filter(Boolean)
-                    .join(' ')
-                )}
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.refreshButton} onPress={() => refetch()}>
-              <RefreshCw size={20} color={theme.colors.primary[500]} />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.name}>
-            {[user?.perfil?.primeiroNome, user?.perfil?.ultimoNome]
-              .filter(Boolean)
-              .join(' ') || 'Usuário'}
-          </Text>
-          <Text style={styles.email}>{user?.email || usuario?.email}</Text>
-
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => navigation.navigate('EditProfile')}
-          >
-            <Text style={styles.editButtonText}>Editar Perfil</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Card style={styles.statsCard}>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Aulas</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Horas</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>-</Text>
-              <Text style={styles.statLabel}>Progresso</Text>
-            </View>
-          </View>
-        </Card>
-
-        <View style={styles.menuSection}>
-          {menuItems.map(item => (
-            <TouchableOpacity
-              key={item.title}
-              style={styles.menuItem}
-              onPress={item.onPress}
-            >
-              <View style={styles.menuIcon}>
-                <Text style={styles.menuIconText}>{item.icon}</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <View style={styles.headerTop}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {getInitials(
+                    [user?.perfil?.primeiroNome, user?.perfil?.ultimoNome]
+                      .filter(Boolean)
+                      .join(' '),
+                  )}
+                </Text>
               </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>{item.title}</Text>
-                <Text style={styles.menuDescription}>{item.description}</Text>
+              <TouchableOpacity style={styles.refreshButton} onPress={() => refetch()}>
+                <RefreshCw size={20} color={theme.colors.primary[500]} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.name}>
+              {[user?.perfil?.primeiroNome, user?.perfil?.ultimoNome].filter(Boolean).join(' ') ||
+                'Usuário'}
+            </Text>
+            <Text style={styles.email}>{user?.email || usuario?.email}</Text>
+          </View>
+
+          <Card style={styles.statsCard}>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>0</Text>
+                <Text style={styles.statLabel}>Aulas</Text>
               </View>
-              <Text style={styles.menuChevron}>›</Text>
-            </TouchableOpacity>
-          ))}
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>0</Text>
+                <Text style={styles.statLabel}>Horas</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>-</Text>
+                <Text style={styles.statLabel}>Progresso</Text>
+              </View>
+            </View>
+          </Card>
+
+          <View style={styles.menuSection}>
+            {menuItems.map(item => (
+              <TouchableOpacity key={item.title} style={styles.menuItem} onPress={item.onPress}>
+                <View style={styles.menuIcon}>{item.icon}</View>
+                <View style={styles.menuContent}>
+                  <Text style={styles.menuTitle}>{item.title}</Text>
+                  <Text style={styles.menuDescription}>{item.description}</Text>
+                </View>
+                <Text style={styles.menuChevron}>›</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Button
+            title="Sair da Conta"
+            variant="destructive"
+            onPress={handleLogout}
+            style={styles.logoutButton}
+          />
+
+          <Text style={styles.versionText}>Versão 1.0.0</Text>
         </View>
-
-        <Button
-          title="Sair da Conta"
-          variant="destructive"
-          onPress={handleLogout}
-          style={styles.logoutButton}
-        />
-
-        <Text style={styles.versionText}>Versão 1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -204,9 +192,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.primary,
   },
+
   content: {
     flex: 1,
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
   },
   loadingContainer: {
     flex: 1,
@@ -241,7 +231,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
     paddingTop: theme.spacing.md,
   },
   headerTop: {
@@ -341,9 +331,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.colors.primary[50],
     marginRight: theme.spacing.md,
-  },
-  menuIconText: {
-    fontSize: theme.typography.fontSize.lg,
   },
   menuContent: {
     flex: 1,

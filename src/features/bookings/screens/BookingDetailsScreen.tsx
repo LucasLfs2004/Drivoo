@@ -1,9 +1,6 @@
-import React from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RouteProp } from '@react-navigation/native';
 import {
   AlertTriangle,
   CalendarDays,
@@ -16,18 +13,20 @@ import {
   UserX,
   XCircle,
 } from 'lucide-react-native';
+import React from 'react';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AppHeader } from '../../../shared/ui/base/AppHeader';
-import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
+import { Card } from '../../../shared/ui/layout/Card';
+import { AppHeader } from '../../../shared/ui/navigation/AppHeader';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import type { AlunoBookingsStackParamList } from '../../../types/navigation';
 import { formatCurrency } from '../../../utils/currency';
 import { useBookingDetailsQuery } from '../hooks/useBookingDetailsQuery';
 import { useCancelBookingMutation } from '../hooks/useCancelBookingMutation';
 import { useUpdateBookingStatusMutation } from '../hooks/useUpdateBookingStatusMutation';
-import type { BookingCheckoutStatusValue } from '../types/domain';
-import type { ScheduledBooking } from '../types/domain';
+import type { BookingCheckoutStatusValue, ScheduledBooking } from '../types/domain';
 
 type NavigationProp = NativeStackNavigationProp<AlunoBookingsStackParamList, 'BookingDetails'>;
 type ScreenRouteProp = RouteProp<AlunoBookingsStackParamList, 'BookingDetails'>;
@@ -117,8 +116,8 @@ export const BookingDetailsScreen: React.FC = () => {
       params: {
         conversationId: `booking-${bookingId}`,
         participantName: isInstructorView
-          ? booking?.studentName ?? 'Aluno'
-          : booking?.instructorName ?? 'Professor',
+          ? (booking?.studentName ?? 'Aluno')
+          : (booking?.instructorName ?? 'Professor'),
       },
     });
   };
@@ -144,7 +143,10 @@ export const BookingDetailsScreen: React.FC = () => {
                 Alert.alert('Aula atualizada', result.message);
               },
               onError: () => {
-                Alert.alert('Nao foi possivel atualizar', 'Verifique o status atual e tente novamente.');
+                Alert.alert(
+                  'Nao foi possivel atualizar',
+                  'Verifique o status atual e tente novamente.',
+                );
               },
             },
           );

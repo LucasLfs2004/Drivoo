@@ -1,28 +1,21 @@
 import dayjs from 'dayjs';
 import { ArrowLeft, CalendarPlus2, Trash2 } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
 import { DatePickerCalendar } from '../../../shared/ui/forms';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
-import { useInstructorAvailabilityDraft } from '../store/InstructorAvailabilityDraftContext';
-import type { AvailabilityException } from '../types/availability';
 import {
   formatIntervalsSummary,
   isPastDate,
   isValidTimeValue,
   maskTimeInput,
-} from '../utils/availability';
+} from '../lib/availability';
+import { useInstructorAvailabilityDraft } from '../store/InstructorAvailabilityDraftContext';
+import type { AvailabilityException } from '../types/availability';
 
 type Props = {
   navigation: {

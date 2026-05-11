@@ -3,9 +3,9 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { theme } from '../../../theme';
+import { getEffectiveIntervalsForDate } from '../lib/availability';
 import type { InstructorAvailabilityCalendarDayApiResponse } from '../types/api';
 import type { InstructorAvailabilityDraft, InstructorBookingPreview } from '../types/availability';
-import { getEffectiveIntervalsForDate } from '../utils/availability';
 import {
   AvailabilityCalendar,
   buildCalendarBaseCells,
@@ -30,7 +30,7 @@ const getPreviewCellState = (
   date: string,
   bookings: InstructorBookingPreview[],
   preservedBookings: InstructorBookingPreview[],
-  calendarDays?: InstructorAvailabilityCalendarDayApiResponse[]
+  calendarDays?: InstructorAvailabilityCalendarDayApiResponse[],
 ) => {
   const calendarDay = calendarDays?.find(item => item.data === date);
   const exception = draft.exceptions.find(item => item.date === date);
@@ -81,15 +81,9 @@ export const AvailabilityCalendarPreview: React.FC<Props> = ({
     () =>
       buildCalendarBaseCells(visibleMonth).map(cell => ({
         ...cell,
-        ...getPreviewCellState(
-          draft,
-          cell.date,
-          bookings,
-          preservedBookings,
-          calendarDays
-        ),
+        ...getPreviewCellState(draft, cell.date, bookings, preservedBookings, calendarDays),
       })),
-    [visibleMonth, draft, bookings, preservedBookings, calendarDays]
+    [visibleMonth, draft, bookings, preservedBookings, calendarDays],
   );
 
   return (

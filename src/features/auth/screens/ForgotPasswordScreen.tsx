@@ -1,13 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useForm, Controller } from 'react-hook-form';
-import { Button } from '../../../shared/ui/base/Button';
 import { FormInput } from '../../../shared/ui/forms';
-import { AuthApiService } from '../api/auth-api-service';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
-import type { AuthStackScreenProps } from '../../../types/navigation';
 import type { ForgotPasswordRequest } from '../../../types/auth';
+import type { AuthStackScreenProps } from '../../../types/navigation';
+import { AuthApiService } from '../api/auth-api-service';
 
 type Props = AuthStackScreenProps<'ForgotPassword'>;
 
@@ -29,7 +29,7 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
       Alert.alert(
         'Email Enviado',
         'Instruções para redefinir sua senha foram enviadas para seu email.',
-        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }],
       );
     } catch (error) {
       const errorMessage =
@@ -49,9 +49,7 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Esqueceu a Senha?</Text>
-        <Text style={styles.subtitle}>
-          Digite seu email para receber instruções de redefinição
-        </Text>
+        <Text style={styles.subtitle}>Digite seu email para receber instruções de redefinição</Text>
 
         <View style={styles.form}>
           <Controller

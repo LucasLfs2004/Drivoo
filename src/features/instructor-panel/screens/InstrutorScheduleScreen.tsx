@@ -1,42 +1,28 @@
 import dayjs from 'dayjs';
 import { ChevronDown, PencilLine, TriangleAlert } from 'lucide-react-native';
 import React from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BottomSheet } from '../../../shared/ui/base';
-import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import type { InstrutorScheduleStackParamList } from '../../../types/navigation';
 import { useInstructorAvailabilityCompleteCalendarQuery } from '../../instructors';
 import { AvailabilityCalendarPreview } from '../../instructors/components/AvailabilityCalendarPreview';
 import { AvailabilityDayCard } from '../../instructors/components/AvailabilityDayCard';
 import { AvailabilityExceptionsCard } from '../../instructors/components/AvailabilityExceptionsCard';
+import { getPreservedBookings, WEEK_DAYS } from '../../instructors/lib/availability';
 import { useInstructorAvailabilityDraft } from '../../instructors/store/InstructorAvailabilityDraftContext';
-import {
-  getPreservedBookings,
-  WEEK_DAYS,
-} from '../../instructors/utils/availability';
 
 type Props = NativeStackScreenProps<InstrutorScheduleStackParamList, 'ScheduleScreen'>;
 
 export const InstrutorScheduleScreen: React.FC<Props> = ({ navigation }) => {
   const currentMonth = React.useMemo(() => dayjs().startOf('month'), []);
   const nextMonthLimit = React.useMemo(() => currentMonth.add(1, 'month'), [currentMonth]);
-  const {
-    draft,
-    isLoading,
-    isError,
-    refetch,
-  } = useInstructorAvailabilityDraft();
+  const { draft, isLoading, isError, refetch } = useInstructorAvailabilityDraft();
   const [visibleMonth, setVisibleMonth] = React.useState(currentMonth);
   const [isExceptionsSheetVisible, setIsExceptionsSheetVisible] = React.useState(false);
   const {
@@ -53,11 +39,11 @@ export const InstrutorScheduleScreen: React.FC<Props> = ({ navigation }) => {
         end: item.hora_fim,
         status: item.status === 'PENDENTE' ? ('pending' as const) : ('confirmed' as const),
       })) ?? [],
-    [completeCalendar]
+    [completeCalendar],
   );
   const preservedBookings = React.useMemo(
     () => getPreservedBookings(draft, bookings),
-    [draft, bookings]
+    [draft, bookings],
   );
 
   if (isLoading) {
@@ -97,7 +83,7 @@ export const InstrutorScheduleScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         {/* <Card style={styles.heroCard}> */}
-          {/* <View style={styles.heroIconWrap}>
+        {/* <View style={styles.heroIconWrap}>
             <Clock3 color={theme.colors.primary[500]} size={20} />
           </View>
           <Text style={styles.sectionTitle}>Resumo da disponibilidade</Text>
@@ -113,7 +99,8 @@ export const InstrutorScheduleScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.warningCopy}>
               <Text style={styles.warningTitle}>Aulas preservadas</Text>
               <Text style={styles.warningText}>
-                {preservedBookings.length} aula(s) seguem válidas mesmo fora da nova janela. O backend deve fechar apenas novos agendamentos nesses horários.
+                {preservedBookings.length} aula(s) seguem válidas mesmo fora da nova janela. O
+                backend deve fechar apenas novos agendamentos nesses horários.
               </Text>
             </View>
           </Card>
@@ -121,10 +108,7 @@ export const InstrutorScheduleScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Semana base</Text>
-          <Pressable
-            style={styles.inlineMeta}
-            onPress={() => setIsExceptionsSheetVisible(true)}
-          >
+          <Pressable style={styles.inlineMeta} onPress={() => setIsExceptionsSheetVisible(true)}>
             <PencilLine color={theme.colors.text.tertiary} size={14} />
             <Text style={styles.inlineMetaText}>{draft.exceptions.length} exceções</Text>
             <ChevronDown color={theme.colors.text.tertiary} size={14} />
@@ -132,11 +116,7 @@ export const InstrutorScheduleScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         {WEEK_DAYS.map(item => (
-          <AvailabilityDayCard
-            key={item.day}
-            day={item.day}
-            intervals={draft.weekly[item.day]}
-          />
+          <AvailabilityDayCard key={item.day} day={item.day} intervals={draft.weekly[item.day]} />
         ))}
 
         <AvailabilityCalendarPreview
@@ -164,14 +144,13 @@ export const InstrutorScheduleScreen: React.FC<Props> = ({ navigation }) => {
           </Text>
         </Card> */}
 
-                  <View style={styles.heroActions}>
-            <Button
-                
-              title="Editar disponibilidade"
-              style={styles.heroAction}
-              onPress={() => navigation.navigate('AvailabilityEditor')}
-            />
-          </View>
+        <View style={styles.heroActions}>
+          <Button
+            title="Editar disponibilidade"
+            style={styles.heroAction}
+            onPress={() => navigation.navigate('AvailabilityEditor')}
+          />
+        </View>
       </ScrollView>
 
       <BottomSheet

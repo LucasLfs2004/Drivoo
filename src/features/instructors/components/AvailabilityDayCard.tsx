@@ -2,10 +2,10 @@ import { ChevronRight } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Card } from '../../../shared/ui/base/Card';
+import { Card } from '../../../shared/ui/layout/Card';
 import { theme } from '../../../theme';
+import { formatIntervalsSummary, getDayLabel } from '../lib/availability';
 import type { AvailabilityInterval } from '../types/availability';
-import { formatIntervalsSummary, getDayLabel } from '../utils/availability';
 
 type Props = {
   day: number;
@@ -23,7 +23,9 @@ export const AvailabilityDayCard: React.FC<Props> = ({
   highlighted = false,
 }) => {
   const content = (
-    <Card style={StyleSheet.flatten([styles.card, highlighted ? styles.cardHighlighted : undefined])}>
+    <Card
+      style={StyleSheet.flatten([styles.card, highlighted ? styles.cardHighlighted : undefined])}
+    >
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <Text style={styles.dayLabel}>{getDayLabel(day)}</Text>

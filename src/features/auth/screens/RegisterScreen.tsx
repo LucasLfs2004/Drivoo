@@ -1,14 +1,14 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Controller, useForm } from 'react-hook-form';
 import { CarFront } from 'lucide-react-native';
-import { Button } from '../../../shared/ui/base/Button';
-import { FormInput } from '../../../shared/ui/forms';
+import React, { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../core/auth';
+import { FormInput } from '../../../shared/ui/forms';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
-import type { AuthStackScreenProps } from '../../../types/navigation';
 import type { CreateAccountCredentials } from '../../../types/auth';
+import type { AuthStackScreenProps } from '../../../types/navigation';
 
 type Props = AuthStackScreenProps<'Register'>;
 

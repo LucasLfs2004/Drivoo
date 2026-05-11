@@ -1,19 +1,13 @@
 import dayjs from 'dayjs';
 import { CalendarPlus2, Trash2 } from 'lucide-react-native';
 import React from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
-import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
+import { formatIntervalsSummary } from '../lib/availability';
 import type { AvailabilityException } from '../types/availability';
-import { formatIntervalsSummary } from '../utils/availability';
 
 type Props = {
   exceptions: AvailabilityException[];
@@ -77,10 +71,7 @@ export const AvailabilityExceptionsCard: React.FC<Props> = ({
                 </Text>
               </View>
               {onRemoveException ? (
-                <Pressable
-                  style={styles.deleteButton}
-                  onPress={() => onRemoveException(item.id)}
-                >
+                <Pressable style={styles.deleteButton} onPress={() => onRemoveException(item.id)}>
                   <Trash2 color={theme.colors.semantic.error} size={16} />
                 </Pressable>
               ) : null}

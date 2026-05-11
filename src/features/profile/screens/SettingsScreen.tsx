@@ -1,19 +1,19 @@
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Switch,
-  TouchableOpacity,
   Alert,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
   ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AppHeader } from '../../../shared/ui/base/AppHeader';
-import { Card } from '../../../shared/ui/base/Card';
-import { Button } from '../../../shared/ui/base/Button';
+import { Card } from '../../../shared/ui/layout/Card';
+import { AppHeader } from '../../../shared/ui/navigation/AppHeader';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import { AlunoProfileStackParamList } from '../../../types/navigation';
 
@@ -29,10 +29,7 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const [darkMode, setDarkMode] = useState(false);
 
   const handleSaveSettings = () => {
-    Alert.alert(
-      'Configurações Salvas',
-      'Suas preferências foram atualizadas com sucesso!'
-    );
+    Alert.alert('Configurações Salvas', 'Suas preferências foram atualizadas com sucesso!');
   };
 
   const handleClearCache = () => {
@@ -46,7 +43,7 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           style: 'destructive',
           onPress: () => Alert.alert('Sucesso', 'Cache limpo com sucesso!'),
         },
-      ]
+      ],
     );
   };
 
@@ -70,11 +67,11 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                   style: 'destructive',
                   onPress: () => console.log('Conta excluída'),
                 },
-              ]
+              ],
             );
           },
         },
-      ]
+      ],
     );
   };
 
@@ -106,9 +103,7 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingLabel}>Notificações Push</Text>
-              <Text style={styles.settingDescription}>
-                Receba alertas sobre aulas e mensagens
-              </Text>
+              <Text style={styles.settingDescription}>Receba alertas sobre aulas e mensagens</Text>
             </View>
             <Switch
               value={pushNotifications}
@@ -134,9 +129,7 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingLabel}>Lembretes de Aula</Text>
-              <Text style={styles.settingDescription}>
-                Receba lembretes antes das suas aulas
-              </Text>
+              <Text style={styles.settingDescription}>Receba lembretes antes das suas aulas</Text>
             </View>
             <Switch
               value={bookingReminders}

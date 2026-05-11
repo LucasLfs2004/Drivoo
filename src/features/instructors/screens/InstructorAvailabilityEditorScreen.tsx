@@ -2,29 +2,19 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import { Sparkles, TriangleAlert } from 'lucide-react-native';
 import React from 'react';
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import type { InstrutorScheduleStackParamList } from '../../../types/navigation';
 import { AvailabilityCalendarPreview } from '../components/AvailabilityCalendarPreview';
 import { AvailabilityDayCard } from '../components/AvailabilityDayCard';
 import { AvailabilityExceptionsCard } from '../components/AvailabilityExceptionsCard';
 import { useInstructorBookingsPreviewQuery } from '../hooks/useInstructorBookingsPreviewQuery';
+import { getPreservedBookings, sortIntervals, WEEK_DAYS } from '../lib/availability';
 import { useInstructorAvailabilityDraft } from '../store/InstructorAvailabilityDraftContext';
-import {
-  getPreservedBookings,
-  sortIntervals,
-  WEEK_DAYS,
-} from '../utils/availability';
 
 type Props = NativeStackScreenProps<InstrutorScheduleStackParamList, 'AvailabilityEditor'>;
 
@@ -51,7 +41,7 @@ export const InstructorAvailabilityEditorScreen: React.FC<Props> = ({ navigation
   } = useInstructorBookingsPreviewQuery(!isError);
   const preservedBookings = React.useMemo(
     () => getPreservedBookings(draft, bookings),
-    [draft, bookings]
+    [draft, bookings],
   );
   const dayChanges = React.useMemo(
     () =>
@@ -73,27 +63,27 @@ export const InstructorAvailabilityEditorScreen: React.FC<Props> = ({ navigation
 
         return { day: item.day, label: 'Alterado' };
       }).filter(Boolean) as Array<{ day: number; label: string }>,
-    [draft.weekly, initialDraft.weekly]
+    [draft.weekly, initialDraft.weekly],
   );
   const exceptionsChanged = React.useMemo(
     () => JSON.stringify(draft.exceptions) !== JSON.stringify(initialDraft.exceptions),
-    [draft.exceptions, initialDraft.exceptions]
+    [draft.exceptions, initialDraft.exceptions],
   );
   const changedDayMap = React.useMemo(
     () => new Map(dayChanges.map(item => [item.day, item.label])),
-    [dayChanges]
+    [dayChanges],
   );
   const pendingChangeCount = dayChanges.length + (exceptionsChanged ? 1 : 0);
   const visibleExceptions = React.useMemo(
     () => [...draft.exceptions].sort((left, right) => left.date.localeCompare(right.date)),
-    [draft.exceptions]
+    [draft.exceptions],
   );
   const exceptionChangeMap = React.useMemo(() => {
     const changes = new Map<string, string>();
 
     visibleExceptions.forEach(item => {
       const previousMatch = initialDraft.exceptions.find(
-        current => current.date === item.date && current.type === item.type
+        current => current.date === item.date && current.type === item.type,
       );
 
       if (!previousMatch) {
@@ -160,9 +150,6 @@ export const InstructorAvailabilityEditorScreen: React.FC<Props> = ({ navigation
           </Text>
         </View>
 
-
-
-
         {hasChanges ? (
           <Card style={styles.pendingCard}>
             <View style={styles.pendingHeader}>
@@ -205,12 +192,12 @@ export const InstructorAvailabilityEditorScreen: React.FC<Props> = ({ navigation
             <View style={styles.warningCopy}>
               <Text style={styles.warningTitle}>Aulas preservadas</Text>
               <Text style={styles.warningText}>
-                {preservedBookings.length} aula(s) seguem válidas mesmo fora da nova janela. O backend deve fechar apenas novos agendamentos nesses horários.
+                {preservedBookings.length} aula(s) seguem válidas mesmo fora da nova janela. O
+                backend deve fechar apenas novos agendamentos nesses horários.
               </Text>
             </View>
           </Card>
         ) : null}
-
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Dias da semana</Text>
@@ -251,7 +238,6 @@ export const InstructorAvailabilityEditorScreen: React.FC<Props> = ({ navigation
           onPressEmptyAction={() => navigation.navigate('AvailabilityExceptions')}
         />
 
-
         <AvailabilityCalendarPreview
           draft={draft}
           bookings={bookings}
@@ -266,13 +252,13 @@ export const InstructorAvailabilityEditorScreen: React.FC<Props> = ({ navigation
           <Text style={styles.previewLoadingText}>Atualizando bookings do mês...</Text>
         ) : null}
 
-                    <Button
-              title="Salvar alterações"
-              style={styles.heroAction}
-              onPress={handleSave}
-              disabled={!hasChanges || isSaving}
-              loading={isSaving}
-            />
+        <Button
+          title="Salvar alterações"
+          style={styles.heroAction}
+          onPress={handleSave}
+          disabled={!hasChanges || isSaving}
+          loading={isSaving}
+        />
 
         {/* <Card style={styles.backendNoteCard}>
           <View style={styles.backendHeader}>
@@ -317,7 +303,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-
   },
   contentContainer: {
     padding: theme.spacing.lg,
@@ -364,8 +349,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   sectionWeekDays: {
-  flexDirection: 'column',
-  rowGap: theme.spacing.lg,  
+    flexDirection: 'column',
+    rowGap: theme.spacing.lg,
   },
   sectionTitle: {
     fontSize: theme.typography.fontSize.lg,

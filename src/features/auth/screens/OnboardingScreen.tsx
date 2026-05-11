@@ -13,16 +13,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../core/auth';
-import { Button } from '../../../shared/ui/base/Button';
 import { StepFlow, type StepFlowItem } from '../../../shared/ui/flows';
 import { FormInput, FormSelect } from '../../../shared/ui/forms';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import type { RegisterUser } from '../../../types/auth';
 import type { AuthStackScreenProps } from '../../../types/navigation';
-import {
-  OnboardingStepper,
-  type OnboardingStepDefinition,
-} from '../components/OnboardingStepper';
+import { OnboardingStepper, type OnboardingStepDefinition } from '../components/OnboardingStepper';
 
 type Props = AuthStackScreenProps<'Onboarding'>;
 type UserType = 'aluno' | 'instrutor';
@@ -136,17 +133,13 @@ const validateRequired = (value: string | undefined): string | true =>
 
 const validateCPF = (cpf: string): string | true => {
   if (!cpf) return 'CPF é obrigatório';
-  return /^\d{11}$/.test(cpf.replace(/\D/g, ''))
-    ? true
-    : 'CPF deve conter 11 dígitos';
+  return /^\d{11}$/.test(cpf.replace(/\D/g, '')) ? true : 'CPF deve conter 11 dígitos';
 };
 
 const validateTelefone = (telefone: string): string | true => {
   if (!telefone) return 'Telefone é obrigatório';
   const telefoneLimpo = telefone.replace(/\D/g, '');
-  return telefoneLimpo.length >= 10 && telefoneLimpo.length <= 11
-    ? true
-    : 'Telefone inválido';
+  return telefoneLimpo.length >= 10 && telefoneLimpo.length <= 11 ? true : 'Telefone inválido';
 };
 
 const validateDate = (value: string): string | true => {
@@ -197,9 +190,7 @@ const formatCurrency = (value: string): string => {
 
 const formatDateToApi = (dateString: string): string => {
   const [day, month, year] = dateString.split('/').map(Number);
-  return `${year}-${month.toString().padStart(2, '0')}-${day
-    .toString()
-    .padStart(2, '0')}`;
+  return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 };
 
 interface ViaCepResponse {
@@ -272,7 +263,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   const isInstrutor = userType === 'instrutor';
   const steps = useMemo(
     () => (isInstrutor ? [...BASE_STEPS, INSTRUCTOR_STEP] : BASE_STEPS),
-    [isInstrutor]
+    [isInstrutor],
   );
 
   useEffect(() => {
@@ -366,10 +357,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const validateCepField = (
-    cepValue: string,
-    options?: { showRequired?: boolean }
-  ): boolean => {
+  const validateCepField = (cepValue: string, options?: { showRequired?: boolean }): boolean => {
     const cepDigits = cepValue.replace(/\D/g, '');
 
     if (!cepDigits.length) {
@@ -426,7 +414,10 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
 
     if (currentStep === 2) {
       if (isInstrutor && !getValues('possuiVeiculo')) {
-        Alert.alert('Veículo obrigatório', 'Instrutores precisam cadastrar um veículo para seguir.');
+        Alert.alert(
+          'Veículo obrigatório',
+          'Instrutores precisam cadastrar um veículo para seguir.',
+        );
         return false;
       }
 
@@ -519,7 +510,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
       inputRef?: React.RefObject<TextInput | null>;
       onChangeText?: (value: string) => void;
       onBlur?: (value: string) => void;
-    }
+    },
   ) => (
     <Controller
       control={control}
@@ -558,14 +549,13 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
     name: keyof OnboardingFormData,
     label: string,
     placeholder: string,
-    options: ReadonlyArray<{ label: string; value: string }>
+    options: ReadonlyArray<{ label: string; value: string }>,
   ) => (
     <Controller
       control={control}
       name={name}
       rules={{
-        validate: value =>
-          validateRequired(typeof value === 'string' ? value : ''),
+        validate: value => validateRequired(typeof value === 'string' ? value : ''),
       }}
       render={({ field: { onChange, value } }) => (
         <FormSelect
@@ -586,7 +576,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
     type: UserType,
     title: string,
     description: string,
-    Icon: typeof UserRound
+    Icon: typeof UserRound,
   ) => {
     const selected = userType === type;
 
@@ -698,13 +688,13 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
           'aluno',
           'Aluno',
           'Estou buscando um instrutor para tirar minha CNH.',
-          UserRound
+          UserRound,
         )}
         {renderAccountTypeCard(
           'instrutor',
           'Instrutor',
           'Sou instrutor e quero ensinar alunos.',
-          GraduationCap
+          GraduationCap,
         )}
       </View>
     </>
@@ -722,10 +712,10 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
       <Text style={styles.sectionLabel}>Possui veículo?</Text>
       <View style={styles.radioGroup}>
         {renderRadioOption('Sim', Boolean(possuiVeiculo), () =>
-          setValue('possuiVeiculo', true, { shouldValidate: true })
+          setValue('possuiVeiculo', true, { shouldValidate: true }),
         )}
         {renderRadioOption('Não', !possuiVeiculo, () =>
-          setValue('possuiVeiculo', false, { shouldValidate: true })
+          setValue('possuiVeiculo', false, { shouldValidate: true }),
         )}
       </View>
 
@@ -751,15 +741,12 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
                 styles.choiceChip,
                 getValues('veiculo_tipo_cambio') === 'MANUAL' && styles.choiceChipSelected,
               ]}
-              onPress={() =>
-                setValue('veiculo_tipo_cambio', 'MANUAL', { shouldValidate: true })
-              }
+              onPress={() => setValue('veiculo_tipo_cambio', 'MANUAL', { shouldValidate: true })}
             >
               <Text
                 style={[
                   styles.choiceChipText,
-                  getValues('veiculo_tipo_cambio') === 'MANUAL' &&
-                    styles.choiceChipTextSelected,
+                  getValues('veiculo_tipo_cambio') === 'MANUAL' && styles.choiceChipTextSelected,
                 ]}
               >
                 Manual
@@ -768,8 +755,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
             <TouchableOpacity
               style={[
                 styles.choiceChip,
-                getValues('veiculo_tipo_cambio') === 'AUTOMATICO' &&
-                  styles.choiceChipSelected,
+                getValues('veiculo_tipo_cambio') === 'AUTOMATICO' && styles.choiceChipSelected,
               ]}
               onPress={() =>
                 setValue('veiculo_tipo_cambio', 'AUTOMATICO', {
@@ -829,12 +815,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
                 setValue('cnh_categorias', next, { shouldValidate: true });
               }}
             >
-              <Text
-                style={[
-                  styles.choiceChipText,
-                  isSelected && styles.choiceChipTextSelected,
-                ]}
-              >
+              <Text style={[styles.choiceChipText, isSelected && styles.choiceChipTextSelected]}>
                 {option}
               </Text>
             </TouchableOpacity>
@@ -875,15 +856,17 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
       >
         <View style={styles.header}>
           <View style={styles.brandRow}>
-            <Image source={require('../../../assets/icon-transparent.png')} style={styles.brandImage} />
+            <Image
+              source={require('../../../assets/icon-transparent.png')}
+              style={styles.brandImage}
+            />
             <View>
-              <Text style={styles.brandTitle}>Drivoo</Text> 
+              <Text style={styles.brandTitle}>Drivoo</Text>
             </View>
           </View>
         </View>
 
-          <OnboardingStepper steps={steps} currentStep={currentStep} />
-
+        <OnboardingStepper steps={steps} currentStep={currentStep} />
 
         {error ? (
           <View style={styles.errorContainer}>

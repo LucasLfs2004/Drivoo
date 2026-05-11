@@ -1,29 +1,16 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Linking,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import React from 'react';
+import { Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Card } from '../../../shared/ui/base/Card';
-import { Button } from '../../../shared/ui/base/Button';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import { InstrutorProfileStackParamList } from '../../../types/navigation';
 
 type Props = NativeStackScreenProps<InstrutorProfileStackParamList, 'Support'>;
 
-type SupportFaqCategory =
-  | 'conta'
-  | 'agenda'
-  | 'ganhos'
-  | 'veiculo'
-  | 'plataforma';
+type SupportFaqCategory = 'conta' | 'agenda' | 'ganhos' | 'veiculo' | 'plataforma';
 
 interface SupportFaqItem {
   id: string;

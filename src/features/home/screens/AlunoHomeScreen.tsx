@@ -1,4 +1,3 @@
-import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   AlertCircle,
@@ -20,6 +19,7 @@ import {
   StyleSheet,
   Text,
   View,
+  ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar, Badge, Button, Card, Divider, Typography } from '../../../shared/ui/base';
@@ -85,24 +85,26 @@ const MetricCard = ({
   label,
   value,
   helper,
+  style,
 }: {
   icon: IconComponent;
   label: string;
   value: string;
   helper?: string;
+  style?: ViewStyle;
 }) => (
-  <Card variant="outlined" padding="md" style={styles.metricCard}>
+  <Card variant="outlined" padding="md" style={[styles.metricCard, style]}>
     <View style={styles.metricIcon}>
       <Icon color={theme.colors.primary[500]} size={20} />
     </View>
     <Typography variant="h4" style={styles.metricValue}>
       {value}
     </Typography>
-    <Typography variant="caption" color="secondary">
+    <Typography variant="caption" color="secondary" numberOfLines={2}>
       {label}
     </Typography>
     {helper ? (
-      <Typography variant="label" color="tertiary" style={styles.metricHelper}>
+      <Typography variant="label" color="tertiary" style={styles.metricHelper} numberOfLines={2}>
         {helper}
       </Typography>
     ) : null}
@@ -126,7 +128,7 @@ const DetailRow = ({
       <Typography variant="label" color="secondary">
         {label}
       </Typography>
-      <Typography variant="body" weight="medium">
+      <Typography variant="body" weight="medium" numberOfLines={2}>
         {value}
       </Typography>
     </View>
@@ -147,7 +149,7 @@ const NextLessonCard = ({
   return (
     <Card variant="elevated" padding="md" style={styles.sectionCard}>
       <View style={styles.cardHeader}>
-        <View>
+        <View style={styles.cardTitleBlock}>
           <View style={styles.rowHeader}>
             <Typography variant="label" color="secondary">
               Próxima aula
@@ -156,14 +158,16 @@ const NextLessonCard = ({
               {status.label}
             </Badge>
           </View>
-          <Typography variant="h4">Seu próximo compromisso</Typography>
+          <Typography variant="h4" numberOfLines={2}>
+            Seu próximo compromisso
+          </Typography>
         </View>
       </View>
 
       <View style={styles.instructorRow}>
         <Avatar name={lesson.instructor.fullName} source={lesson.instructor.avatarUrl} size="lg" />
         <View style={styles.instructorText}>
-          <Typography variant="body" weight="semibold">
+          <Typography variant="body" weight="semibold" numberOfLines={1}>
             {lesson.instructor.fullName}
           </Typography>
           <Typography variant="caption" color="secondary">
@@ -251,12 +255,14 @@ const DashboardSummary = ({ dashboard }: { dashboard: StudentDashboard }) => {
         label="Próximas"
         value={String(dashboard.bookingSummary.upcoming)}
         helper={`${dashboard.bookingSummary.completed} concluídas`}
+        style={styles.metricCardCompact}
       />
       <MetricCard
         icon={Users}
         label="Instrutores"
         value={String(dashboard.stats.uniqueInstructors)}
         helper={`${dashboard.bookingSummary.canceled} canceladas`}
+        style={styles.metricCardCompact}
       />
     </View>
   );
@@ -268,11 +274,13 @@ const LearningSnapshot = ({ dashboard }: { dashboard: StudentDashboard }) => {
   return (
     <Card variant="outlined" padding="md" style={styles.sectionCard}>
       <View style={styles.cardHeader}>
-        <View>
+        <View style={styles.cardTitleBlock}>
           <Typography variant="label" color="secondary">
             Resumo do aluno
           </Typography>
-          <Typography variant="h4">Progresso e avaliações</Typography>
+          <Typography variant="h4" numberOfLines={2}>
+            Progresso e avaliações
+          </Typography>
         </View>
         <View style={styles.ratingPill}>
           <Star
@@ -292,8 +300,18 @@ const LearningSnapshot = ({ dashboard }: { dashboard: StudentDashboard }) => {
           <Text style={styles.snapshotValue}>{dashboard.progress.completedLessons}</Text>
         </View>
         <View style={styles.snapshotRow}>
+          <Text style={styles.snapshotLabel}>Próximas aulas</Text>
+          <Text style={styles.snapshotValue}>{String(dashboard.bookingSummary.upcoming)}</Text>
+        </View>
+        <View style={styles.snapshotRow}>
           <Text style={styles.snapshotLabel}>Horas praticadas</Text>
           <Text style={styles.snapshotValue}>{dashboard.progress.practiceHours.toFixed(1)}h</Text>
+        </View>
+        <View style={styles.snapshotRow}>
+          <Text style={styles.snapshotLabel}>Avaliação média dada</Text>
+          <Text style={styles.snapshotValue}>
+            {hasRating ? dashboard.stats.averageRatingGiven.toFixed(1) : '-'}
+          </Text>
         </View>
         <View style={styles.snapshotRow}>
           <Text style={styles.snapshotLabel}>Avaliação média dada</Text>
@@ -306,8 +324,11 @@ const LearningSnapshot = ({ dashboard }: { dashboard: StudentDashboard }) => {
   );
 };
 
-export const AlunoHomeScreen: React.FC = () => {
-  const navigation = useNavigation<NavigationProp>();
+interface Props {
+  navigation: NavigationProp;
+}
+
+export const AlunoHomeScreen: React.FC<Props> = ({ navigation }) => {
   const { data: dashboard, isError, isLoading, isRefetching, refetch } = useStudentDashboardQuery();
 
   const handleSearchInstructorsPress = () => {
@@ -381,7 +402,7 @@ export const AlunoHomeScreen: React.FC = () => {
           />
         }
       >
-        <HomeHeader subtitle={headerSubtitle} />
+        <HomeHeader subtitle={headerSubtitle} navigation={navigation} />
 
         {dashboard.nextLesson ? (
           <NextLessonCard
@@ -393,9 +414,7 @@ export const AlunoHomeScreen: React.FC = () => {
           <EmptyNextLessonCard onSearch={handleSearchInstructorsPress} />
         )}
 
-        <DashboardSummary dashboard={dashboard} />
-
-        <LearningSnapshot dashboard={dashboard} />
+        {/* <DashboardSummary dashboard={dashboard} /> */}
 
         <Card variant="elevated" padding="md" style={styles.quickActions}>
           <Typography variant="h4">Ações rápidas</Typography>
@@ -423,6 +442,7 @@ export const AlunoHomeScreen: React.FC = () => {
             />
           </View>
         </Card>
+        <LearningSnapshot dashboard={dashboard} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -438,7 +458,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: theme.spacing.md,
-    paddingBottom: theme.spacing['2xl'],
+    paddingBottom: theme.spacing.bottomTabPadding,
     gap: theme.spacing.md,
   },
   loadingState: {
@@ -463,15 +483,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: theme.spacing.md,
+  },
+  cardTitleBlock: {
     flex: 1,
+    minWidth: 0,
   },
   rowHeader: {
-    flex: 1,
-    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // gap: theme.spacing.sm,
+    gap: theme.spacing.sm,
   },
   instructorRow: {
     flexDirection: 'row',
@@ -499,14 +520,17 @@ const styles = StyleSheet.create({
   },
   detailContent: {
     flex: 1,
+    minWidth: 0,
     gap: theme.spacing.xs,
   },
   actions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: theme.spacing.sm,
   },
   actionButton: {
     flex: 1,
+    minWidth: theme.scaleUtils.moderateScale(112),
   },
   emptyLessonIcon: {
     width: theme.scaleUtils.moderateScale(54),
@@ -527,9 +551,13 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   metricCard: {
-    width: '48%',
+    flexGrow: 1,
+    flexBasis: theme.scaleUtils.moderateScale(148),
     minHeight: theme.scaleUtils.moderateScale(132),
     gap: theme.spacing.xs,
+  },
+  metricCardCompact: {
+    minHeight: theme.scaleUtils.moderateScale(118),
   },
   metricIcon: {
     width: theme.scaleUtils.moderateScale(36),
@@ -549,6 +577,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.xs,
+    flexShrink: 0,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borders.radius.full,
@@ -575,12 +604,14 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.semibold,
+    flexShrink: 0,
   },
   quickActions: {
     gap: theme.spacing.md,
   },
   actionButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: theme.spacing.sm,
   },
 });

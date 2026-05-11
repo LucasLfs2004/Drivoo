@@ -1,3 +1,4 @@
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
   Alert,
@@ -10,25 +11,20 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react-native';
 
-import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
+import { getDayLabel, getDayValidationErrors, maskTimeInput } from '../lib/availability';
 import { useInstructorAvailabilityDraft } from '../store/InstructorAvailabilityDraftContext';
 import type { AvailabilityInterval } from '../types/availability';
-import {
-  getDayLabel,
-  getDayValidationErrors,
-  maskTimeInput,
-} from '../utils/availability';
 
 type EditableInterval = AvailabilityInterval & {
   id: string;
 };
 
 const createEditableInterval = (
-  interval: AvailabilityInterval = { start: '08:00', end: '12:00' }
+  interval: AvailabilityInterval = { start: '08:00', end: '12:00' },
 ): EditableInterval => ({
   ...interval,
   id: `interval-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -45,40 +41,32 @@ type Props = {
   };
 };
 
-export const EditInstructorAvailabilityDayScreen: React.FC<Props> = ({
-  navigation,
-  route,
-}) => {
+export const EditInstructorAvailabilityDayScreen: React.FC<Props> = ({ navigation, route }) => {
   const { day } = route.params;
   const { draft, updateDay } = useInstructorAvailabilityDraft();
   const [enabled, setEnabled] = useState(draft.weekly[day].length > 0);
   const [intervals, setIntervals] = useState<EditableInterval[]>(
     draft.weekly[day].length
       ? draft.weekly[day].map(interval => createEditableInterval(interval))
-      : [createEditableInterval()]
+      : [createEditableInterval()],
   );
 
   const normalizedIntervals = useMemo<AvailabilityInterval[]>(
     () => intervals.map(({ id: _id, ...interval }) => interval),
-    [intervals]
+    [intervals],
   );
-  const errors = useMemo(
-    () => getDayValidationErrors(normalizedIntervals),
-    [normalizedIntervals]
-  );
+  const errors = useMemo(() => getDayValidationErrors(normalizedIntervals), [normalizedIntervals]);
   const hasErrors = errors.some(Boolean);
 
   const handleIntervalChange = (
     intervalId: string,
     field: keyof AvailabilityInterval,
-    value: string
+    value: string,
   ) => {
     setIntervals(current =>
       current.map(interval =>
-        interval.id === intervalId
-          ? { ...interval, [field]: maskTimeInput(value) }
-          : interval
-      )
+        interval.id === intervalId ? { ...interval, [field]: maskTimeInput(value) } : interval,
+      ),
     );
   };
 
@@ -127,10 +115,15 @@ export const EditInstructorAvailabilityDayScreen: React.FC<Props> = ({
           <Text style={styles.sectionTitle}>Horários</Text>
           <Pressable
             style={styles.addButton}
-            onPress={() => setIntervals(current => [...current, createEditableInterval({
-              start: '13:00',
-              end: '18:00',
-            })])}
+            onPress={() =>
+              setIntervals(current => [
+                ...current,
+                createEditableInterval({
+                  start: '13:00',
+                  end: '18:00',
+                }),
+              ])
+            }
           >
             <Plus color={theme.colors.primary[500]} size={16} />
             <Text style={styles.addLabel}>Adicionar horário</Text>
@@ -180,7 +173,12 @@ export const EditInstructorAvailabilityDayScreen: React.FC<Props> = ({
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button title="Cancelar" variant="outline" onPress={() => navigation.goBack()} style={styles.footerButton} />
+        <Button
+          title="Cancelar"
+          variant="outline"
+          onPress={() => navigation.goBack()}
+          style={styles.footerButton}
+        />
         <Button title="Salvar dia" onPress={handleSave} style={styles.footerButton} />
       </View>
     </SafeAreaView>

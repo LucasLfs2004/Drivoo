@@ -1,19 +1,19 @@
 import { apiClient } from '../../../core/api';
+import { mapCreateCheckoutSessionError } from '../lib/checkoutErrors';
 import type {
   BookingCheckoutSessionApiResponse,
   BookingCheckoutStatusApiResponse,
   CreateBookingCheckoutSessionApiRequest,
 } from '../types/api';
-import { mapCreateCheckoutSessionError } from '../utils/checkoutErrors';
 
 export const bookingCheckoutApi = {
   async createCheckoutSession(
-    payload: CreateBookingCheckoutSessionApiRequest
+    payload: CreateBookingCheckoutSessionApiRequest,
   ): Promise<BookingCheckoutSessionApiResponse> {
     try {
       const response = await apiClient.post<BookingCheckoutSessionApiResponse>(
         '/agendamentos/checkout-session',
-        payload
+        payload,
       );
 
       return response.data;
@@ -22,11 +22,9 @@ export const bookingCheckoutApi = {
     }
   },
 
-  async getCheckoutStatus(
-    bookingId: string
-  ): Promise<BookingCheckoutStatusApiResponse> {
+  async getCheckoutStatus(bookingId: string): Promise<BookingCheckoutStatusApiResponse> {
     const response = await apiClient.get<BookingCheckoutStatusApiResponse>(
-      `/agendamentos/${bookingId}/checkout-status`
+      `/agendamentos/${bookingId}/checkout-status`,
     );
 
     return response.data;

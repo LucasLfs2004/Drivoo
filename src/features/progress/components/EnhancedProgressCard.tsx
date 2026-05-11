@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, StyleSheet, ActivityIndicator, Vibration } from 'react-native';
-import { theme } from '../../../theme';
-import { Card, Typography, Divider } from '../../../shared/ui/base';
-import { CategoryProgressSection } from './CategoryProgressSection';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Vibration, View } from 'react-native';
 import { loadProgress, saveProgress } from '../../../services/progressStorage';
+import { Card, Divider, Typography } from '../../../shared/ui/base';
+import { theme } from '../../../theme';
 import { debounceAsync } from '../../../utils/debounce';
+import { CategoryProgressSection } from './CategoryProgressSection';
 
 interface ProgressState {
   categoryA: {
@@ -39,14 +39,14 @@ export const EnhancedProgressCard: React.FC = () => {
     debounceAsync(async (lessons: number) => {
       await saveProgress('A', lessons);
       delete pendingSavesRef.current.categoryA;
-    }, DEBOUNCE_DELAY)
+    }, DEBOUNCE_DELAY),
   ).current;
 
   const debouncedSaveB = useRef(
     debounceAsync(async (lessons: number) => {
       await saveProgress('B', lessons);
       delete pendingSavesRef.current.categoryB;
-    }, DEBOUNCE_DELAY)
+    }, DEBOUNCE_DELAY),
   ).current;
 
   const triggerHapticFeedback = useCallback(() => {
@@ -165,43 +165,35 @@ export const EnhancedProgressCard: React.FC = () => {
   return (
     <Card variant="elevated" padding="lg">
       <View style={styles.container}>
-        <Typography variant="h3" weight="bold" style={styles.title}>
-          Meu Progresso
-        </Typography>
+        <View style={styles.progressView}>
+          <CategoryProgressSection
+            category="A"
+            categoryLabel="Categoria A - Moto"
+            completedLessons={state.categoryA.completedLessons}
+            isEditing={state.categoryA.isEditing}
+            onIncrement={() => handleIncrement('A')}
+            onDecrement={() => handleDecrement('A')}
+            onToggleEdit={() => handleToggleEdit('A')}
+            maxLessons={MAX_LESSONS}
+            recommendedLessons={RECOMMENDED_LESSONS}
+            minimumLessons={MINIMUM_LESSONS}
+          />
 
-        <Typography variant="caption" color="secondary" style={styles.subtitle}>
-          Acompanhe suas aulas praticas
-        </Typography>
+          <Divider spacing="md" />
 
-        <Divider spacing="md" />
-
-        <CategoryProgressSection
-          category="A"
-          categoryLabel="Categoria A - Moto"
-          completedLessons={state.categoryA.completedLessons}
-          isEditing={state.categoryA.isEditing}
-          onIncrement={() => handleIncrement('A')}
-          onDecrement={() => handleDecrement('A')}
-          onToggleEdit={() => handleToggleEdit('A')}
-          maxLessons={MAX_LESSONS}
-          recommendedLessons={RECOMMENDED_LESSONS}
-          minimumLessons={MINIMUM_LESSONS}
-        />
-
-        <Divider spacing="md" />
-
-        <CategoryProgressSection
-          category="B"
-          categoryLabel="Categoria B - Carro"
-          completedLessons={state.categoryB.completedLessons}
-          isEditing={state.categoryB.isEditing}
-          onIncrement={() => handleIncrement('B')}
-          onDecrement={() => handleDecrement('B')}
-          onToggleEdit={() => handleToggleEdit('B')}
-          maxLessons={MAX_LESSONS}
-          recommendedLessons={RECOMMENDED_LESSONS}
-          minimumLessons={MINIMUM_LESSONS}
-        />
+          <CategoryProgressSection
+            category="B"
+            categoryLabel="Categoria B - Carro"
+            completedLessons={state.categoryB.completedLessons}
+            isEditing={state.categoryB.isEditing}
+            onIncrement={() => handleIncrement('B')}
+            onDecrement={() => handleDecrement('B')}
+            onToggleEdit={() => handleToggleEdit('B')}
+            maxLessons={MAX_LESSONS}
+            recommendedLessons={RECOMMENDED_LESSONS}
+            minimumLessons={MINIMUM_LESSONS}
+          />
+        </View>
       </View>
     </Card>
   );
@@ -222,5 +214,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: 'center',
+  },
+  progressView: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing.xs,
   },
 });

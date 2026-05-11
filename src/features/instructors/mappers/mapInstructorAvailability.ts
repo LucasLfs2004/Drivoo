@@ -1,3 +1,4 @@
+import { createEmptyWeeklyAvailability, normalizeWeeklyAvailability } from '../lib/availability';
 import type {
   InstructorAvailabilityAggregateApiResponse,
   InstructorAvailabilityBulkApiRequest,
@@ -9,12 +10,11 @@ import type {
   InstructorBookingPreview,
   WeeklyAvailability,
 } from '../types/availability';
-import { createEmptyWeeklyAvailability, normalizeWeeklyAvailability } from '../utils/availability';
 
 const normalizeTime = (value?: string | null) => (value ?? '').slice(0, 5);
 
 export const mapInstructorAvailability = (
-  response: InstructorAvailabilityAggregateApiResponse
+  response: InstructorAvailabilityAggregateApiResponse,
 ): InstructorAvailabilityDraft => {
   const weekly = response.semanal.reduce<WeeklyAvailability>((acc, item) => {
     acc[item.dia_semana] = (item.intervalos ?? []).map(interval => ({
@@ -54,45 +54,43 @@ export const mapInstructorAvailability = (
 
 export const mapInstructorAvailabilityToBulkPayload = (
   draft: InstructorAvailabilityDraft,
-  initialDraft?: InstructorAvailabilityDraft
+  initialDraft?: InstructorAvailabilityDraft,
 ): InstructorAvailabilityBulkApiRequest => {
   const weeklyItems = Object.entries(draft.weekly)
-      .filter(([day, intervals]) => {
-        if (!initialDraft) {
-          return true;
-        }
+    .filter(([day, intervals]) => {
+      if (!initialDraft) {
+        return true;
+      }
 
-        const previousIntervals = initialDraft.weekly[Number(day)] ?? [];
-        return JSON.stringify(previousIntervals) !== JSON.stringify(intervals);
-      })
-      .map(([day, intervals]) => ({
-        tipo_disponibilidade: 'SEMANAL' as const,
-        dias_semana: [Number(day)],
-        intervalos: intervals.map(interval => ({
-          hora_inicio: interval.start,
-          hora_fim: interval.end,
-        })),
-      }));
+      const previousIntervals = initialDraft.weekly[Number(day)] ?? [];
+      return JSON.stringify(previousIntervals) !== JSON.stringify(intervals);
+    })
+    .map(([day, intervals]) => ({
+      tipo_disponibilidade: 'SEMANAL' as const,
+      dias_semana: [Number(day)],
+      intervalos: intervals.map(interval => ({
+        hora_inicio: interval.start,
+        hora_fim: interval.end,
+      })),
+    }));
 
   const exceptionItems = draft.exceptions
-      .filter(item => {
-        if (!initialDraft) {
-          return true;
-        }
+    .filter(item => {
+      if (!initialDraft) {
+        return true;
+      }
 
-        const previousException = initialDraft.exceptions.find(
-          current =>
-            current.date === item.date &&
-            current.type === item.type
-        );
+      const previousException = initialDraft.exceptions.find(
+        current => current.date === item.date && current.type === item.type,
+      );
 
-        if (!previousException) {
-          return true;
-        }
+      if (!previousException) {
+        return true;
+      }
 
-        return JSON.stringify(previousException) !== JSON.stringify(item);
-      })
-      .map(item => {
+      return JSON.stringify(previousException) !== JSON.stringify(item);
+    })
+    .map(item => {
       if (item.type === 'blocked') {
         return {
           tipo_disponibilidade: 'EXCECAO_BLOQUEIO' as const,
@@ -112,9 +110,7 @@ export const mapInstructorAvailabilityToBulkPayload = (
 
   const deletedExceptionItems = initialDraft
     ? initialDraft.exceptions
-        .filter(previous =>
-          !draft.exceptions.some(current => current.id === previous.id)
-        )
+        .filter(previous => !draft.exceptions.some(current => current.id === previous.id))
         .map(previous => ({
           tipo_disponibilidade: 'EXCLUIR_EXCECAO' as const,
           datas_especificas: [previous.date],
@@ -128,7 +124,7 @@ export const mapInstructorAvailabilityToBulkPayload = (
 };
 
 export const mapInstructorBookingsPreview = (
-  response: InstructorBookingsPreviewApiResponse
+  response: InstructorBookingsPreviewApiResponse,
 ): InstructorBookingPreview[] =>
   (response.itens ?? []).map(item => ({
     id: item.id,

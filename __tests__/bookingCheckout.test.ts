@@ -1,10 +1,10 @@
+import { mapCreateCheckoutSessionError } from '../src/features/bookings/lib/checkoutErrors';
+import { calculateBookingPaymentInfo } from '../src/features/bookings/lib/payment';
 import {
   mapBookingCheckoutSession,
   mapBookingCheckoutStatus,
   mapBookingDataToCheckoutPayload,
 } from '../src/features/bookings/mappers/mapBookingCheckout';
-import { mapCreateCheckoutSessionError } from '../src/features/bookings/utils/checkoutErrors';
-import { calculateBookingPaymentInfo } from '../src/features/bookings/utils/payment';
 import type { BookingData } from '../src/features/bookings/types/domain';
 
 describe('Booking checkout mapping', () => {

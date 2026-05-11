@@ -1,8 +1,8 @@
+import { Minus, Plus } from 'lucide-react-native';
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Plus, Minus } from 'lucide-react-native';
-import { theme } from '../../../theme';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Typography } from '../../../shared/ui/base';
+import { theme } from '../../../theme';
 
 interface LessonCounterProps {
   count: number;
@@ -26,11 +26,7 @@ export const LessonCounter: React.FC<LessonCounterProps> = ({
 
   if (!isEditing) {
     return (
-      <TouchableOpacity
-        onPress={onToggleEdit}
-        style={styles.displayContainer}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity onPress={onToggleEdit} style={styles.displayContainer} activeOpacity={0.7}>
         <Typography variant="h3" weight="bold" color="primary">
           {count}
         </Typography>
@@ -55,12 +51,8 @@ export const LessonCounter: React.FC<LessonCounterProps> = ({
         />
       </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={onToggleEdit}
-        style={styles.countContainer}
-        activeOpacity={0.7}
-      >
-        <Typography variant="h3" weight="bold" color="primary">
+      <TouchableOpacity onPress={onToggleEdit} style={styles.countContainer} activeOpacity={0.7}>
+        <Typography variant="h3" weight="bold" color="secondary">
           {count}
         </Typography>
       </TouchableOpacity>
@@ -84,7 +76,7 @@ const styles = StyleSheet.create({
   displayContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
   },
   editContainer: {
     flexDirection: 'row',

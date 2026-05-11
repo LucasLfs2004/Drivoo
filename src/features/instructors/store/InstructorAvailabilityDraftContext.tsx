@@ -1,16 +1,13 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+import { useSaveInstructorAvailabilityMutation } from '../hooks/useInstructorAvailabilityMutations';
+import { useInstructorAvailabilityQuery } from '../hooks/useInstructorAvailabilityQuery';
+import { createPrototypeAvailabilityDraft, normalizeWeeklyAvailability } from '../lib/availability';
 import type {
   AvailabilityException,
   AvailabilityInterval,
   InstructorAvailabilityDraft,
 } from '../types/availability';
-import {
-  createPrototypeAvailabilityDraft,
-  normalizeWeeklyAvailability,
-} from '../utils/availability';
-import { useInstructorAvailabilityQuery } from '../hooks/useInstructorAvailabilityQuery';
-import { useSaveInstructorAvailabilityMutation } from '../hooks/useInstructorAvailabilityMutations';
 
 type InstructorAvailabilityDraftContextValue = {
   draft: InstructorAvailabilityDraft;
@@ -35,22 +32,17 @@ const serializeDraft = (draft: InstructorAvailabilityDraft) => JSON.stringify(dr
 export const InstructorAvailabilityDraftProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-  } = useInstructorAvailabilityQuery();
+  const { data, isLoading, isError, refetch } = useInstructorAvailabilityQuery();
   const saveMutation = useSaveInstructorAvailabilityMutation();
   const [initialDraft, setInitialDraft] = useState<InstructorAvailabilityDraft>(
-    createPrototypeAvailabilityDraft()
+    createPrototypeAvailabilityDraft(),
   );
   const [draft, setDraft] = useState<InstructorAvailabilityDraft>(initialDraft);
   const [hasHydratedFromApi, setHasHydratedFromApi] = useState(false);
 
   const hasChanges = useMemo(
     () => serializeDraft(draft) !== serializeDraft(initialDraft),
-    [draft, initialDraft]
+    [draft, initialDraft],
   );
 
   useEffect(() => {
@@ -89,9 +81,7 @@ export const InstructorAvailabilityDraftProvider: React.FC<{
 
           return {
             ...current,
-            exceptions: nextExceptions.sort((left, right) =>
-              left.date.localeCompare(right.date)
-            ),
+            exceptions: nextExceptions.sort((left, right) => left.date.localeCompare(right.date)),
           };
         });
       },
@@ -113,7 +103,7 @@ export const InstructorAvailabilityDraftProvider: React.FC<{
       },
       refetch,
     }),
-    [draft, initialDraft, hasChanges, isLoading, isError, saveMutation, refetch]
+    [draft, initialDraft, hasChanges, isLoading, isError, saveMutation, refetch],
   );
 
   return (

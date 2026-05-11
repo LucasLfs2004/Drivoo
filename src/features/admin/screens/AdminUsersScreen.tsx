@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card } from '../../../shared/ui/base/Card';
-import { Button } from '../../../shared/ui/base/Button';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 
 export const AdminUsersScreen: React.FC = () => {
@@ -11,31 +11,14 @@ export const AdminUsersScreen: React.FC = () => {
       <ScrollView style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Usuários</Text>
-          <Text style={styles.subtitle}>
-            Gerencie alunos da plataforma
-          </Text>
+          <Text style={styles.subtitle}>Gerencie alunos da plataforma</Text>
         </View>
 
         <Card style={styles.filtersCard}>
           <View style={styles.filterButtons}>
-            <Button
-              title="Todos"
-              variant="primary"
-              size="sm"
-              style={styles.filterButton}
-            />
-            <Button
-              title="Ativos"
-              variant="outline"
-              size="sm"
-              style={styles.filterButton}
-            />
-            <Button
-              title="Inativos"
-              variant="outline"
-              size="sm"
-              style={styles.filterButton}
-            />
+            <Button title="Todos" variant="primary" size="sm" style={styles.filterButton} />
+            <Button title="Ativos" variant="outline" size="sm" style={styles.filterButton} />
+            <Button title="Inativos" variant="outline" size="sm" style={styles.filterButton} />
           </View>
         </Card>
 

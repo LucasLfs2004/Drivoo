@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card } from '../../shared/ui/base/Card';
+import { Card } from '../../shared/ui/layout/Card';
 import { theme } from '../../theme';
 
 export const ChatListScreen: React.FC = () => {
@@ -10,9 +10,7 @@ export const ChatListScreen: React.FC = () => {
       <ScrollView style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Conversas</Text>
-          <Text style={styles.subtitle}>
-            Suas mensagens com instrutores e alunos
-          </Text>
+          <Text style={styles.subtitle}>Suas mensagens com instrutores e alunos</Text>
         </View>
 
         <View style={styles.chatSection}>

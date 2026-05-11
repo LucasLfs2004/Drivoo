@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card } from '../../../shared/ui/base/Card';
+import { Card } from '../../../shared/ui/layout/Card';
 import { theme } from '../../../theme';
 
 export const AdminAnalyticsScreen: React.FC = () => {
@@ -10,9 +10,7 @@ export const AdminAnalyticsScreen: React.FC = () => {
       <ScrollView style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Analytics</Text>
-          <Text style={styles.subtitle}>
-            Visão geral da plataforma
-          </Text>
+          <Text style={styles.subtitle}>Visão geral da plataforma</Text>
         </View>
 
         <View style={styles.metricsRow}>
@@ -40,17 +38,13 @@ export const AdminAnalyticsScreen: React.FC = () => {
         <Card style={styles.chartCard}>
           <Text style={styles.sectionTitle}>Crescimento de Usuários</Text>
           <View style={styles.chartPlaceholder}>
-            <Text style={styles.chartText}>
-              Gráfico de crescimento aparecerá aqui
-            </Text>
+            <Text style={styles.chartText}>Gráfico de crescimento aparecerá aqui</Text>
           </View>
         </Card>
 
         <Card style={styles.recentActivity}>
           <Text style={styles.sectionTitle}>Atividade Recente</Text>
-          <Text style={styles.noActivity}>
-            Nenhuma atividade recente
-          </Text>
+          <Text style={styles.noActivity}>Nenhuma atividade recente</Text>
         </Card>
       </ScrollView>
     </SafeAreaView>

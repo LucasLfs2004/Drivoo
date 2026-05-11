@@ -1,11 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Card } from '../../../shared/ui/base/Card';
-import { Button } from '../../../shared/ui/base/Button';
-import { theme } from '../../../theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from 'react';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
+import { theme } from '../../../theme';
 import type { AlunoBookingsStackParamList } from '../../../types/navigation';
 import { BookingCard } from '../components/BookingCard';
 import { useMyBookingsQuery } from '../hooks/useMyBookingsQuery';

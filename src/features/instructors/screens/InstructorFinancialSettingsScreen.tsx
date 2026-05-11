@@ -12,29 +12,21 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppHeader } from '../../../shared/ui/base/AppHeader';
-import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
 import { FormInput, FormSelect } from '../../../shared/ui/forms';
+import { Card } from '../../../shared/ui/layout/Card';
+import { AppHeader } from '../../../shared/ui/navigation/AppHeader';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import type { InstrutorProfileStackParamList } from '../../../types/navigation';
-import {
-  mapInstructorFinancialFormToPayload,
-} from '../mappers/mapInstructorFinancial';
 import {
   useCreateStripeOnboardingLinkMutation,
   useUpdateInstructorFinancialMutation,
 } from '../hooks/useInstructorFinancialMutations';
 import { useInstructorFinancialQuery } from '../hooks/useInstructorFinancialQuery';
-import type {
-  InstructorFinancialFormValues,
-  InstructorFiscalType,
-} from '../types/domain';
+import { mapInstructorFinancialFormToPayload } from '../mappers/mapInstructorFinancial';
+import type { InstructorFinancialFormValues, InstructorFiscalType } from '../types/domain';
 
-type Props = NativeStackScreenProps<
-  InstrutorProfileStackParamList,
-  'FinancialSettings'
->;
+type Props = NativeStackScreenProps<InstrutorProfileStackParamList, 'FinancialSettings'>;
 
 const fiscalTypeOptions = [
   { label: 'Pessoa física', value: 'PF' },
@@ -62,15 +54,12 @@ const formatCpfInput = (value: string) => {
     return `${cleanValue.slice(0, 3)}.${cleanValue.slice(3)}`;
   }
   if (cleanValue.length <= 9) {
-    return `${cleanValue.slice(0, 3)}.${cleanValue.slice(
-      3,
-      6
-    )}.${cleanValue.slice(6)}`;
+    return `${cleanValue.slice(0, 3)}.${cleanValue.slice(3, 6)}.${cleanValue.slice(6)}`;
   }
 
   return `${cleanValue.slice(0, 3)}.${cleanValue.slice(
     3,
-    6
+    6,
   )}.${cleanValue.slice(6, 9)}-${cleanValue.slice(9)}`;
 };
 
@@ -82,16 +71,10 @@ const formatPhoneInput = (value: string) => {
     return `(${cleanValue.slice(0, 2)}) ${cleanValue.slice(2)}`;
   }
   if (cleanValue.length <= 10) {
-    return `(${cleanValue.slice(0, 2)}) ${cleanValue.slice(
-      2,
-      6
-    )}-${cleanValue.slice(6)}`;
+    return `(${cleanValue.slice(0, 2)}) ${cleanValue.slice(2, 6)}-${cleanValue.slice(6)}`;
   }
 
-  return `(${cleanValue.slice(0, 2)}) ${cleanValue.slice(
-    2,
-    7
-  )}-${cleanValue.slice(7)}`;
+  return `(${cleanValue.slice(0, 2)}) ${cleanValue.slice(2, 7)}-${cleanValue.slice(7)}`;
 };
 
 const formatBirthDateInput = (value: string) => {
@@ -102,10 +85,7 @@ const formatBirthDateInput = (value: string) => {
     return `${cleanValue.slice(0, 2)}/${cleanValue.slice(2)}`;
   }
 
-  return `${cleanValue.slice(0, 2)}/${cleanValue.slice(
-    2,
-    4
-  )}/${cleanValue.slice(4)}`;
+  return `${cleanValue.slice(0, 2)}/${cleanValue.slice(2, 4)}/${cleanValue.slice(4)}`;
 };
 
 const formatAcceptedAt = (value?: string | null) => {
@@ -150,7 +130,7 @@ const getStatusTone = (pendingCount: number, completedAt: string | null) => {
 };
 
 const buildFormValues = (
-  profile?: ReturnType<typeof useInstructorFinancialQuery>['data']
+  profile?: ReturnType<typeof useInstructorFinancialQuery>['data'],
 ): InstructorFinancialFormValues => ({
   fiscalType: profile?.fiscalType ?? 'PF',
   cpf: profile?.cpf ?? '',
@@ -164,27 +144,20 @@ const buildFormValues = (
   fiscalAddress: profile?.fiscalAddress ?? '',
 });
 
-export const InstructorFinancialSettingsScreen: React.FC<Props> = ({
-  navigation,
-  route,
-}) => {
+export const InstructorFinancialSettingsScreen: React.FC<Props> = ({ navigation, route }) => {
   const stripeReturn = route.params?.stripeReturn;
   const financialQuery = useInstructorFinancialQuery();
   const updateFinancialMutation = useUpdateInstructorFinancialMutation();
   const createStripeLinkMutation = useCreateStripeOnboardingLinkMutation();
   const { refetch: refetchFinancialProfile } = financialQuery;
-  const [formValues, setFormValues] =
-    useState<InstructorFinancialFormValues>(defaultFormValues);
+  const [formValues, setFormValues] = useState<InstructorFinancialFormValues>(defaultFormValues);
   const [isFormDirty, setIsFormDirty] = useState(false);
   const contractAcceptedAt = financialQuery.data?.contractAcceptedAt ?? null;
-  const taxResponsibilityAcceptedAt =
-    financialQuery.data?.taxResponsibilityAcceptedAt ?? null;
+  const taxResponsibilityAcceptedAt = financialQuery.data?.taxResponsibilityAcceptedAt ?? null;
   const isContractAcceptanceLocked = Boolean(contractAcceptedAt);
   const isTaxAcceptanceLocked = Boolean(taxResponsibilityAcceptedAt);
   const formattedContractAcceptedAt = formatAcceptedAt(contractAcceptedAt);
-  const formattedTaxResponsibilityAcceptedAt = formatAcceptedAt(
-    taxResponsibilityAcceptedAt
-  );
+  const formattedTaxResponsibilityAcceptedAt = formatAcceptedAt(taxResponsibilityAcceptedAt);
 
   useEffect(() => {
     if (financialQuery.data && !isFormDirty) {
@@ -212,14 +185,14 @@ export const InstructorFinancialSettingsScreen: React.FC<Props> = ({
     () =>
       getStatusTone(
         financialQuery.data?.pendingItems.length ?? 0,
-        financialQuery.data?.stripeOnboardingCompletedAt ?? null
+        financialQuery.data?.stripeOnboardingCompletedAt ?? null,
       ),
-    [financialQuery.data]
+    [financialQuery.data],
   );
 
   const updateField = <TKey extends keyof InstructorFinancialFormValues>(
     field: TKey,
-    value: InstructorFinancialFormValues[TKey]
+    value: InstructorFinancialFormValues[TKey],
   ) => {
     setIsFormDirty(true);
     setFormValues(current => ({
@@ -258,10 +231,7 @@ export const InstructorFinancialSettingsScreen: React.FC<Props> = ({
     const missingFields = validateForm();
 
     if (missingFields.length) {
-      Alert.alert(
-        'Dados incompletos',
-        `Preencha: ${missingFields.join(', ')}.`
-      );
+      Alert.alert('Dados incompletos', `Preencha: ${missingFields.join(', ')}.`);
       return;
     }
 
@@ -277,9 +247,7 @@ export const InstructorFinancialSettingsScreen: React.FC<Props> = ({
       Alert.alert('Dados salvos', 'As informações financeiras foram atualizadas.');
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'Não foi possível salvar os dados financeiros.';
+        error instanceof Error ? error.message : 'Não foi possível salvar os dados financeiros.';
       Alert.alert('Erro ao salvar', message);
     }
   };
@@ -296,9 +264,7 @@ export const InstructorFinancialSettingsScreen: React.FC<Props> = ({
       await Linking.openURL(link.onboardingUrl);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'Não foi possível iniciar o onboarding da Stripe.';
+        error instanceof Error ? error.message : 'Não foi possível iniciar o onboarding da Stripe.';
       Alert.alert('Stripe indisponível', message);
     }
   };
@@ -330,13 +296,11 @@ export const InstructorFinancialSettingsScreen: React.FC<Props> = ({
         {stripeReturn && (
           <Card style={styles.card}>
             <Text style={styles.returnTitle}>
-              {stripeReturn === 'refresh'
-                ? 'Link da Stripe expirado'
-                : 'Retorno da Stripe'}
+              {stripeReturn === 'refresh' ? 'Link da Stripe expirado' : 'Retorno da Stripe'}
             </Text>
             <Text style={styles.returnText}>
-              Atualizamos o status financeiro com o backend. Se ainda houver pendências,
-              continue a configuração com um novo link da Stripe.
+              Atualizamos o status financeiro com o backend. Se ainda houver pendências, continue a
+              configuração com um novo link da Stripe.
             </Text>
           </Card>
         )}
@@ -365,9 +329,7 @@ export const InstructorFinancialSettingsScreen: React.FC<Props> = ({
             </View>
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>Elegibilidade</Text>
-              <Text style={styles.metaValue}>
-                {financialQuery.data?.eligibility ?? 'Pendente'}
-              </Text>
+              <Text style={styles.metaValue}>{financialQuery.data?.eligibility ?? 'Pendente'}</Text>
             </View>
           </View>
 
@@ -411,9 +373,7 @@ export const InstructorFinancialSettingsScreen: React.FC<Props> = ({
           <FormInput
             label="Data de nascimento"
             value={formValues.birthDate}
-            onChangeText={value =>
-              updateField('birthDate', formatBirthDateInput(value))
-            }
+            onChangeText={value => updateField('birthDate', formatBirthDateInput(value))}
             keyboardType="number-pad"
             placeholder="dd/mm/aaaa"
             required
@@ -459,9 +419,7 @@ export const InstructorFinancialSettingsScreen: React.FC<Props> = ({
                 Declaro estar de acordo com os termos comerciais do Drivoo.
               </Text>
               {formattedContractAcceptedAt && (
-                <Text style={styles.acceptanceDate}>
-                  Aceito em {formattedContractAcceptedAt}
-                </Text>
+                <Text style={styles.acceptanceDate}>Aceito em {formattedContractAcceptedAt}</Text>
               )}
             </View>
             <Switch
@@ -490,9 +448,7 @@ export const InstructorFinancialSettingsScreen: React.FC<Props> = ({
             </View>
             <Switch
               value={formValues.taxResponsibilityAccepted}
-              onValueChange={value =>
-                updateField('taxResponsibilityAccepted', value)
-              }
+              onValueChange={value => updateField('taxResponsibilityAccepted', value)}
               disabled={isTaxAcceptanceLocked}
               trackColor={{
                 false: theme.colors.neutral[300],

@@ -11,18 +11,18 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppHeader } from '../../../shared/ui/base/AppHeader';
-import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
+import { Card } from '../../../shared/ui/layout/Card';
+import { AppHeader } from '../../../shared/ui/navigation/AppHeader';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import { AlunoSearchStackParamList } from '../../../types/navigation';
 import { formatCurrency } from '../../../utils/currency';
-import { calculateBookingPaymentInfo } from '../utils/payment';
-import { mapBookingDataToCheckoutPayload } from '../mappers/mapBookingCheckout';
 import {
   useBookingCheckoutStatusQuery,
   useCreateBookingCheckoutSessionMutation,
 } from '../hooks/useBookingCheckout';
+import { calculateBookingPaymentInfo } from '../lib/payment';
+import { mapBookingDataToCheckoutPayload } from '../mappers/mapBookingCheckout';
 import { pendingCheckoutStorage } from '../store/pendingCheckoutStorage';
 import type {
   BookingCheckoutSession,
@@ -310,11 +310,7 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({ route, navigation }
             </View>
 
             <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>
-                {hasBackendPaymentInfo && displayedPaymentInfo.total !== null
-                  ? 'Total'
-                  : 'Valor estimado'}
-              </Text>
+              <Text style={styles.totalLabel}>Total</Text>
               <Text style={styles.totalValue}>
                 {formatCurrency(
                   displayedPaymentInfo.total ?? displayedPaymentInfo.subtotal ?? 0,

@@ -25,8 +25,8 @@ import {
 } from 'react-native';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '../../../shared/ui/base/Button';
-import { Card } from '../../../shared/ui/base/Card';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import type { InstrutorEarningsStackParamList } from '../../../types/navigation';
 import { formatCurrency } from '../../../utils/currency';

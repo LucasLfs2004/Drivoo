@@ -1,19 +1,19 @@
 import React, { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
   ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
   Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useForm, Controller } from 'react-hook-form';
-import { Card } from '../../../shared/ui/base/Card';
-import { Button } from '../../../shared/ui/base/Button';
 import { FormInput, FormSelect } from '../../../shared/ui/forms';
+import { Card } from '../../../shared/ui/layout/Card';
+import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';
 import {
   useDeleteInstructorVehicleMutation,
@@ -50,10 +50,7 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
     isLoading: isLoadingProfile,
     isError: hasProfileError,
   } = useMyInstructorProfileQuery();
-  const {
-    data: vehicles = [],
-    isLoading: isLoadingVehicles,
-  } = useInstructorVehiclesQuery();
+  const { data: vehicles = [], isLoading: isLoadingVehicles } = useInstructorVehiclesQuery();
   const updateProfileMutation = useInstructorProfileUpdateMutation();
   const deleteVehicleMutation = useDeleteInstructorVehicleMutation();
 
@@ -108,8 +105,7 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
           : primaryVehicle?.transmissao === 'manual' || profile.veiculo.transmissao === 'manual'
             ? 'MANUAL'
             : '',
-      aceitaVeiculoAluno:
-        primaryVehicle?.aceitaVeiculoAluno ?? profile.veiculo.aceitaVeiculoAluno,
+      aceitaVeiculoAluno: primaryVehicle?.aceitaVeiculoAluno ?? profile.veiculo.aceitaVeiculoAluno,
     });
   }, [primaryVehicle, profile, reset]);
 
@@ -125,7 +121,7 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
       data.veiculoModelo.trim() ||
       data.veiculoAno.trim() ||
       data.veiculoPlaca.trim() ||
-      data.tipoCambio
+      data.tipoCambio,
     );
 
     try {
@@ -202,9 +198,7 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
     ]);
   };
 
-  const isSaving =
-    updateProfileMutation.isPending ||
-    deleteVehicleMutation.isPending;
+  const isSaving = updateProfileMutation.isPending || deleteVehicleMutation.isPending;
 
   if (isLoadingProfile || isLoadingVehicles) {
     return (
@@ -247,7 +241,7 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
               <FormSelect
                 label="Genero"
                 value={value}
-                onSelect={(selectedValue) =>
+                onSelect={selectedValue =>
                   onChange(selectedValue as InstructorProfileFormData['genero'])
                 }
                 options={[
@@ -383,7 +377,7 @@ export const EditInstructorProfileScreen: React.FC<Props> = ({ navigation }) => 
               <FormSelect
                 label="Transmissão"
                 value={value}
-                onSelect={(selectedValue) =>
+                onSelect={selectedValue =>
                   onChange(selectedValue as InstructorProfileFormData['tipoCambio'])
                 }
                 options={[

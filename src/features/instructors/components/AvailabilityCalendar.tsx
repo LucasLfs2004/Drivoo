@@ -7,7 +7,7 @@ import {
   type CalendarCellModel,
   type CalendarDayTone,
 } from '../../../shared/ui/base';
-import { CALENDAR_WEEK_DAYS } from '../utils/availability';
+import { CALENDAR_WEEK_DAYS } from '../lib/availability';
 
 export type AvailabilityCalendarCellModel = {
   date: string;

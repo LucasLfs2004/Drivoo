@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
 import { Bike, Car } from 'lucide-react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Badge, Typography } from '../../../shared/ui/base';
 import { theme } from '../../../theme';
-import { Typography, Badge } from '../../../shared/ui/base';
 import { LessonCounter } from './LessonCounter';
 
 interface CategoryProgressSectionProps {
@@ -41,8 +41,8 @@ const CategoryProgressSectionComponent: React.FC<CategoryProgressSectionProps> =
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Icon size={24} color={iconColor} />
-          <Typography variant="h4" weight="semibold">
+          <Icon size={20} color={iconColor} />
+          <Typography variant="body" weight="semibold">
             {categoryLabel}
           </Typography>
         </View>
@@ -77,30 +77,25 @@ const CategoryProgressSectionComponent: React.FC<CategoryProgressSectionProps> =
 
       <View style={styles.progressSection}>
         <View style={styles.progressBar}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${Math.min(percentage, 100)}%` },
-            ]}
-          />
+          <View style={[styles.progressFill, { width: `${Math.min(percentage, 100)}%` }]} />
         </View>
         <Typography variant="body" weight="medium" color="primary">
           {percentage}%
         </Typography>
       </View>
 
-      {!hasReachedMinimum && (
+      {/* {!hasReachedMinimum && (
         <Typography variant="caption" color="secondary" style={styles.minInfo}>
-          Minimo de {minimumLessons} aulas para tirar a CNH
+          Mínimo de {minimumLessons} aulas para realizar o exame prático do Detran.
         </Typography>
-      )}
+      )} */}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   header: {
     gap: theme.spacing.sm,
@@ -151,5 +146,5 @@ export const CategoryProgressSection = React.memo(
     prevProps.category === nextProps.category &&
     prevProps.categoryLabel === nextProps.categoryLabel &&
     prevProps.completedLessons === nextProps.completedLessons &&
-    prevProps.isEditing === nextProps.isEditing
+    prevProps.isEditing === nextProps.isEditing,
 );
