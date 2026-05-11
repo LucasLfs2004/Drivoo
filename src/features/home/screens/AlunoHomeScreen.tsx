@@ -22,7 +22,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Avatar, Badge, Button, Card, Divider, Typography } from '../../../shared/ui/base';
+import { Avatar, Badge, Button, Card, Divider, Typography } from '../../../shared/ui';
 import { theme } from '../../../theme';
 import type { AlunoHomeStackParamList } from '../../../types/navigation';
 import { HomeHeader } from '../components/HomeHeader';

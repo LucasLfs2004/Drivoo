@@ -37,7 +37,7 @@
 
 ## Fase 5: Shared e legado
 
-- criar `shared/ui/base`
+- criar `shared/ui`
 - mover componentes realmente genéricos
 - reduzir expansão de `components/common`
 - remover contextos e serviços legados sem uso

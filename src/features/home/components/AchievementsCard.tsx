@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Card, Typography } from '../../../shared/ui/base';
+import { StyleSheet, View } from 'react-native';
+import { Card, Typography } from '../../../shared/ui';
 import { theme } from '../../../theme';
 
 interface Achievement {
@@ -32,20 +32,18 @@ const AchievementBadge: React.FC<Achievement> = ({ icon, title, unlocked }) => {
   );
 };
 
-export const AchievementsCard: React.FC<AchievementsCardProps> = ({
-  achievements,
-}) => {
+export const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements }) => {
   return (
     <Card variant="elevated" padding="md" style={styles.container}>
       <View style={styles.header}>
         <Typography variant="h4">🏆 Conquistas</Typography>
         <Typography variant="caption" color="secondary">
-          {achievements.filter((achievement) => achievement.unlocked).length}/{achievements.length}
+          {achievements.filter(achievement => achievement.unlocked).length}/{achievements.length}
         </Typography>
       </View>
 
       <View style={styles.badgeRow}>
-        {achievements.map((achievement) => (
+        {achievements.map(achievement => (
           <AchievementBadge key={achievement.id} {...achievement} />
         ))}
       </View>

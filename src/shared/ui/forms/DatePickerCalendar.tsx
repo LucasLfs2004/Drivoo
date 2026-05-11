@@ -3,11 +3,8 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
 import { theme } from '../../../theme';
-import {
-  Calendar,
-  buildCalendarMonthCells,
-  type CalendarCellModel,
-} from '../base';
+
+import { buildCalendarMonthCells, Calendar, CalendarCellModel } from '../calendar';
 
 type Props = {
   title?: string;
@@ -62,18 +59,13 @@ export const DatePickerCalendar: React.FC<Props> = ({
     return minDate ? dayjs(minDate).startOf('day') : null;
   }, [disablePastDates, minDate]);
 
-  const resolvedMaxDate = useMemo(
-    () => (maxDate ? dayjs(maxDate).endOf('day') : null),
-    [maxDate]
-  );
+  const resolvedMaxDate = useMemo(() => (maxDate ? dayjs(maxDate).endOf('day') : null), [maxDate]);
 
   const cells = useMemo<CalendarCellModel[]>(
     () =>
       buildCalendarMonthCells(visibleMonth).map(cell => {
         const cellDate = dayjs(cell.date);
-        const isBeforeMin = resolvedMinDate
-          ? cellDate.isBefore(resolvedMinDate, 'day')
-          : false;
+        const isBeforeMin = resolvedMinDate ? cellDate.isBefore(resolvedMinDate, 'day') : false;
         const isAfterMax = resolvedMaxDate ? cellDate.isAfter(resolvedMaxDate, 'day') : false;
 
         return {
@@ -83,7 +75,7 @@ export const DatePickerCalendar: React.FC<Props> = ({
           tone: value === cell.date ? 'brand' : cell.today ? 'neutral' : 'default',
         };
       }),
-    [visibleMonth, resolvedMaxDate, resolvedMinDate, value]
+    [visibleMonth, resolvedMaxDate, resolvedMinDate, value],
   );
 
   const allowPreviousMonth = useMemo(() => {

@@ -14,6 +14,8 @@ export const bookingsApi = {
     const response = await apiClient.get<ListMyBookingsApiResponse>('/agendamentos/meus', {
       params: {
         status_filtro: params.status_filtro ?? undefined,
+        ordenar_por: params.ordenar_por ?? 'data_aula',
+        ordem: params.ordem ?? 'asc',
         limite: params.limite ?? 50,
         offset: params.offset ?? 0,
       },

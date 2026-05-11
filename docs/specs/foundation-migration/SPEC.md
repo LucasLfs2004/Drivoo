@@ -40,7 +40,7 @@ Migrar primeiro a fundação do app para que todos os próximos domínios sejam 
 - `src/core/auth`
 - `src/core/api`
 - `src/core/storage`
-- `src/shared/ui/base`
+- `src/shared/ui`
 - `src/shared/ui/feedback`
 - convenções iniciais de export e organização
 
@@ -57,7 +57,7 @@ Ao fim desta etapa:
 - a navegação principal estará estruturada em `app/navigation`
 - a autenticação principal estará consolidada em `core/auth`
 - o cliente HTTP e infraestrutura de integração estarão em `core/api`
-- componentes genéricos de base começarão a sair de `components/common` para `shared/ui/base`
+- componentes genéricos de base começarão a sair de `components/common` para `shared/ui`
 - domínios futuros terão uma fundação clara para migrar
 
 ## Motivação
@@ -89,7 +89,7 @@ Integrações de domínio devem consumir essa base a partir de suas próprias ca
 
 ### Shared UI
 
-Componentes realmente genéricos devem migrar para `shared/ui/base`.
+Componentes realmente genéricos devem migrar para `shared/ui`.
 
 Componentes ainda muito específicos não devem ser promovidos cedo demais para `shared`.
 

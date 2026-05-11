@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { BottomSheet } from '../../../shared/ui/base';
+import { BottomSheet } from '../../../shared/ui';
 import { Card } from '../../../shared/ui/layout/Card';
 import { Button } from '../../../shared/ui/primitives/Button';
 import { theme } from '../../../theme';

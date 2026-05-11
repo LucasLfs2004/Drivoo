@@ -1,19 +1,12 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
-import {
-  CalendarDays,
-  Car,
-  ChevronRight,
-  Clock3,
-  MapPin,
-  UserRound,
-} from 'lucide-react-native';
+import { CalendarDays, Car, ChevronRight, Clock3, MapPin, UserRound } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AppHeader, Button, Card } from '../../../shared/ui/base';
+import { AppHeader, Button, Card } from '../../../shared/ui';
 import { theme } from '../../../theme';
 import type { InstrutorDashboardStackParamList } from '../../../types/navigation';
 import {
@@ -78,10 +71,8 @@ export const InstrutorBookingsScreen: React.FC<Props> = ({ navigation }) => {
 
   const upcomingCount = React.useMemo(
     () =>
-      bookings.filter(
-        booking =>
-          booking.status === 'scheduled' || booking.status === 'in_progress',
-      ).length,
+      bookings.filter(booking => booking.status === 'scheduled' || booking.status === 'in_progress')
+        .length,
     [bookings],
   );
 
@@ -157,18 +148,13 @@ export const InstrutorBookingsScreen: React.FC<Props> = ({ navigation }) => {
                       viewerRole: 'instrutor',
                     })
                   }
-                  style={({ pressed }) => [
-                    styles.bookingRow,
-                    pressed && styles.bookingRowPressed,
-                  ]}
+                  style={({ pressed }) => [styles.bookingRow, pressed && styles.bookingRowPressed]}
                 >
                   <View style={styles.bookingDateBlock}>
                     <Text style={styles.bookingWeekday}>
                       {dayjs(booking.date).locale('pt-br').format('ddd').replace('.', '')}
                     </Text>
-                    <Text style={styles.bookingDateDay}>
-                      {dayjs(booking.date).format('DD')}
-                    </Text>
+                    <Text style={styles.bookingDateDay}>{dayjs(booking.date).format('DD')}</Text>
                     <Text style={styles.bookingDateMonth}>
                       {dayjs(booking.date).locale('pt-br').format('MMM').replace('.', '')}
                     </Text>

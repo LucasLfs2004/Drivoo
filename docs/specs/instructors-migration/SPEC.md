@@ -88,7 +88,7 @@ Esta spec depende da conclusão da migração da fundação:
 - `core/auth`
 - `core/api`
 - `core/storage`
-- `shared/ui/base`
+- `shared/ui`
 
 ### Fase 1
 

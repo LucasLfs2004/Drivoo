@@ -92,7 +92,7 @@ store/
 
 Placement rules:
 
-- shared/generic UI goes to `shared/ui/base`
+- shared/generic UI goes to `shared/ui`
 - domain-specific UI goes inside the feature
 - API calls belong in `features/<domain>/api`
 - query/mutation hooks belong in `features/<domain>/hooks`

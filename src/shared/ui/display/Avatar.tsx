@@ -3,21 +3,27 @@ import React from 'react';
 import {
   Image,
   ImageSourcePropType,
+  Pressable,
+  StyleProp,
   StyleSheet,
-  Text,
-  TouchableOpacity,
+  View,
   ViewStyle,
 } from 'react-native';
 import { theme } from '../../../theme';
 
-export interface AvatarProps {
+import { Typography } from '../primitives';
+
+type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type AvatarVariant = 'circle' | 'rounded' | 'square';
+
+type AvatarProps = {
   source?: ImageSourcePropType | string;
   name?: string;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  variant?: 'circle' | 'rounded' | 'square';
-  style?: ViewStyle;
+  size?: AvatarSize;
+  variant?: AvatarVariant;
+  style?: StyleProp<ViewStyle>;
   onPress?: () => void;
-}
+};
 
 export const Avatar: React.FC<AvatarProps> = ({
   source,
@@ -27,13 +33,6 @@ export const Avatar: React.FC<AvatarProps> = ({
   style,
   onPress,
 }) => {
-  const getInitials = (name?: string) => {
-    if (!name) return '';
-    const parts = name.trim().split(' ');
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-  };
-
   const sizeValue = sizeMap[size];
   const iconSize = iconSizeMap[size];
   const fontSize = fontSizeMap[size];
@@ -49,17 +48,42 @@ export const Avatar: React.FC<AvatarProps> = ({
 
   const imageSource = typeof source === 'string' ? { uri: source } : source;
 
-  return (
-    <TouchableOpacity style={containerStyle} onPress={onPress}>
-      {imageSource ? (
-        <Image source={imageSource} style={styles.image} />
-      ) : name ? (
-        <Text style={[styles.initials, { fontSize }]}>{getInitials(name)}</Text>
-      ) : (
-        <User color={theme.colors.primary[500]} size={iconSize} />
-      )}
-    </TouchableOpacity>
+  const content = imageSource ? (
+    <Image source={imageSource} style={styles.image} />
+  ) : name ? (
+    <Typography style={[styles.initials, { fontSize }]}>{getInitials(name)}</Typography>
+  ) : (
+    <User color={theme.colors.primary[500]} size={iconSize} />
   );
+
+  if (onPress) {
+    return (
+      <Pressable
+        style={containerStyle}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={name ? `Avatar de ${name}` : 'Avatar'}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return <View style={containerStyle}>{content}</View>;
+};
+
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/);
+
+  if (parts.length === 0 || !parts[0]) {
+    return '';
+  }
+
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+
+  return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
 };
 
 const sizeMap = {

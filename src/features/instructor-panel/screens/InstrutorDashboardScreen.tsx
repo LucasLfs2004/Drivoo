@@ -1,20 +1,23 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
-import React from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { CalendarDays, ChevronRight, Clock3, MapPin, UserRound } from 'lucide-react-native';
+import React from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '../../../core/auth';
-import { buildCalendarMonthCells, Button, Calendar, Card, type CalendarCellModel } from '../../../shared/ui/base';
+import {
+  buildCalendarMonthCells,
+  Button,
+  Calendar,
+  Card,
+  type CalendarCellModel,
+} from '../../../shared/ui';
 import { theme } from '../../../theme';
-import { useInstructorAvailabilityCompleteCalendarQuery, useMyInstructorProfileQuery } from '../../instructors';
+import {
+  useInstructorAvailabilityCompleteCalendarQuery,
+  useMyInstructorProfileQuery,
+} from '../../instructors';
 
 interface NavigationLike {
   navigate: (screen: string, params?: unknown) => void;
@@ -58,16 +61,13 @@ export const InstrutorDashboardScreen: React.FC<Props> = ({ navigation }) => {
   const isLoading = isLoadingProfile || isLoadingCalendar;
   const hasError = hasProfileError || hasCalendarError;
 
-  const instructorName =
-    profile?.primeiroNome ?? usuario?.perfil?.primeiroNome ?? 'Instrutor';
+  const instructorName = profile?.primeiroNome ?? usuario?.perfil?.primeiroNome ?? 'Instrutor';
 
   const calendarCells = React.useMemo<CalendarCellModel[]>(
     () =>
       buildCalendarMonthCells(visibleMonth).map(cell => {
         const day = calendarData?.dias.find(item => item.data === cell.date);
-        const hasBookings = Boolean(
-          day?.horarios.some(slot => slot.status !== 'DISPONIVEL')
-        );
+        const hasBookings = Boolean(day?.horarios.some(slot => slot.status !== 'DISPONIVEL'));
         const hasPreserved = Boolean(day?.bookings_preservados.length);
 
         return {
@@ -83,12 +83,12 @@ export const InstrutorDashboardScreen: React.FC<Props> = ({ navigation }) => {
           indicatorTone: hasPreserved ? 'warning' : hasBookings ? 'info' : undefined,
         };
       }),
-    [calendarData?.dias, visibleMonth]
+    [calendarData?.dias, visibleMonth],
   );
 
   const upcomingBookings = React.useMemo(
     () => (calendarData?.bookings_preview ?? []).slice(0, 3),
-    [calendarData?.bookings_preview]
+    [calendarData?.bookings_preview],
   );
 
   if (isLoading) {
@@ -123,17 +123,12 @@ export const InstrutorDashboardScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.greeting}>Olá, {instructorName}</Text>
         </View>
 
-        <Button
-          title="Ver agendamentos"
-          onPress={() => navigation.navigate('BookingsScreen')}
-        />
+        <Button title="Ver agendamentos" onPress={() => navigation.navigate('BookingsScreen')} />
 
         <Card style={styles.calendarCard}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Calendário de aulas</Text>
-            <Text style={styles.sectionMeta}>
-              {calendarData.total_bookings} aula(s) no período
-            </Text>
+            <Text style={styles.sectionMeta}>{calendarData.total_bookings} aula(s) no período</Text>
           </View>
           <Text style={styles.helperText}>
             O calendário abaixo destaca apenas os dias com aulas agendadas.
@@ -228,9 +223,7 @@ export const InstrutorDashboardScreen: React.FC<Props> = ({ navigation }) => {
               })}
             </View>
           ) : (
-            <Text style={styles.emptyText}>
-              Você ainda não tem aulas agendadas nessa janela.
-            </Text>
+            <Text style={styles.emptyText}>Você ainda não tem aulas agendadas nessa janela.</Text>
           )}
         </Card>
       </ScrollView>

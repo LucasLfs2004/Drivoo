@@ -1,9 +1,5 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import MapView, { Marker, type Region } from 'react-native-maps';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   Bookmark,
@@ -15,8 +11,12 @@ import {
   ShieldCheck,
   Store,
 } from 'lucide-react-native';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import MapView, { Marker, type Region } from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AppHeader, BottomSheet, Button, Card } from '../../shared/ui/base';
+import { AppHeader, BottomSheet, Button, Card } from '../../shared/ui';
 import { theme } from '../../theme';
 import type { ChatStackParamList } from '../../types/navigation';
 

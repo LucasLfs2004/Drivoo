@@ -1,14 +1,7 @@
+import { Calendar, Car, MapPin, Star } from 'lucide-react-native';
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Calendar, MapPin, Car, Star } from 'lucide-react-native';
-import {
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  Divider,
-  Typography,
-} from '../../../shared/ui/base';
+import { StyleSheet, View } from 'react-native';
+import { Avatar, Badge, Button, Card, Divider, Typography } from '../../../shared/ui';
 import { theme } from '../../../theme';
 
 interface EnhancedLessonCardProps {
@@ -67,11 +60,7 @@ export const EnhancedLessonCard: React.FC<EnhancedLessonCardProps> = ({
         <View style={styles.instructorInfo}>
           <Typography variant="h4">{instructorName}</Typography>
           <View style={styles.ratingRow}>
-            <Star
-              color={theme.colors.warning[500]}
-              size={16}
-              fill={theme.colors.warning[500]}
-            />
+            <Star color={theme.colors.warning[500]} size={16} fill={theme.colors.warning[500]} />
             <Typography variant="caption" color="secondary">
               {rating.toFixed(1)} • {totalLessons} aulas
             </Typography>

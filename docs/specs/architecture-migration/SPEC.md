@@ -42,7 +42,7 @@ Ao final da migração principal:
 - integrações remotas estarão isoladas por domínio
 - `AuthContext` será o único fluxo de sessão ativo
 - `react-query` será a fonte padrão de estado remoto
-- `shared/ui/base` substituirá gradualmente a expansão difusa de `common`
+- `shared/ui` substituirá gradualmente a expansão difusa de `common`
 - o fluxo de `spec -> design -> tasks -> implement` estará institucionalizado via skill do projeto
 
 ## Estratégia
@@ -74,7 +74,7 @@ Antes da primeira feature piloto de domínio, a aplicação deve migrar sua fund
 - `core/auth`
 - `core/api`
 - `core/storage`
-- `shared/ui/base`
+- `shared/ui`
 
 Isso reduz retrabalho e impede que o primeiro domínio novo nasça preso à infraestrutura antiga.
 

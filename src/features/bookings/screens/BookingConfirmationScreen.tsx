@@ -2,6 +2,7 @@ import { formatDate } from '@/shared/lib/formatters/date';
 import { formatDuration } from '@/shared/lib/formatters/duration';
 import {
   AppHeader,
+  Avatar,
   Button,
   Divider,
   FormCheckbox,
@@ -20,9 +21,15 @@ import { formatCurrency } from '../../../utils/currency';
 import { calculateBookingPaymentInfo } from '../lib/payment';
 import { validateBookingData } from '../lib/validation';
 
-type Props = NativeStackScreenProps<AlunoSearchStackParamList, 'BookingConfirmation'>;
+type BookingConfirmationScreenProps = NativeStackScreenProps<
+  AlunoSearchStackParamList,
+  'BookingConfirmation'
+>;
 
-export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }) => {
+export const BookingConfirmationScreen: React.FC<BookingConfirmationScreenProps> = ({
+  route,
+  navigation,
+}) => {
   const { bookingData } = route.params;
 
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -37,29 +44,6 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
       setValidationErrors(validation.errors.map(error => error.message));
     }
   }, [bookingData]);
-
-  const renderInstructorAvatar = () => {
-    if (bookingData.instructorAvatar) {
-      return (
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>👤</Text>
-        </View>
-      );
-    }
-
-    const initials = bookingData.instructorName
-      .split(' ')
-      .map((n: string) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-
-    return (
-      <View style={styles.avatarContainer}>
-        <Text style={styles.avatarText}>{initials}</Text>
-      </View>
-    );
-  };
 
   const handleConfirmBooking = async () => {
     if (!termsAccepted) {
@@ -122,7 +106,11 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
     >
       <View style={styles.instructorHeader}>
         <View style={styles.instructorHeaderInfo}>
-          {renderInstructorAvatar()}
+          <Avatar
+            source={bookingData.instructorAvatar}
+            name={bookingData.instructorName}
+            size="lg"
+          />
           <View>
             <Typography variant="body" weight="bold">
               {bookingData.instructorName}

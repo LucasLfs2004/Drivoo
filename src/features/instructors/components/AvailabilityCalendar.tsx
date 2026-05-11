@@ -6,7 +6,7 @@ import {
   buildCalendarMonthCells,
   type CalendarCellModel,
   type CalendarDayTone,
-} from '../../../shared/ui/base';
+} from '../../../shared/ui';
 import { CALENDAR_WEEK_DAYS } from '../lib/availability';
 
 export type AvailabilityCalendarCellModel = {

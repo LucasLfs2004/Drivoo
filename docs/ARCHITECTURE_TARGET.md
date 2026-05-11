@@ -309,7 +309,7 @@ Este fluxo deve orientar nomes de status, telas e mutations futuras.
 ### Recomendadas
 
 - componentes de domínio ficam dentro da feature
-- componentes genéricos ficam em `shared/ui/base`
+- componentes genéricos ficam em `shared/ui`
 - stores locais de feature devem ser pequenos e explícitos
 - documentação de features complexas deve viver em `docs/specs/<feature>/`
 

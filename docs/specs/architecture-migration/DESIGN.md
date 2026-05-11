@@ -36,7 +36,7 @@ Migrar:
 - `core/auth`
 - `core/api`
 - `core/storage`
-- `shared/ui/base`
+- `shared/ui`
 
 ### Etapa 3: Feature piloto
 
@@ -59,7 +59,7 @@ Migrar `instructors`:
 
 ### Etapa 6: Shared/UI
 
-- organizar `shared/ui/base`
+- organizar `shared/ui`
 - reduzir crescimento de `components/common`
 
 ## Estratégia de convivência

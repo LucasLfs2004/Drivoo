@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
 import { Lightbulb } from 'lucide-react-native';
-import { Button, Card, Typography } from '../../../shared/ui/base';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Button, Card, Typography } from '../../../shared/ui';
 import { theme } from '../../../theme';
 
 interface TipCardProps {
@@ -10,11 +10,7 @@ interface TipCardProps {
   onViewMore?: () => void;
 }
 
-export const TipCard: React.FC<TipCardProps> = ({
-  title = '💡 Dica do Dia',
-  tip,
-  onViewMore,
-}) => {
+export const TipCard: React.FC<TipCardProps> = ({ title = '💡 Dica do Dia', tip, onViewMore }) => {
   return (
     <Card variant="filled" padding="md" style={styles.container}>
       <View style={styles.header}>

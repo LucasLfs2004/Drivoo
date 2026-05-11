@@ -2,19 +2,27 @@ import React from 'react';
 import { StyleProp, StyleSheet, Text, TextProps, TextStyle } from 'react-native';
 import { theme } from '../../../theme';
 
+export type TypographyVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'caption' | 'label';
+
+export type TypographyColor =
+  | 'primary'
+  | 'secondary'
+  | 'tertiary'
+  | 'inverse'
+  | 'link'
+  | 'error'
+  | 'contrast'
+  | 'success';
+
+export type TypographyWeight = 'normal' | 'medium' | 'semibold' | 'bold';
+
+export type TypographyAlign = 'left' | 'center' | 'right';
+
 export interface TypographyProps extends TextProps {
-  variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'caption' | 'label';
-  color?:
-    | 'primary'
-    | 'secondary'
-    | 'tertiary'
-    | 'inverse'
-    | 'link'
-    | 'error'
-    | 'contrast'
-    | 'success';
-  weight?: 'normal' | 'medium' | 'semibold' | 'bold';
-  align?: 'left' | 'center' | 'right';
+  variant?: TypographyVariant;
+  color?: TypographyColor;
+  weight?: TypographyWeight;
+  align?: TypographyAlign;
   children: React.ReactNode;
 }
 

@@ -1,19 +1,12 @@
+import { Badge, Card, Divider, Page } from '@/shared/ui';
+import { SummaryRow } from '@/shared/ui/display/SummaryRow';
+import { scale } from '@/utils';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  AppState,
-  Linking,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card } from '../../../shared/ui/layout/Card';
+import { ActivityIndicator, Alert, AppState, Linking, StyleSheet, View } from 'react-native';
 import { AppHeader } from '../../../shared/ui/navigation/AppHeader';
 import { Button } from '../../../shared/ui/primitives/Button';
+import { Typography } from '../../../shared/ui/primitives/Typography';
 import { theme } from '../../../theme';
 import { AlunoSearchStackParamList } from '../../../types/navigation';
 import { formatCurrency } from '../../../utils/currency';
@@ -84,12 +77,14 @@ const getReturnDescription = (checkoutReturn?: 'sucesso' | 'cancelado') => {
 };
 
 export const PaymentConfirmationScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { bookingData, checkoutBookingId, checkoutReturn } = route.params;
+  const { bookingData, checkoutBookingId, checkoutReturn, checkoutUrl } = route.params;
   const typedBookingData = bookingData as BookingData | undefined;
   const initialBookingId = checkoutBookingId ?? '';
 
   const [checkoutSession, setCheckoutSession] = useState<BookingCheckoutSession | null>(null);
   const [bookingId, setBookingId] = useState(initialBookingId);
+  const [resumableCheckoutUrl, setResumableCheckoutUrl] = useState(checkoutUrl ?? null);
+  const [resumableCheckoutExpiresAt, setResumableCheckoutExpiresAt] = useState<string | null>(null);
   const [openingCheckout, setOpeningCheckout] = useState(false);
   const [pendingCheckoutLoaded, setPendingCheckoutLoaded] = useState(Boolean(initialBookingId));
   const [sessionError, setSessionError] = useState<string | null>(null);
@@ -104,9 +99,6 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({ route, navigation }
   );
   const displayedPaymentInfo =
     checkoutStatusQuery.data?.paymentInfo ?? checkoutSession?.paymentInfo ?? paymentInfo;
-  const hasBackendPaymentInfo = Boolean(
-    checkoutStatusQuery.data?.paymentInfo ?? checkoutSession?.paymentInfo,
-  );
 
   const status = checkoutStatusQuery.data?.bookingStatus ?? checkoutSession?.bookingStatus;
   const isFinalStatus = status ? FINAL_STATUSES.includes(status) : false;
@@ -125,7 +117,13 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({ route, navigation }
 
       setCheckoutSession(session);
       setBookingId(session.bookingId);
-      await pendingCheckoutStorage.saveBookingId(session.bookingId);
+      setResumableCheckoutUrl(session.checkoutUrl);
+      setResumableCheckoutExpiresAt(session.expiresAt);
+      await pendingCheckoutStorage.saveCheckoutSession({
+        bookingId: session.bookingId,
+        checkoutUrl: session.checkoutUrl,
+        expiresAt: session.expiresAt,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Não foi possível iniciar o checkout.';
@@ -157,22 +155,42 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({ route, navigation }
   ]);
 
   useEffect(() => {
-    if (bookingId || typedBookingData) {
-      if (typedBookingData) {
-        setPendingCheckoutLoaded(true);
+    const loadPendingBooking = async () => {
+      if (bookingId || typedBookingData) {
+        if (typedBookingData) {
+          setPendingCheckoutLoaded(true);
+        }
+        return;
       }
-      return;
-    }
-
-    pendingCheckoutStorage
-      .getBookingId()
-      .then(storedBookingId => {
+      try {
+        const storedBookingId = await pendingCheckoutStorage.getBookingId();
         if (storedBookingId) {
           setBookingId(storedBookingId);
         }
-      })
-      .finally(() => setPendingCheckoutLoaded(true));
+      } finally {
+        setPendingCheckoutLoaded(true);
+      }
+    };
+
+    loadPendingBooking();
   }, [bookingId, typedBookingData]);
+
+  useEffect(() => {
+    const loadStoredCheckoutSession = async () => {
+      if (!bookingId || resumableCheckoutUrl) {
+        return;
+      }
+
+      const storedSession = await pendingCheckoutStorage.getCheckoutSession(bookingId);
+
+      if (storedSession?.checkoutUrl) {
+        setResumableCheckoutUrl(storedSession.checkoutUrl);
+        setResumableCheckoutExpiresAt(storedSession.expiresAt ?? null);
+      }
+    };
+
+    loadStoredCheckoutSession();
+  }, [bookingId, resumableCheckoutUrl]);
 
   useEffect(() => {
     if (!pendingCheckoutLoaded || bookingId || typedBookingData) {
@@ -190,7 +208,10 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({ route, navigation }
     }
 
     pendingCheckoutStorage.clearBookingId();
-  }, [isFinalStatus]);
+    if (bookingId) {
+      pendingCheckoutStorage.clearCheckoutSession(bookingId);
+    }
+  }, [bookingId, isFinalStatus]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextState => {
@@ -203,25 +224,25 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({ route, navigation }
   }, [bookingId, checkoutStatusQuery]);
 
   const handleOpenCheckout = async () => {
-    const checkoutUrl = checkoutSession?.checkoutUrl;
+    const activeCheckoutUrl = checkoutSession?.checkoutUrl ?? resumableCheckoutUrl;
 
-    if (!checkoutUrl) {
+    if (!activeCheckoutUrl) {
       Alert.alert(
         'Checkout indisponível',
-        'Ainda não temos uma URL de checkout ativa. Tente iniciar novamente.',
+        'Ainda não temos uma URL de checkout ativa para este agendamento.',
       );
       return;
     }
 
     try {
       setOpeningCheckout(true);
-      const canOpen = await Linking.canOpenURL(checkoutUrl);
+      const canOpen = await Linking.canOpenURL(activeCheckoutUrl);
 
       if (!canOpen) {
         throw new Error('Não foi possível abrir a URL do Checkout.');
       }
 
-      await Linking.openURL(checkoutUrl);
+      await Linking.openURL(activeCheckoutUrl);
     } catch {
       Alert.alert(
         'Erro ao abrir Checkout',
@@ -236,26 +257,51 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({ route, navigation }
     navigation.getParent()?.navigate('Bookings' as never);
   };
 
+  const getStatusBadgeVariant = (status?: BookingCheckoutStatusValue) => {
+    switch (status) {
+      case 'AGENDADO':
+        return 'success';
+
+      case 'PENDENTE_PAGAMENTO':
+        return 'warning';
+
+      case 'EXPIRADO':
+        return 'neutral';
+
+      case 'CANCELADO':
+        return 'error';
+
+      default:
+        return 'primary';
+    }
+  };
+
   const isPreparingCheckout =
     createCheckoutMutation.isPending || (!bookingId && !sessionError && !pendingCheckoutLoaded);
 
   if (isPreparingCheckout) {
     return (
-      <SafeAreaView style={styles.container}>
+      <Page>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-          <Text style={styles.centeredText}>Preparando checkout seguro...</Text>
+          <Typography style={styles.centeredText} color="secondary" align="center">
+            Preparando checkout seguro...
+          </Typography>
         </View>
-      </SafeAreaView>
+      </Page>
     );
   }
 
   if (sessionError) {
     return (
-      <SafeAreaView style={styles.container}>
+      <Page>
         <View style={styles.centered}>
-          <Text style={styles.errorTitle}>Não foi possível iniciar o pagamento</Text>
-          <Text style={styles.errorMessage}>{sessionError}</Text>
+          <Typography style={styles.errorTitle} variant="h3" weight="bold" align="center">
+            Não foi possível iniciar o pagamento
+          </Typography>
+          <Typography style={styles.errorMessage} color="error" align="center">
+            {sessionError}
+          </Typography>
           <Button
             title="Tentar novamente"
             onPress={createCheckoutSession}
@@ -268,136 +314,160 @@ export const PaymentConfirmationScreen: React.FC<Props> = ({ route, navigation }
             style={styles.centerButton}
           />
         </View>
-      </SafeAreaView>
+      </Page>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+    <Page
+      scrollable
+      header={
         <AppHeader
           title="Pagamento"
           subtitle="Checkout seguro pela Stripe"
           onBackPress={() => navigation.goBack()}
         />
-
+      }
+    >
+      <View style={styles.content}>
         {typedBookingData && displayedPaymentInfo && (
-          <Card style={styles.card}>
-            <Text style={styles.sectionTitle}>Resumo da aula</Text>
+          <Card>
+            <View style={styles.resume}>
+              <View style={styles.row}>
+                <Typography variant="h4" weight="semibold">
+                  Resumo da aula
+                </Typography>
+                <Badge variant={getStatusBadgeVariant(status)} size="sm">
+                  {getStatusTitle(status)}
+                </Badge>
+              </View>
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Instrutor</Text>
-              <Text style={styles.summaryValue}>{typedBookingData.instructorName}</Text>
-            </View>
+              <SummaryRow label="Instrutor" value={typedBookingData.instructorName} />
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Data</Text>
-              <Text style={styles.summaryValue}>{formatDate(typedBookingData.date)}</Text>
-            </View>
+              <SummaryRow label="Data" value={formatDate(typedBookingData.date)} />
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Horário</Text>
-              <Text style={styles.summaryValue}>{typedBookingData.timeSlot}</Text>
-            </View>
+              <SummaryRow label="Horário" value={typedBookingData.timeSlot} />
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Duração</Text>
-              <Text style={styles.summaryValue}>{typedBookingData.duration} minutos</Text>
-            </View>
-
-            <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>
-                {formatCurrency(
+              <SummaryRow label="Duração" value={`${typedBookingData.duration} minutos`} />
+              <Divider />
+              <SummaryRow
+                label="Total"
+                value={formatCurrency(
                   displayedPaymentInfo.total ?? displayedPaymentInfo.subtotal ?? 0,
                   displayedPaymentInfo.currency,
                 )}
-              </Text>
+                labelColor="primary"
+                labelWeight="semibold"
+                valueVariant="h4"
+                valueWeight="bold"
+                valueColor="success"
+              />
             </View>
           </Card>
         )}
 
-        <Card style={styles.card}>
-          <Text style={styles.sectionTitle}>{getStatusTitle(status)}</Text>
-          {returnDescription && <Text style={styles.returnDescription}>{returnDescription}</Text>}
-          <Text style={styles.description}>{getStatusDescription(status)}</Text>
+        {/* <Card style={styles.card}> */}
+        <View style={styles.stripeInfos}>
+          <Typography variant="h4" weight="semibold">
+            {getStatusTitle(status)}
+          </Typography>
+          {returnDescription && (
+            <Typography variant="caption" color="link" weight="medium">
+              {returnDescription}
+            </Typography>
+          )}
+          <Typography color="secondary">{getStatusDescription(status)}</Typography>
 
-          {checkoutStatusQuery.isFetching && (
-            <View style={styles.inlineLoading}>
+          {/* <View style={styles.statusMeta}>
+            <Typography variant="label" color="secondary">
+              Agendamento
+            </Typography>
+            <Typography variant="caption" weight="medium">
+              {bookingId}
+            </Typography>
+          </View> */}
+
+          <View style={styles.row}>
+            {(checkoutSession?.expiresAt ?? resumableCheckoutExpiresAt) &&
+              status === 'PENDENTE_PAGAMENTO' && (
+                <View style={styles.statusMeta}>
+                  <Typography variant="label" color="secondary">
+                    Checkout expira em
+                  </Typography>
+                  <Typography variant="caption" weight="medium">
+                    {new Date(
+                      checkoutSession?.expiresAt ?? resumableCheckoutExpiresAt ?? '',
+                    ).toLocaleString('pt-BR')}
+                  </Typography>
+                </View>
+              )}
+            {checkoutStatusQuery.isFetching && (
               <ActivityIndicator size="small" color={theme.colors.primary[500]} />
-              <Text style={styles.inlineLoadingText}>Atualizando status...</Text>
-            </View>
-          )}
-
-          <View style={styles.statusMeta}>
-            <Text style={styles.metaLabel}>Agendamento</Text>
-            <Text style={styles.metaValue}>{bookingId}</Text>
+            )}
           </View>
+        </View>
 
-          {checkoutSession?.expiresAt && status === 'PENDENTE_PAGAMENTO' && (
-            <View style={styles.statusMeta}>
-              <Text style={styles.metaLabel}>Checkout expira em</Text>
-              <Text style={styles.metaValue}>
-                {new Date(checkoutSession.expiresAt).toLocaleString('pt-BR')}
-              </Text>
-            </View>
-          )}
-
-          {checkoutStatusQuery.data?.failureMessage && (
-            <Text style={styles.errorMessage}>{checkoutStatusQuery.data.failureMessage}</Text>
-          )}
-        </Card>
+        {checkoutStatusQuery.data?.failureMessage && (
+          <Typography color="error" align="center">
+            {checkoutStatusQuery.data.failureMessage}
+          </Typography>
+        )}
+        {/* </Card> */}
 
         {status !== 'AGENDADO' && status !== 'CANCELADO' && status !== 'EXPIRADO' && (
           <Button
             title={openingCheckout ? 'Abrindo Checkout...' : 'Abrir Checkout Stripe'}
             onPress={handleOpenCheckout}
-            disabled={!checkoutSession?.checkoutUrl || openingCheckout}
-            style={styles.actionButton}
+            disabled={!(checkoutSession?.checkoutUrl ?? resumableCheckoutUrl) || openingCheckout}
           />
         )}
 
-        <Button
-          title="Atualizar status"
-          variant="outline"
-          onPress={() => checkoutStatusQuery.refetch()}
-          disabled={!bookingId || checkoutStatusQuery.isFetching}
-          style={styles.actionButton}
-        />
+        {status === 'PENDENTE_PAGAMENTO' &&
+          !(checkoutSession?.checkoutUrl ?? resumableCheckoutUrl) && (
+            <View style={styles.notice}>
+              <Typography
+                style={styles.noticeText}
+                variant="caption"
+                color="secondary"
+                align="center"
+              >
+                Este agendamento está pendente, mas o app não recebeu uma URL ativa de checkout para
+                reabrir. Atualize o status ou gere uma nova reserva se o checkout tiver expirado.
+              </Typography>
+            </View>
+          )}
 
-        {status === 'AGENDADO' && (
-          <Button
-            title="Ver minhas aulas"
-            onPress={handleViewBookings}
-            style={styles.actionButton}
-          />
-        )}
+        <View>
+          {status === 'PENDENTE_PAGAMENTO' && (
+            <Button
+              title="Atualizar status"
+              variant="outline"
+              onPress={() => checkoutStatusQuery.refetch()}
+              disabled={!bookingId || checkoutStatusQuery.isFetching}
+            />
+          )}
 
-        <View style={styles.notice}>
-          <Text style={styles.noticeText}>
-            O retorno da Stripe não confirma o pagamento sozinho. Esta tela sempre consulta o
-            backend para mostrar o estado real do agendamento.
-          </Text>
+          {status === 'AGENDADO' && (
+            <Button title="Ver minhas aulas" onPress={handleViewBookings} />
+          )}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </Page>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background.primary,
-  },
   content: {
-    flex: 1,
+    paddingTop: theme.spacing.sm,
+    rowGap: theme.spacing.md,
   },
-  scrollContent: {
-    padding: theme.spacing.lg,
+  resume: {
+    rowGap: theme.spacing.xs,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
   centered: {
     flex: 1,
@@ -415,44 +485,11 @@ const styles = StyleSheet.create({
     minWidth: 220,
     marginTop: theme.spacing.md,
   },
-  card: {
-    marginBottom: theme.spacing.lg,
-  },
-  sectionTitle: {
-    color: theme.colors.text.primary,
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semibold,
-    marginBottom: theme.spacing.md,
-  },
-  description: {
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.fontSize.md,
-    lineHeight: 22,
-    marginBottom: theme.spacing.md,
-  },
-  returnDescription: {
-    color: theme.colors.primary[600],
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-    lineHeight: 20,
-    marginBottom: theme.spacing.sm,
-  },
   summaryRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: theme.spacing.sm,
-  },
-  summaryLabel: {
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.fontSize.sm,
-  },
-  summaryValue: {
-    color: theme.colors.text.primary,
-    flex: 1,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-    textAlign: 'right',
   },
   totalRow: {
     borderTopColor: theme.colors.border.light,
@@ -460,42 +497,21 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
     paddingTop: theme.spacing.md,
   },
-  totalLabel: {
-    color: theme.colors.text.primary,
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semibold,
+  stripeInfos: {
+    paddingHorizontal: theme.spacing.sm,
   },
-  totalValue: {
-    color: theme.colors.primary[600],
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.bold,
-  },
+
   inlineLoading: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: theme.spacing.sm,
+    height: scale(40),
     marginBottom: theme.spacing.md,
-  },
-  inlineLoadingText: {
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.fontSize.sm,
   },
   statusMeta: {
     marginTop: theme.spacing.sm,
   },
-  metaLabel: {
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.fontSize.xs,
-    marginBottom: theme.spacing.xs,
-  },
-  metaValue: {
-    color: theme.colors.text.primary,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  actionButton: {
-    marginBottom: theme.spacing.md,
-  },
+
   notice: {
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borders.radius.md,

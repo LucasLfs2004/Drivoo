@@ -34,7 +34,7 @@
 
 ## Shared UI
 
-- criar `src/shared/ui/base`
+- criar `src/shared/ui`
 - mapear componentes realmente genéricos em `components/common`
 - mover gradualmente os componentes de base
 - criar `src/shared/ui/feedback` para loading, error e empty states genéricos

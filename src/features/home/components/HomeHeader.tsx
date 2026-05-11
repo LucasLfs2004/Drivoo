@@ -2,7 +2,7 @@ import { useAuth } from '@/core/auth';
 import theme from '@/theme';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StyleSheet, Text, View } from 'react-native';
-import { Avatar } from '../../../shared/ui/base';
+import { Avatar } from '../../../shared/ui';
 
 interface HomeHeaderProps {
   subtitle?: string;

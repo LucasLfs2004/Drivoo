@@ -1,7 +1,7 @@
 import { Minus, Plus } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Typography } from '../../../shared/ui/base';
+import { Typography } from '../../../shared/ui';
 import { theme } from '../../../theme';
 
 interface LessonCounterProps {

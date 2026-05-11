@@ -53,7 +53,7 @@ export type AlunoHomeStackParamList = {
   InstructorDetails: { instructorId: string; instructorSummary?: InstrutorDisponivel };
   ProgressDetails: undefined;
   ComponentShowcase: undefined;
-  DesignSystem: undefined
+  DesignSystem: undefined;
 };
 
 export type AlunoSearchStackParamList = {
@@ -65,6 +65,7 @@ export type AlunoSearchStackParamList = {
     bookingData?: BookingData;
     checkoutBookingId?: string;
     checkoutReturn?: 'sucesso' | 'cancelado';
+    checkoutUrl?: string;
   };
 };
 
@@ -136,24 +137,34 @@ export type AdminSettingsStackParamList = {
 };
 
 // Screen Props Types
-export type RootStackScreenProps<T extends keyof RootStackParamList> =
-  NativeStackScreenProps<RootStackParamList, T>;
+export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<
+  RootStackParamList,
+  T
+>;
 
-export type AuthStackScreenProps<T extends keyof AuthStackParamList> =
-  NativeStackScreenProps<AuthStackParamList, T>;
+export type AuthStackScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<
+  AuthStackParamList,
+  T
+>;
 
-export type AlunoTabScreenProps<T extends keyof AlunoTabParamList> =
-  BottomTabScreenProps<AlunoTabParamList, T>;
+export type AlunoTabScreenProps<T extends keyof AlunoTabParamList> = BottomTabScreenProps<
+  AlunoTabParamList,
+  T
+>;
 
-export type InstrutorTabScreenProps<T extends keyof InstrutorTabParamList> =
-  BottomTabScreenProps<InstrutorTabParamList, T>;
+export type InstrutorTabScreenProps<T extends keyof InstrutorTabParamList> = BottomTabScreenProps<
+  InstrutorTabParamList,
+  T
+>;
 
-export type AdminDrawerScreenProps<T extends keyof AdminDrawerParamList> =
-  DrawerScreenProps<AdminDrawerParamList, T>;
+export type AdminDrawerScreenProps<T extends keyof AdminDrawerParamList> = DrawerScreenProps<
+  AdminDrawerParamList,
+  T
+>;
 
 declare global {
   namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList { }
+    interface RootParamList extends RootStackParamList {}
   }
 }
 import type { InstrutorDisponivel } from '../search';

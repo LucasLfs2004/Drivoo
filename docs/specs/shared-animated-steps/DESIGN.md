@@ -65,7 +65,7 @@ src/shared/ui/flows/index.ts
 Se o time preferir evitar uma nova pasta, a segunda opção aceitável é:
 
 ```text
-src/shared/ui/base/StepFlow.tsx
+src/shared/ui/StepFlow.tsx
 ```
 
 Recomendação:
@@ -76,7 +76,7 @@ Motivo:
 
 - o componente não é um átomo visual simples
 - ele é um orquestrador de UI e navegação local
-- isso evita inflar `shared/ui/base` com componentes mais “workflow-like”
+- isso evita inflar `shared/ui` com componentes mais “workflow-like”
 
 ## Contrato sugerido
 

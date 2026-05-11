@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
-import { theme } from '../../../theme';
-import { Card, Typography } from '../../../shared/ui/base';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { loadProgress } from '../../../services/progressStorage';
+import { Card, Typography } from '../../../shared/ui';
+import { theme } from '../../../theme';
 
 interface CompactProgressCardProps {
   onPress: () => void;
@@ -69,10 +69,7 @@ export const CompactProgressCard: React.FC<CompactProgressCardProps> = ({ onPres
               <View style={styles.progressBarContainer}>
                 <View style={styles.progressBar}>
                   <View
-                    style={[
-                      styles.progressFill,
-                      { width: `${Math.min(percentageA, 100)}%` },
-                    ]}
+                    style={[styles.progressFill, { width: `${Math.min(percentageA, 100)}%` }]}
                   />
                 </View>
                 <Typography variant="caption" weight="medium" color="primary">
@@ -93,10 +90,7 @@ export const CompactProgressCard: React.FC<CompactProgressCardProps> = ({ onPres
               <View style={styles.progressBarContainer}>
                 <View style={styles.progressBar}>
                   <View
-                    style={[
-                      styles.progressFill,
-                      { width: `${Math.min(percentageB, 100)}%` },
-                    ]}
+                    style={[styles.progressFill, { width: `${Math.min(percentageB, 100)}%` }]}
                   />
                 </View>
                 <Typography variant="caption" weight="medium" color="primary">

@@ -98,7 +98,7 @@ Concentrar:
 - token storage
 - outros mecanismos de persistência técnica compartilhada
 
-### 6. `shared/ui/base`
+### 6. `shared/ui`
 
 Migrar gradualmente componentes genéricos de:
 

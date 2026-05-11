@@ -222,8 +222,7 @@ export const mapScheduledBooking = (item: BookingListItemApiResponse): Scheduled
 export const mapScheduledBookings = (response: ListMyBookingsApiResponse): ScheduledBooking[] =>
   getListItems(response)
     .map(mapScheduledBooking)
-    .filter((item): item is ScheduledBooking => Boolean(item?.id))
-    .sort((left, right) => left.date.getTime() - right.date.getTime());
+    .filter((item): item is ScheduledBooking => Boolean(item?.id));
 
 export const mapBookingCancellationResult = (response: {
   agendamento_id: string;

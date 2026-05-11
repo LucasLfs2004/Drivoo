@@ -26,7 +26,7 @@ import { formatCurrency } from '../../../utils/currency';
 import { useBookingDetailsQuery } from '../hooks/useBookingDetailsQuery';
 import { useCancelBookingMutation } from '../hooks/useCancelBookingMutation';
 import { useUpdateBookingStatusMutation } from '../hooks/useUpdateBookingStatusMutation';
-import type { BookingCheckoutStatusValue, ScheduledBooking } from '../types/domain';
+import type { BookingCheckoutStatusValue, BookingData, ScheduledBooking } from '../types/domain';
 
 type NavigationProp = NativeStackNavigationProp<AlunoBookingsStackParamList, 'BookingDetails'>;
 type ScreenRouteProp = RouteProp<AlunoBookingsStackParamList, 'BookingDetails'>;
@@ -83,6 +83,38 @@ const getStatusTone = (booking: ScheduledBooking) => {
   return theme.colors.primary[500];
 };
 
+const formatBookingTimeSlot = (date: Date) =>
+  date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+const mapScheduledBookingToBookingData = (booking: ScheduledBooking): BookingData => {
+  const [vehicleBrand = booking.vehicleLabel ?? 'Veículo', ...vehicleModelParts] =
+    booking.vehicleLabel?.split(' ').filter(Boolean) ?? [];
+
+  return {
+    id: booking.id,
+    instructorId: booking.instructorId ?? '',
+    instructorName: booking.instructorName,
+    instructorAvatar: booking.instructorAvatar ?? undefined,
+    date: booking.date,
+    timeSlot: formatBookingTimeSlot(booking.date),
+    duration: booking.duration,
+    price: booking.price,
+    currency: booking.currency,
+    vehicleInfo: {
+      marca: vehicleBrand,
+      modelo: vehicleModelParts.join(' '),
+      transmissao: booking.vehicleType === 'automatic' ? 'automatico' : 'manual',
+    },
+    location: {
+      endereco: booking.location ?? booking.meetingPointSuggestion ?? 'Local a confirmar',
+    },
+    status: 'pending',
+  };
+};
+
 const DetailItem = ({
   icon,
   label,
@@ -118,6 +150,20 @@ export const BookingDetailsScreen: React.FC = () => {
         participantName: isInstructorView
           ? (booking?.studentName ?? 'Aluno')
           : (booking?.instructorName ?? 'Professor'),
+      },
+    });
+  };
+
+  const handlePaymentPress = () => {
+    if (!booking) {
+      return;
+    }
+
+    navigation.getParent()?.navigate('Search', {
+      screen: 'PaymentConfirmation',
+      params: {
+        bookingData: mapScheduledBookingToBookingData(booking),
+        checkoutBookingId: bookingId,
       },
     });
   };
@@ -362,6 +408,14 @@ export const BookingDetailsScreen: React.FC = () => {
           ) : (
             <>
               <View style={styles.actions}>
+                {booking.apiStatus === 'PENDENTE_PAGAMENTO' && (
+                  <Button
+                    title="Realizar pagamento"
+                    icon={CreditCard}
+                    variant="secondary"
+                    onPress={handlePaymentPress}
+                  />
+                )}
                 <Button
                   title="Chat com professor"
                   icon={MessageCircle}

@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { IconButton, Typography } from '../../../shared/ui/base';
+import { IconButton, Typography } from '../../../shared/ui';
 import { theme } from '../../../theme';
 import { EnhancedProgressCard } from '../components/EnhancedProgressCard';
 

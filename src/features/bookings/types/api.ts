@@ -10,6 +10,10 @@ export type BookingCheckoutApiStatus =
 
 export type BookingListApiStatus = BookingCheckoutApiStatus;
 
+export type BookingListSortBy = 'data_aula' | 'data_compra' | 'criado_em' | 'atualizado_em';
+
+export type BookingListSortOrder = 'asc' | 'desc';
+
 export type BookingTransactionApiStatus =
   | 'PENDING'
   | 'SUCCEEDED'
@@ -94,6 +98,8 @@ export interface BookingCheckoutStatusApiResponse {
 
 export interface ListMyBookingsApiParams {
   status_filtro?: BookingListApiStatus | null;
+  ordenar_por?: BookingListSortBy;
+  ordem?: BookingListSortOrder;
   limite?: number;
   offset?: number;
 }
