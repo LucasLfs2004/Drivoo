@@ -1,9 +1,14 @@
 import { formatDate } from '@/shared/lib/formatters/date';
 import { formatDuration } from '@/shared/lib/formatters/duration';
-import { AppHeader, Button, Divider, Typography } from '@/shared/ui/base';
-import InfoDisplay from '@/shared/ui/base/InfoDisplay';
-import { Page } from '@/shared/ui/base/Page';
-import { FormCheckbox } from '@/shared/ui/forms/FormCheckbox';
+import {
+  AppHeader,
+  Button,
+  Divider,
+  FormCheckbox,
+  InfoDisplay,
+  Page,
+  Typography,
+} from '@/shared/ui';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Calendar, Car, Clock, MapPin, Star } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
